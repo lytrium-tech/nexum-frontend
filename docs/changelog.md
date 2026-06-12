@@ -11,3 +11,11 @@
 - Redirección obligatoria de Onboarding (`/onboarding/wallet`) en ausencia de cuentas financieras.
 - UI mínima de creación de cuenta bajo `AccountCreate` DTO (limitado a Name, Type y Currency).
 - Constante temporal `TEMPORARY_ALPHA_CATEGORY_FALLBACK` para categorías del Alpha Privado.
+
+## [Unreleased] - Fase 3
+### Added
+- Refactorización de flujo Bootstrap: se ejecuta de forma paralela e idempotente asegurando JWT previo.
+- Integración de Onboarding de Categorías `/onboarding/categories` con backend vía POST `CategoryCreate`.
+- Shell Visual Principal protegido bajo `AppShell` (Escritorio Sidebar, Móvil BottomNav).
+- Conexión del Dashboard (Home MVP) mediante Fetch paralelo (`snapshot`, `balance`, `cashflow`, `free-money`).
+- Estados obligatorios UI: Loading (`loading.tsx`), Empty States para cuentas y dashboard vacío, Error Boundaries para backend inoperativo.

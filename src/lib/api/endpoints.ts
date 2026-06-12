@@ -36,5 +36,21 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }, isServer),
+  },
+  intelligence: {
+    snapshot: (isServer = false) => 
+      apiClient<unknown>('/api/v1/intelligence/snapshot', { method: 'GET' }, isServer),
+    balance: (isServer = false) => 
+      apiClient<unknown>('/api/v1/intelligence/balance', { method: 'GET' }, isServer),
+    freeMoney: (isServer = false) => 
+      apiClient<unknown>('/api/v1/intelligence/free-money', { method: 'GET' }, isServer),
+    cashflow: (isServer = false) => 
+      apiClient<unknown>('/api/v1/intelligence/cashflow', { method: 'GET' }, isServer),
+    goals: (isServer = false) => 
+      apiClient<unknown>('/api/v1/intelligence/goals', { method: 'GET' }, isServer),
+    obligations: (isServer = false) => 
+      apiClient<unknown>('/api/v1/intelligence/obligations', { method: 'GET' }, isServer),
+    creditCards: (isServer = false) => 
+      apiClient<unknown>('/api/v1/intelligence/credit-cards', { method: 'GET' }, isServer),
   }
 };

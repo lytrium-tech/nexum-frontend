@@ -22,5 +22,17 @@ export async function createFirstAccount(formData: FormData) {
     redirect('/onboarding/wallet?error=No+se+pudo+crear+la+cuenta')
   }
 
-  redirect('/app')
+  let hasCategories = false
+  try {
+    const categories = await api.categories.list(true)
+    hasCategories = categories.length > 0
+  } catch (error) {
+    console.error('Failed to fetch categories:', error)
+  }
+
+  if (hasCategories) {
+    redirect('/app')
+  } else {
+    redirect('/onboarding/categories')
+  }
 }
