@@ -11,15 +11,28 @@ export async function createFirstAccount(formData: FormData) {
   const type = formData.get('type') as AccountType
   const currency = formData.get('currency') as string || 'COP'
 
+  let creationError = '';
   try {
     await api.accounts.create({
       name,
       type,
       currency,
     }, true)
-  } catch (error) {
-    console.error('Failed to create account:', error)
-    redirect('/onboarding/wallet?error=No+se+pudo+crear+la+cuenta')
+  } catch (error: unknown) {
+    const err = error as { status?: number, data?: { detail?: string } };
+    if (err.status === 409) {
+      const accounts = await api.accounts.list(true).catch(() => []);
+      if (accounts.length === 0) {
+        creationError = err.data?.detail || 'Ya existe una cuenta activa con este nombre.';
+      }
+    } else {
+      console.error('Failed to create account:', error)
+      creationError = 'Ocurrió un error inesperado al intentar crear tu cuenta.';
+    }
+  }
+
+  if (creationError) {
+    redirect(`/onboarding/wallet?error=${encodeURIComponent(creationError)}`)
   }
 
   let hasCategories = false

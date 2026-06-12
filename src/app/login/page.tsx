@@ -1,10 +1,10 @@
 import { login } from '../auth-actions'
 import Link from 'next/link'
 
-export default function LoginPage() {
-  // Using React 19's approach for async props in Next 15+ if needed, 
-  // but we can just use simple searchParams if we treat it as any or wait for it.
-  
+export default async function LoginPage(props: { searchParams?: Promise<{ error?: string }> }) {
+  const searchParams = await props.searchParams;
+  const error = searchParams?.error;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-sm border border-soft-gray">
@@ -13,7 +13,13 @@ export default function LoginPage() {
           <p className="text-gray-500">Inicia sesión para continuar a Nexum</p>
         </div>
 
-        <form className="flex flex-col gap-4">
+        {error && (
+          <div className="mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100">
+            {error}
+          </div>
+        )}
+
+        <form action={login} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium" htmlFor="email">Correo electrónico</label>
             <input
@@ -38,7 +44,7 @@ export default function LoginPage() {
           </div>
 
           <button
-            formAction={login}
+            type="submit"
             className="mt-4 bg-graphite-blue text-warm-white py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors font-medium"
           >
             Iniciar Sesión

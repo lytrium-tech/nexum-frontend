@@ -1,7 +1,10 @@
 import { createCategories } from './actions'
 import { TEMPORARY_ALPHA_CATEGORY_FALLBACK } from '@/lib/constants/fallbacks'
 
-export default function CategoriesOnboardingPage() {
+export default async function CategoriesOnboardingPage(props: { searchParams?: Promise<{ error?: string }> }) {
+  const searchParams = await props.searchParams;
+  const error = searchParams?.error;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-lg bg-white p-8 rounded-2xl shadow-sm border border-soft-gray">
@@ -11,6 +14,12 @@ export default function CategoriesOnboardingPage() {
             Selecciona las categorías que usas habitualmente. Podrás modificarlas más adelante.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100">
+            {error}
+          </div>
+        )}
 
         <form action={createCategories} className="flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-3">

@@ -42,8 +42,10 @@ export default async function AppPage() {
 
   // Si no hay datos financieros reales aún (empty state)
   // El backend podría devolver balance 0 o listas vacías.
-  const totalBalance = balance?.total_balance ?? 0;
-  const isCompletelyEmpty = totalBalance === 0 && !cashflow?.income_total && !cashflow?.expense_total;
+  const b = balance as any;
+  const cf = cashflow as any;
+  const totalBalance = b?.total_balance ?? 0;
+  const isCompletelyEmpty = totalBalance === 0 && !cf?.income_total && !cf?.expense_total;
 
   if (isCompletelyEmpty) {
     return (
@@ -73,9 +75,9 @@ export default async function AppPage() {
           <p className="text-3xl font-semibold text-graphite-blue">
             {formatCurrency(totalBalance)}
           </p>
-          {balance?.safe_money !== undefined && (
+          {b?.safe_money !== undefined && (
             <p className="text-xs text-gray-400 mt-2">
-              Dinero seguro: {formatCurrency(balance.safe_money)}
+              Dinero seguro: {formatCurrency(b.safe_money)}
             </p>
           )}
         </div>
@@ -84,7 +86,7 @@ export default async function AppPage() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-soft-gray">
           <h3 className="text-sm font-medium text-gray-500 mb-1">Dinero Libre (Fin de mes)</h3>
           <p className="text-3xl font-semibold text-champagne-gold">
-            {formatCurrency(freeMoney?.projected_free_money ?? 0)}
+            {formatCurrency((freeMoney as any)?.projected_free_money ?? 0)}
           </p>
           <p className="text-xs text-gray-400 mt-2">
             Después de obligaciones y metas
@@ -98,20 +100,20 @@ export default async function AppPage() {
           <h3 className="text-base font-medium text-gray-800 mb-4">Resumen Mensual</h3>
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm text-gray-500">Ingresos</span>
-            <span className="text-sm font-medium text-green-600">{formatCurrency(cashflow?.income_total ?? 0)}</span>
+            <span className="text-sm font-medium text-green-600">{formatCurrency(cf?.income_total ?? 0)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-500">Gastos</span>
-            <span className="text-sm font-medium text-red-500">{formatCurrency(cashflow?.expense_total ?? 0)}</span>
+            <span className="text-sm font-medium text-red-500">{formatCurrency(cf?.expense_total ?? 0)}</span>
           </div>
         </div>
 
         {/* Próximas Obligaciones o Snapshot */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-soft-gray">
           <h3 className="text-base font-medium text-gray-800 mb-4">Obligaciones Pendientes</h3>
-          {snapshot?.upcoming_obligations && snapshot.upcoming_obligations.length > 0 ? (
+          {(snapshot as any)?.upcoming_obligations && (snapshot as any).upcoming_obligations.length > 0 ? (
             <div className="space-y-3">
-              {snapshot.upcoming_obligations.slice(0, 3).map((obs: { name: string, amount: number }, i: number) => (
+              {(snapshot as any).upcoming_obligations.slice(0, 3).map((obs: { name: string, amount: number }, i: number) => (
                 <div key={i} className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">{obs.name}</span>
                   <span className="text-sm font-medium">{formatCurrency(obs.amount)}</span>
