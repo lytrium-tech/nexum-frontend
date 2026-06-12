@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { api } from '@/lib/api/endpoints';
 import { getSessionToken } from '@/lib/api/client';
 import AppShell from '@/components/layout/AppShell';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function AppLayout({
   children,
@@ -17,13 +18,19 @@ export default async function AppLayout({
   let accounts: unknown[] = [];
   let categories: unknown[] = [];
   let sessionExpired = false;
+  let userName: string | null = null;
 
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    userName = user?.user_metadata?.full_name || null;
+
     // 2. Execute idempotent bootstrap
     try {
       await api.users.bootstrap({
         timezone: 'America/Bogota',
         currency: 'COP',
+        name: userName
       }, true);
     } catch (error: unknown) {
       const err = error as { status?: number };
@@ -68,5 +75,5 @@ export default async function AppLayout({
     redirect('/onboarding/categories');
   }
 
-  return <AppShell>{children}</AppShell>;
+  return <AppShell userName={userName}>{children}</AppShell>;
 }

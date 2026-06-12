@@ -52,5 +52,19 @@ export const api = {
       apiClient<unknown>('/api/v1/intelligence/obligations', { method: 'GET' }, isServer),
     creditCards: (isServer = false) => 
       apiClient<unknown>('/api/v1/intelligence/credit-cards', { method: 'GET' }, isServer),
+  },
+  conversations: {
+    message: (data: { message: string; channel?: string; external_message_id?: string | null }, isServer = false) =>
+      apiClient<{
+        response_text: string;
+        intent?: string;
+        status: 'completed' | 'awaiting_clarification' | 'awaiting_confirmation' | 'cancelled' | 'error';
+        trace_id?: string;
+        pending_action_id?: string | null;
+        structured_data?: unknown;
+      }>('/api/v1/conversations/message', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }, isServer),
   }
 };
