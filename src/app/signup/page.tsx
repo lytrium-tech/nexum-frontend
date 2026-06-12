@@ -1,9 +1,10 @@
 import { signup } from '../auth-actions'
 import Link from 'next/link'
 
-export default async function SignupPage(props: { searchParams?: Promise<{ error?: string }> }) {
+export default async function SignupPage(props: { searchParams?: Promise<{ error?: string, success?: string }> }) {
   const searchParams = await props.searchParams;
   const error = searchParams?.error;
+  const success = searchParams?.success;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -16,6 +17,12 @@ export default async function SignupPage(props: { searchParams?: Promise<{ error
         {error && (
           <div className="mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100">
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 p-3 bg-green-50 text-green-700 text-sm rounded-lg text-center border border-green-100">
+            {success}
           </div>
         )}
 
