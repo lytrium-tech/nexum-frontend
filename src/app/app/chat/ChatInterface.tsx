@@ -15,6 +15,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [activePendingActionId, setActivePendingActionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -30,6 +31,7 @@ export default function ChatInterface() {
     if (!inputValue.trim() || isLoading) return;
 
     const userMessageId = crypto.randomUUID();
+    const externalMessageId = crypto.randomUUID();
     const messageText = inputValue.trim();
 
     setMessages((prev) => [
@@ -49,7 +51,12 @@ export default function ChatInterface() {
           'Content-Type': 'application/json',
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
         },
-        body: JSON.stringify({ message: messageText })
+        body: JSON.stringify({ 
+          message: messageText,
+          channel: 'pwa',
+          external_message_id: externalMessageId,
+          pending_action_id: activePendingActionId || undefined
+        })
       });
 
       let response;
@@ -59,6 +66,15 @@ export default function ChatInterface() {
         response = await res.json();
       }
       
+      // Update state machine
+      if (response.status === 'awaiting_confirmation' || response.status === 'awaiting_clarification') {
+        if (response.pending_action_id) {
+          setActivePendingActionId(response.pending_action_id);
+        }
+      } else if (response.status === 'completed' || response.status === 'cancelled' || response.status === 'error') {
+        setActivePendingActionId(null);
+      }
+
       setMessages((prev) => 
         prev.map((m) => m.id === userMessageId ? { ...m, status: 'sent' } : m)
       );
