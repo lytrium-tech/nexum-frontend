@@ -12,6 +12,11 @@ type IntelligenceSnapshotRead = components['schemas']['IntelligenceSnapshotRead'
 type CashIncomeCreate = components['schemas']['CashIncomeCreate'];
 type CashExpenseCreate = components['schemas']['CashExpenseCreate'];
 type CashOperationResult = components['schemas']['CashOperationResult'];
+type GoalRead = components['schemas']['GoalRead'];
+type GoalCreate = components['schemas']['GoalCreate'];
+type GoalUpdate = components['schemas']['GoalUpdate'];
+type GoalContributionCreate = components['schemas']['GoalContributionCreate'];
+type GoalContributionResult = components['schemas']['GoalContributionResult'];
 
 export const api = {
   cash: {
@@ -75,7 +80,29 @@ export const api = {
         body: JSON.stringify(data),
       }, isServer),
     delete: (id: string, isServer = false) =>
-      apiClient<unknown>(`/api/v1/categories/${id}`, { method: 'DELETE' }, isServer),
+      apiClient<void>(`/api/v1/categories/${id}`, { method: 'DELETE' }, isServer),
+  },
+  goals: {
+    list: (isServer = false) =>
+      apiClient<GoalRead[]>('/api/v1/goals', { method: 'GET' }, isServer),
+    create: (data: GoalCreate, isServer = false) =>
+      apiClient<GoalRead>('/api/v1/goals', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }, isServer),
+    update: (id: string, data: GoalUpdate, isServer = false) =>
+      apiClient<GoalRead>(`/api/v1/goals/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }, isServer),
+    contribute: (id: string, data: GoalContributionCreate, idempotencyKey: string, isServer = false) =>
+      apiClient<GoalContributionResult>(`/api/v1/goals/${id}/contributions`, {
+        method: 'POST',
+        headers: {
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(data),
+      }, isServer),
   },
   intelligence: {
     snapshot: (isServer = false) => 
