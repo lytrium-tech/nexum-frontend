@@ -21,10 +21,17 @@ export async function createAccountAction(data: {
   } catch (err: unknown) {
     console.error('Create account action error:', err);
     let message = 'Ocurrió un error al crear la cuenta. Intenta nuevamente.';
-    if (err instanceof Error) {
-      if (err.message.includes('409')) message = 'Ya existe una cuenta con este nombre.';
-      else if (err.message.includes('422')) message = 'Los datos ingresados no son válidos.';
+    
+    const apiError = err as { status?: number; message?: string };
+    if (apiError?.status === 409 || (apiError?.message && typeof apiError.message === 'string' && apiError.message.includes('already exists'))) {
+      message = 'Ya existe una cuenta con este nombre.';
+    } else if (apiError?.status === 422) {
+      message = 'Los datos ingresados no son válidos.';
+    } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado') {
+      // Use the specific safe error message returned by backend if available
+      message = apiError.message;
     }
+    
     return { success: false, error: message };
   }
 }

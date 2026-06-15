@@ -14,3 +14,4 @@ Esta tabla correlaciona la UI o feature en el frontend con los endpoints autoriz
 ## Notas
 - Los endpoints de Ledger mencionados en algunos documentos de backend (Fase 6) han sido sincronizados exitosamente desde el `openapi.json` del backend local, exponiendo eventos, resumen y timeline.
 - Por políticas estrictas, el frontend **no inventará endpoints ni DTOs** para estos servicios hasta que se formalicen y publiquen en el archivo `openapi.json` oficial.
+- **Opening Balance / Saldo Inicial**: Backend V1.1 pendiente por exponer operaciones como `opening_balance` o `balance_adjustment` en el ledger, para evitar que el frontend inyecte saldos iniciales como un `income` falso, lo cual contaminaría los snapshots. No se pedirá saldo inicial en UI hasta entonces.
