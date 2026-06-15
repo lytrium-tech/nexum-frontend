@@ -9,8 +9,29 @@ type AccountCreate = components['schemas']['AccountCreate'];
 type CategoryRead = components['schemas']['CategoryRead'];
 type CategoryCreate = components['schemas']['CategoryCreate'];
 type IntelligenceSnapshotRead = components['schemas']['IntelligenceSnapshotRead'];
+type CashIncomeCreate = components['schemas']['CashIncomeCreate'];
+type CashExpenseCreate = components['schemas']['CashExpenseCreate'];
+type CashOperationResult = components['schemas']['CashOperationResult'];
 
 export const api = {
+  cash: {
+    createIncome: (data: CashIncomeCreate, idempotencyKey: string, isServer = false) =>
+      apiClient<CashOperationResult>('/api/v1/cash/income', {
+        method: 'POST',
+        headers: {
+          'idempotency-key': idempotencyKey,
+        },
+        body: JSON.stringify(data),
+      }, isServer),
+    createExpense: (data: CashExpenseCreate, idempotencyKey: string, isServer = false) =>
+      apiClient<CashOperationResult>('/api/v1/cash/expense', {
+        method: 'POST',
+        headers: {
+          'idempotency-key': idempotencyKey,
+        },
+        body: JSON.stringify(data),
+      }, isServer),
+  },
   users: {
     me: (isServer = false) => 
       apiClient<UserRead>('/api/v1/users/me', { method: 'GET' }, isServer),
