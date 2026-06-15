@@ -12,7 +12,6 @@ const AlertCircle = ({ className }: { className?: string }) => <svg className={c
 const X = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const PiggyBank = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const Calendar = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
-const ChevronRight = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>;
 const ArrowRight = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>;
 
 type GoalRead = components['schemas']['GoalRead'];
@@ -286,9 +285,6 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                   >
                     <PiggyBank className="w-4 h-4" />
                     {isCompleted ? 'Completada' : 'Aportar'}
-                  </button>
-                  <button className="p-2 rounded-xl bg-white border border-graphite-blue/10 text-graphite-blue/60 hover:text-graphite-blue hover:bg-graphite-blue/5 transition-colors">
-                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
