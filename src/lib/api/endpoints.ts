@@ -23,11 +23,22 @@ export const api = {
   accounts: {
     list: (isServer = false) => 
       apiClient<AccountRead[]>('/api/v1/accounts', { method: 'GET' }, isServer),
+    summary: (isServer = false) =>
+      apiClient<components['schemas']['AccountSummary']>('/api/v1/accounts/summary', { method: 'GET' }, isServer),
+    get: (id: string, isServer = false) =>
+      apiClient<AccountRead>(`/api/v1/accounts/${id}`, { method: 'GET' }, isServer),
     create: (data: AccountCreate, isServer = false) =>
       apiClient<AccountRead>('/api/v1/accounts', {
         method: 'POST',
         body: JSON.stringify(data),
       }, isServer),
+    update: (id: string, data: components['schemas']['AccountUpdate'], isServer = false) =>
+      apiClient<AccountRead>(`/api/v1/accounts/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }, isServer),
+    delete: (id: string, isServer = false) =>
+      apiClient<unknown>(`/api/v1/accounts/${id}`, { method: 'DELETE' }, isServer),
   },
   categories: {
     list: (isServer = false) => 
