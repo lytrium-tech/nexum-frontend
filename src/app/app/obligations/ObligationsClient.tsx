@@ -454,7 +454,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
 
               <div>
                 <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="amount">
-                  Monto pagado *
+                  Monto a pagar
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-graphite-blue/40 font-medium">
@@ -464,17 +464,13 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                     id="amount"
                     name="amount"
                     type="number"
-                    min="1"
-                    step="0.01"
-                    defaultValue={parseFloat(selectedObligation.amount)}
-                    required
-                    placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
-                    disabled={isSubmitting || !!successMessage}
+                    value={parseFloat(selectedObligation.amount)}
+                    readOnly
+                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/10 border-transparent focus:ring-0 transition-colors text-graphite-blue font-medium outline-none cursor-not-allowed opacity-80"
                   />
                 </div>
                 <p className="text-xs text-graphite-blue/40 mt-1.5">
-                  Monto base sugerido. Puedes editarlo si el pago fue distinto.
+                  Esta obligación se paga por el monto completo de la cuota.
                 </p>
               </div>
 

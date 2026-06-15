@@ -72,12 +72,28 @@ export async function payObligationAction(id: string, data: components['schemas'
       if (apiError.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
         message = apiError.message;
       }
-    } else if (apiError?.status === 400 || apiError?.status === 403) {
+    } else if (apiError?.status === 400 || apiError?.status === 403 || apiError?.status === 409) {
        if (apiError.message && typeof apiError.message === 'string' && apiError.message !== '{}') {
-         message = apiError.message; // Could be insufficient funds or business logic error
+         const backendMsg = apiError.message.toLowerCase();
+         if (backendMsg.includes('match') && backendMsg.includes('quota')) {
+           message = 'El pago debe coincidir exactamente con el valor de la obligación.';
+         } else if (backendMsg.includes('already paid') || backendMsg.includes('paid for this period')) {
+           message = 'Esta obligación ya fue pagada para este periodo.';
+         } else if (backendMsg.includes('insufficient') || backendMsg.includes('fondos') || backendMsg.includes('balance')) {
+           message = 'No tienes saldo suficiente en esta cuenta para realizar el pago.';
+         } else {
+           message = apiError.message;
+         }
        }
     } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
-      message = apiError.message;
+      const backendMsg = apiError.message.toLowerCase();
+      if (backendMsg.includes('match') && backendMsg.includes('quota')) {
+        message = 'El pago debe coincidir exactamente con el valor de la obligación.';
+      } else if (backendMsg.includes('already paid') || backendMsg.includes('paid for this period') || backendMsg.includes('duplicate')) {
+        message = 'Esta obligación ya fue pagada para este periodo.';
+      } else {
+        message = apiError.message;
+      }
     }
     
     return { success: false, error: message };
