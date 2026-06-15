@@ -16,6 +16,7 @@ type CategoryRead = {
   id: string;
   name: string;
   type?: string | null;
+  is_active?: boolean | null;
 };
 
 export default function NewEntryClient({
@@ -38,7 +39,7 @@ export default function NewEntryClient({
   const [showSuccess, setShowSuccess] = useState(false);
 
   const activeAccounts = initialAccounts.filter(a => a.is_active !== false);
-  const filteredCategories = initialCategories.filter(c => c.type === type || c.type === 'transfer');
+  const filteredCategories = initialCategories.filter(c => c.is_active !== false && (c.type === type || c.type === 'transfer'));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
