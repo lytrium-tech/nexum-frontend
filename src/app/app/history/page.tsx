@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { getSessionToken } from '@/lib/api/client';
 import { api } from '@/lib/api/endpoints';
+import { components } from '@/lib/api/types.generated';
 
 export const metadata = {
   title: 'Nexum - Historial Financiero',
