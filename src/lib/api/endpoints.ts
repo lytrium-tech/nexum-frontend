@@ -8,6 +8,7 @@ type AccountRead = components['schemas']['AccountRead'];
 type AccountCreate = components['schemas']['AccountCreate'];
 type CategoryRead = components['schemas']['CategoryRead'];
 type CategoryCreate = components['schemas']['CategoryCreate'];
+type IntelligenceSnapshotRead = components['schemas']['IntelligenceSnapshotRead'];
 
 export const api = {
   users: {
@@ -39,7 +40,7 @@ export const api = {
   },
   intelligence: {
     snapshot: (isServer = false) => 
-      apiClient<unknown>('/api/v1/intelligence/snapshot', { method: 'GET' }, isServer),
+      apiClient<IntelligenceSnapshotRead>('/api/v1/intelligence/snapshot', { method: 'GET' }, isServer),
     balance: (isServer = false) => 
       apiClient<unknown>('/api/v1/intelligence/balance', { method: 'GET' }, isServer),
     freeMoney: (isServer = false) => 
