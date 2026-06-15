@@ -5,15 +5,10 @@ import Link from 'next/link';
 import { getSessionToken } from '@/lib/api/client';
 import { api } from '@/lib/api/endpoints';
 import { components } from '@/lib/api/types.generated';
+import { formatLedgerAmount, getLedgerEventName } from '@/lib/format/ledger';
 
 export const metadata = {
   title: 'Nexum - Historial Financiero',
-};
-
-const formatCurrency = (val: string | number) => {
-  const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return '$0';
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(num);
 };
 
 const formatDate = (dateStr: string) => {
@@ -56,7 +51,6 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
 
   // MVP Basic filters
   const filterType = typeof resolvedSearchParams.event_type === 'string' ? resolvedSearchParams.event_type : null;
-  console.log('[DEBUG /app/history] URL event_type:', filterType);
   
   let eventsData = null;
   let hasError = false;
@@ -64,7 +58,6 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   try {
     const params: Record<string, string | number> = { limit: 50 };
     if (filterType) params.event_type = filterType;
-    console.log('[DEBUG /app/history] Request params to api.ledger.events:', params);
     eventsData = await api.ledger.events(params, true);
   } catch (error) {
     console.error('Error fetching ledger events:', error);
@@ -82,13 +75,6 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
 
   const events = eventsData?.items || [];
   const isEmpty = events.length === 0;
-
-  console.log('[DEBUG /app/history] First 3 events:', events.slice(0, 3).map((e: any) => ({
-    id: e.id,
-    event_type: e.event_type,
-    direction: e.direction,
-    amount: e.amount
-  })));
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full pb-10">
@@ -132,16 +118,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                 {getEventIcon(evt.event_type)}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate capitalize">
-                    {evt.description || {
-                      income: 'Ingreso',
-                      expense: 'Gasto',
-                      transfer_in: 'Transferencia recibida',
-                      transfer_out: 'Transferencia enviada',
-                      goal_contribution: 'Aporte a meta',
-                      obligation_payment: 'Pago de obligación',
-                      credit_card_purchase: 'Compra con tarjeta',
-                      credit_card_payment: 'Pago de tarjeta'
-                    }[evt.event_type] || evt.event_type.replace(/_/g, ' ')}
+                    {evt.description || getLedgerEventName(evt.event_type)}
                   </p>
                   <p className="text-xs text-gray-500">
                     {formatDate(evt.occurred_at)}
@@ -150,8 +127,8 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className={`text-base font-semibold ${evt.direction === 'in' ? 'text-sage-green' : 'text-gray-900'}`}>
-                    {evt.direction === 'in' ? '+' : '-'}{formatCurrency(Math.abs(parseFloat(evt.amount)))}
+                  <p className={`text-base font-semibold ${formatLedgerAmount({ amount: evt.amount, currency: evt.currency, direction: evt.direction, eventType: evt.event_type }).startsWith('+') ? 'text-sage-green' : 'text-gray-900'}`}>
+                    {formatLedgerAmount({ amount: evt.amount, currency: evt.currency, direction: evt.direction, eventType: evt.event_type })}
                   </p>
                   <p className="text-[10px] text-gray-400 uppercase">{evt.currency || 'COP'}</p>
                 </div>
