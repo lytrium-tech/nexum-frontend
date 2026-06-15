@@ -1,11 +1,6 @@
-# Problemas Conocidos y Tareas Pendientes (Frontend)
+# Nexum Frontend - Known Issues
 
-## 1. Categorías Iniciales (Onboarding)
-- **Contexto:** El onboarding necesita un catálogo de categorías de respaldo temporal.
-- **Pendiente:** Determinar si existe endpoint para crear categorías personalizadas, si el backend requiere IDs existentes, si el backend crea categorías base y cómo se persisten por usuario.
-- **Acción a futuro:** Implementar un fallback visual de onboarding, o conectarse directamente a un eventual endpoint de categorías base en el backend.
-
-## 2. Saldo Inicial
-- **Contexto:** El usuario requiere configurar su saldo inicial durante el onboarding forzoso de primera billetera.
-- **Pendiente:** Verificar si `POST /api/v1/accounts` soporta el establecimiento de un saldo inicial o si requiere llamadas secundarias (creación de transacción inicial o ajuste de capital).
-- **Resolución Parcial (Fase 2):** Se confirmó que el contrato `AccountCreate` no soporta la propiedad `initial_balance`. La UI de onboarding actual omite este campo para no enviar requests erróneos ni falsificar ingresos. Se requiere una definición de backend sobre si se usará `POST /api/v1/cash/income` u otro endpoint para el balance inicial.
+## APIs y Contratos
+* **Ledger / Recent Activity Endpoints**: La documentación general menciona la existencia de endpoints de ledger (`GET /api/v1/ledger/events`, `GET /api/v1/ledger/summary`, etc.), pero estos **no se encuentran** en la definición de `openapi.json` actual (Fase 5/6).
+* **OpenAPI Público Bloqueado**: El entorno backend configurado en `NEXT_PUBLIC_API_BASE_URL` devuelve 404 Not Found al intentar consultar `/openapi.json` y `/docs`. Por lo tanto, no es posible resincronizar dinámicamente un esquema más reciente. La integración depende estrictamente de lo estipulado en `docs/context/openapi.json`.
+* **Snapshot Limitations**: El `IntelligenceSnapshotRead` proporciona resúmenes numéricos como `available_real` y `free_money`, pero no retorna la matriz de historial reciente ni transferencias. La UI de Actividad Reciente se encuentra suspendida hasta que la versión en el backend incluya el endpoint.
