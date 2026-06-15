@@ -75,14 +75,22 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
     }
 
     setIsSubmitting(true);
-    const result = await updateCategoryAction(id, { name: editName.trim(), is_active: editActive });
+    console.log('[DEBUG category update] category_id', id);
+    const payload = { name: editName.trim(), is_active: editActive };
+    console.log('[DEBUG category update] payload enviado', payload);
+    const result = await updateCategoryAction(id, payload);
+    console.log('[DEBUG category update] status/error recibido', result);
     setIsSubmitting(false);
 
     if (result.success && result.result) {
       setCategories(categories.map(c => c.id === id ? result.result! : c));
       setEditingId(null);
     } else {
-      setError(result.error || 'Error al actualizar la categoría.');
+      let errMsg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+      if (!errMsg || errMsg === '{}' || errMsg === 'Ocurrió un error al actualizar la categoría. Intenta nuevamente.') {
+        errMsg = 'No se pudo guardar la categoría. Intenta nuevamente.';
+      }
+      setError(errMsg);
     }
   };
 
@@ -228,12 +236,16 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                         <button
                           onClick={async () => {
                             setIsSubmitting(true);
-                            const result = await updateCategoryAction(cat.id, { is_active: true });
+                            console.log('[DEBUG category update] category_id', cat.id);
+                            const payload = { is_active: true };
+                            console.log('[DEBUG category update] payload enviado', payload);
+                            const result = await updateCategoryAction(cat.id, payload);
+                            console.log('[DEBUG category update] status/error recibido', result);
                             setIsSubmitting(false);
                             if (result.success && result.result) {
                               setCategories(categories.map(c => c.id === cat.id ? result.result! : c));
                             } else {
-                              setError(result.error || 'Error al reactivar la categoría.');
+                              setError(typeof result.error === 'string' ? result.error : JSON.stringify(result.error) || 'Error al reactivar la categoría.');
                             }
                           }}
                           disabled={isSubmitting}
@@ -270,8 +282,12 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
             <div key={cat.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl">
               <div className="w-2 h-2 rounded-full bg-slate-400" />
               <div>
-                <p className="font-medium text-slate-700 text-sm">{cat.name}</p>
-                <p className="text-xs text-slate-400 capitalize">{cat.type ? TYPE_LABELS[cat.type] || cat.type : 'General'}</p>
+                <p className="font-medium text-slate-700 text-sm">
+                  {cat.name === 'sin_clasificar' ? 'Sin clasificar' : cat.name}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {cat.name === 'sin_clasificar' ? 'Categoría de respaldo del sistema' : (cat.type ? TYPE_LABELS[cat.type] || cat.type : 'General')}
+                </p>
               </div>
             </div>
           ))}

@@ -36,14 +36,22 @@ export async function updateCategoryAction(id: string, data: components['schemas
   } catch (err: unknown) {
     console.error('Update category error:', err);
     let message = 'Ocurrió un error al actualizar la categoría. Intenta nuevamente.';
+    const apiError = err as { status?: number; message?: string; data?: unknown };
+    console.error('Update category apiError details:', { status: apiError?.status, message: apiError?.message, data: apiError?.data });
     
-    const apiError = err as { status?: number; message?: string };
     if (apiError?.status === 409) {
       message = 'Ya existe una categoría con este nombre.';
     } else if (apiError?.status === 422) {
       message = 'Los datos ingresados no son válidos.';
-    } else if (apiError?.message && apiError.message !== 'Ocurrió un error inesperado') {
+      if (apiError.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
+        message = apiError.message;
+      }
+    } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
       message = apiError.message;
+    }
+
+    if (message === '{}' || message === 'Ocurrió un error al actualizar la categoría. Intenta nuevamente.') {
+      message = 'No pude reactivar esta categoría. Intenta nuevamente.';
     }
     
     return { success: false, error: message };

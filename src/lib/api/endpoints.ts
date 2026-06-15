@@ -63,7 +63,7 @@ export const api = {
   },
   categories: {
     list: (isServer = false) => 
-      apiClient<CategoryRead[]>('/api/v1/categories?include_inactive=true', { method: 'GET' }, isServer),
+      apiClient<CategoryRead[]>('/api/v1/categories', { method: 'GET' }, isServer),
     create: (data: CategoryCreate, isServer = false) =>
       apiClient<CategoryRead>('/api/v1/categories', {
         method: 'POST',

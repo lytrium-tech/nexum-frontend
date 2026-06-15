@@ -21,7 +21,14 @@ export default async function CategoriesPage() {
   let hasError = false;
 
   try {
+    console.log('[DEBUG categories list] request url: /api/v1/categories');
+    console.log('[DEBUG categories list] query params enviados: none');
     categories = await api.categories.list(true);
+    const active = categories.filter(c => c.is_active !== false).length;
+    const inactive = categories.filter(c => c.is_active === false).length;
+    console.log('[DEBUG categories list] total categorías recibidas', categories.length);
+    console.log('[DEBUG categories list] activas', active);
+    console.log('[DEBUG categories list] inactivas', inactive);
   } catch (error) {
     console.error('Error fetching categories:', error);
     hasError = true;
