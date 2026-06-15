@@ -96,6 +96,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounts/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Summary */
+        get: operations["get_summary_api_v1_accounts_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounts/{account_id}": {
         parameters: {
             query?: never;
@@ -364,6 +381,120 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/credit/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Credit Summary */
+        get: operations["get_credit_summary_api_v1_credit_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit/cards/{card_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Card Status */
+        get: operations["get_card_status_api_v1_credit_cards__card_id__status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Events
+         * @description Lista el historial de eventos financieros del usuario.
+         */
+        get: operations["list_events_api_v1_ledger_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Event Detail
+         * @description Devuelve el detalle de un evento financiero.
+         */
+        get: operations["get_event_detail_api_v1_ledger_events__event_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Summary
+         * @description Resumen financiero agrupado para un periodo dado.
+         */
+        get: operations["get_summary_api_v1_ledger_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Timeline
+         * @description Timeline de eventos financieros agrupados por día.
+         */
+        get: operations["get_timeline_api_v1_ledger_timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/intelligence/snapshot": {
         parameters: {
             query?: never;
@@ -520,6 +651,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Transfers */
+        get: operations["list_transfers_api_v1_transfers_get"];
+        put?: never;
+        /** Create Transfer */
+        post: operations["create_transfer_api_v1_transfers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transfers/{transfer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Transfer */
+        get: operations["get_transfer_api_v1_transfers__transfer_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -573,6 +739,27 @@ export interface components {
             /** Is Active */
             is_active: boolean;
         };
+        /** AccountRef */
+        AccountRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** AccountSummary */
+        AccountSummary: {
+            /** Total Balance */
+            total_balance: string;
+            /** Accounts Count */
+            accounts_count: number;
+            /** Active Accounts Count */
+            active_accounts_count: number;
+            /** Currency */
+            currency: string;
+        };
         /**
          * AccountType
          * @enum {string}
@@ -582,6 +769,8 @@ export interface components {
         AccountUpdate: {
             /** Name */
             name?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
         };
         /** CashExpenseCreate */
         CashExpenseCreate: {
@@ -601,6 +790,10 @@ export interface components {
             description?: string | null;
             /** @default api */
             source: components["schemas"]["EventSource"];
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
         };
         /** CashIncomeCreate */
         CashIncomeCreate: {
@@ -620,6 +813,10 @@ export interface components {
             description?: string | null;
             /** @default api */
             source: components["schemas"]["EventSource"];
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
         };
         /** CashOperationResult */
         CashOperationResult: {
@@ -659,6 +856,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Is Global
+             * @default false
+             */
+            is_global: boolean;
             /** User Id */
             user_id: string | null;
             /** Name */
@@ -666,6 +868,16 @@ export interface components {
             type: components["schemas"]["CategoryType"] | null;
             /** Is Active */
             is_active: boolean;
+        };
+        /** CategoryRef */
+        CategoryRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /**
          * CategoryType
@@ -676,6 +888,8 @@ export interface components {
         CategoryUpdate: {
             /** Name */
             name?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
         };
         /**
          * ConversationalRequest
@@ -748,6 +962,10 @@ export interface components {
             account_id: string;
             /** Amount */
             amount: number | string;
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
         };
         /** CreditCardPaymentResult */
         CreditCardPaymentResult: {
@@ -777,6 +995,10 @@ export interface components {
              * @default 1
              */
             installments_total: number;
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
         };
         /** CreditCardPurchaseResult */
         CreditCardPurchaseResult: {
@@ -830,6 +1052,38 @@ export interface components {
             /** Estimated Available Credit */
             readonly estimated_available_credit: string;
         };
+        /** CreditCardStatusRead */
+        CreditCardStatusRead: {
+            /**
+             * Card Id
+             * Format: uuid
+             */
+            card_id: string;
+            /** Name */
+            name: string;
+            /** Credit Limit */
+            credit_limit: string;
+            /** Total Debt */
+            total_debt: string;
+            /** Billed Debt */
+            billed_debt: string;
+            /** Unbilled Debt */
+            unbilled_debt: string;
+            /** Available Credit */
+            available_credit: string;
+            /** Monthly Cc Payment */
+            monthly_cc_payment: string;
+            /** Cutoff Day */
+            cutoff_day: number;
+            /** Payment Due Day */
+            payment_due_day: number;
+            /** Next Payment Due Date */
+            next_payment_due_date: string;
+            /** Purchases Count */
+            purchases_count: number;
+            /** Payments Count */
+            payments_count: number;
+        };
         /** CreditCardUpdate */
         CreditCardUpdate: {
             /** Name */
@@ -844,6 +1098,17 @@ export interface components {
             due_day?: number | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** CreditSummaryRead */
+        CreditSummaryRead: {
+            /** Total Credit Limit */
+            total_credit_limit: string;
+            /** Total Debt */
+            total_debt: string;
+            /** Total Available Credit */
+            total_available_credit: string;
+            /** Cards */
+            cards: components["schemas"]["CreditCardStatusRead"][];
         };
         /**
          * EventSource
@@ -876,6 +1141,10 @@ export interface components {
             account_id: string;
             /** Amount */
             amount: number | string;
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
         };
         /** GoalContributionResult */
         GoalContributionResult: {
@@ -902,6 +1171,10 @@ export interface components {
             target_amount: number | string;
             /** Target Date */
             target_date?: string | null;
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
         };
         /** GoalRead */
         GoalRead: {
@@ -1010,6 +1283,10 @@ export interface components {
             credit_limit: string | null;
             /** Estimated Current Debt */
             estimated_current_debt: string;
+            /** Billed Debt */
+            billed_debt?: string | null;
+            /** Unbilled Debt */
+            unbilled_debt?: string | null;
             /** Estimated Available Credit */
             estimated_available_credit: string | null;
             /** Monthly Cc Payment */
@@ -1018,6 +1295,8 @@ export interface components {
             cutoff_day: number | null;
             /** Due Day */
             due_day: number | null;
+            /** Next Payment Due Date */
+            next_payment_due_date?: string | null;
         };
         /** IntelligenceDebtRead */
         IntelligenceDebtRead: {
@@ -1078,37 +1357,125 @@ export interface components {
         };
         /** IntelligenceSnapshotRead */
         IntelligenceSnapshotRead: {
-            /** Available Real */
-            available_real: string;
-            /** Safe Money */
-            safe_money: string;
-            /** Free Money */
-            free_money: string;
-            /** Total Income Current Month */
-            total_income_current_month: string;
-            /** Cash Consumption Outflow */
-            cash_consumption_outflow: string;
-            /** Credit Card Consumption Committed */
-            credit_card_consumption_committed: string;
-            /** Total Consumption Committed */
-            total_consumption_committed: string;
-            /** Committed Outflow Current Month */
-            committed_outflow_current_month: string;
-            /** Wealth Allocation Current Month */
-            wealth_allocation_current_month: string;
-            /** Pending Obligations Total */
-            pending_obligations_total: string;
-            /** Goals Required This Period */
-            goals_required_this_period: string;
-            /** Credit Cards Required Payment */
-            credit_cards_required_payment: string;
-            /** Total Credit Card Debt */
-            total_credit_card_debt: string;
+            period: components["schemas"]["SnapshotPeriod"];
+            cash: components["schemas"]["SnapshotCash"];
+            cashflow: components["schemas"]["SnapshotCashflow"];
+            debt: components["schemas"]["SnapshotDebt"];
+            goals: components["schemas"]["SnapshotGoals"];
+            obligations: components["schemas"]["SnapshotObligations"];
+            transfers: components["schemas"]["SnapshotTransfers"];
+            /** Recent Activity */
+            recent_activity: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** LedgerEventDetail */
+        LedgerEventDetail: {
             /**
-             * Calculated At
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /**
+             * Occurred At
              * Format: date-time
              */
-            calculated_at: string;
+            occurred_at: string;
+            /** Event Type */
+            event_type: string;
+            /** Direction */
+            direction: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /** Description */
+            description: string | null;
+            account?: components["schemas"]["AccountRef"] | null;
+            category?: components["schemas"]["CategoryRef"] | null;
+            /** Source */
+            source: string;
+            /** Raw Message */
+            raw_message?: string | null;
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Command Id */
+            command_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** LedgerEventsRef */
+        LedgerEventsRef: {
+            /**
+             * Out Event Id
+             * Format: uuid
+             */
+            out_event_id: string;
+            /**
+             * In Event Id
+             * Format: uuid
+             */
+            in_event_id: string;
+        };
+        /** LedgerEventsResponse */
+        LedgerEventsResponse: {
+            /** Items */
+            items: components["schemas"]["LedgerEventDetail"][];
+            pagination: components["schemas"]["LedgerPaginationInfo"];
+        };
+        /** LedgerPaginationInfo */
+        LedgerPaginationInfo: {
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** LedgerSummaryResponse */
+        LedgerSummaryResponse: {
+            /** Total Income */
+            total_income: string;
+            /** Total Expense */
+            total_expense: string;
+            /** Net Cashflow */
+            net_cashflow: string;
+            /** Total Goal Contributions */
+            total_goal_contributions: string;
+            /** Total Obligation Payments */
+            total_obligation_payments: string;
+            /** Total Credit Card Payments */
+            total_credit_card_payments: string;
+            /** Total Credit Card Purchases */
+            total_credit_card_purchases: string;
+            /** Events Count */
+            events_count: number;
+        };
+        /** LedgerTimelineGroup */
+        LedgerTimelineGroup: {
+            /** Date */
+            date: string;
+            /** Income */
+            income: string;
+            /** Expense */
+            expense: string;
+            /** Net */
+            net: string;
+            /** Items */
+            items: components["schemas"]["LedgerEventDetail"][];
+        };
+        /** LedgerTimelineResponse */
+        LedgerTimelineResponse: {
+            /** Groups */
+            groups: components["schemas"]["LedgerTimelineGroup"][];
         };
         /** ObligationCreate */
         ObligationCreate: {
@@ -1136,6 +1503,10 @@ export interface components {
             account_id: string;
             /** Amount */
             amount: number | string;
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
         };
         /** ObligationPaymentResult */
         ObligationPaymentResult: {
@@ -1207,6 +1578,116 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** SnapshotCash */
+        SnapshotCash: {
+            /** Total Balance */
+            total_balance: string;
+            /** Active Accounts Count */
+            active_accounts_count: number;
+        };
+        /** SnapshotCashflow */
+        SnapshotCashflow: {
+            /** Income */
+            income: string;
+            /** Expenses */
+            expenses: string;
+            /** Net Cashflow */
+            net_cashflow: string;
+        };
+        /** SnapshotDebt */
+        SnapshotDebt: {
+            /** Credit Card Total Debt */
+            credit_card_total_debt: string;
+            /** Billed Debt */
+            billed_debt: string;
+            /** Unbilled Debt */
+            unbilled_debt: string;
+        };
+        /** SnapshotGoals */
+        SnapshotGoals: {
+            /** Active Goals Count */
+            active_goals_count: number;
+            /** Total Target */
+            total_target: string;
+            /** Total Saved */
+            total_saved: string;
+        };
+        /** SnapshotObligations */
+        SnapshotObligations: {
+            /** Pending Count */
+            pending_count: number;
+            /** Pending Amount */
+            pending_amount: string;
+        };
+        /** SnapshotPeriod */
+        SnapshotPeriod: {
+            /** Month */
+            month: string;
+            /** Timezone */
+            timezone: string;
+        };
+        /** SnapshotTransfers */
+        SnapshotTransfers: {
+            /** Monthly Transfer Volume */
+            monthly_transfer_volume: string;
+        };
+        /**
+         * TransferCreate
+         * @description Payload para crear transferencia.
+         */
+        TransferCreate: {
+            /**
+             * Source Account Id
+             * Format: uuid
+             */
+            source_account_id: string;
+            /**
+             * Destination Account Id
+             * Format: uuid
+             */
+            destination_account_id: string;
+            /** Amount */
+            amount: number | string;
+            /**
+             * Currency
+             * @default COP
+             */
+            currency: string;
+            /** Description */
+            description?: string | null;
+            /** Occurred At */
+            occurred_at?: string | null;
+            /** Command Id */
+            command_id?: string | null;
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
+        };
+        /** TransferResult */
+        TransferResult: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            source_account: components["schemas"]["AccountRead"];
+            destination_account: components["schemas"]["AccountRead"];
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /** Description */
+            description: string | null;
+            /** Status */
+            status: string;
+            ledger_events?: components["schemas"]["LedgerEventsRef"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** UserOnboardingRequest */
         UserOnboardingRequest: {
@@ -1415,6 +1896,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_summary_api_v1_accounts_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountSummary"];
                 };
             };
         };
@@ -2295,6 +2796,193 @@ export interface operations {
             };
         };
     };
+    get_credit_summary_api_v1_credit_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditSummaryRead"];
+                };
+            };
+        };
+    };
+    get_card_status_api_v1_credit_cards__card_id__status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditCardStatusRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_api_v1_ledger_events_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                account_id?: string | null;
+                category_id?: string | null;
+                event_type?: string | null;
+                direction?: string | null;
+                amount_min?: number | null;
+                amount_max?: number | null;
+                search?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEventsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_event_detail_api_v1_ledger_events__event_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEventDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_summary_api_v1_ledger_summary_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_timeline_api_v1_ledger_timeline_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerTimelineResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_snapshot_api_v1_intelligence_snapshot_get: {
         parameters: {
             query?: never;
@@ -2477,6 +3165,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConversationalResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_transfers_api_v1_transfers_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferResult"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_transfer_api_v1_transfers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_transfer_api_v1_transfers__transfer_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transfer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferResult"];
                 };
             };
             /** @description Validation Error */

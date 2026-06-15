@@ -196,6 +196,32 @@
         ]
       }
     },
+    "/api/v1/accounts/summary": {
+      "get": {
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Get Summary",
+        "operationId": "get_summary_api_v1_accounts_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSummary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/accounts/{account_id}": {
       "get": {
         "tags": [
@@ -1563,6 +1589,485 @@
         }
       }
     },
+    "/api/v1/credit/summary": {
+      "get": {
+        "tags": [
+          "Credit"
+        ],
+        "summary": "Get Credit Summary",
+        "operationId": "get_credit_summary_api_v1_credit_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSummaryRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/credit/cards/{card_id}/status": {
+      "get": {
+        "tags": [
+          "Credit"
+        ],
+        "summary": "Get Card Status",
+        "operationId": "get_card_status_api_v1_credit_cards__card_id__status_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "card_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Card Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditCardStatusRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ledger/events": {
+      "get": {
+        "tags": [
+          "ledger"
+        ],
+        "summary": "List Events",
+        "description": "Lista el historial de eventos financieros del usuario.",
+        "operationId": "list_events_api_v1_ledger_events_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "category_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Id"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "amount_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Amount Min"
+            }
+          },
+          {
+            "name": "amount_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Amount Max"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerEventsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ledger/events/{event_id}": {
+      "get": {
+        "tags": [
+          "ledger"
+        ],
+        "summary": "Get Event Detail",
+        "description": "Devuelve el detalle de un evento financiero.",
+        "operationId": "get_event_detail_api_v1_ledger_events__event_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerEventDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ledger/summary": {
+      "get": {
+        "tags": [
+          "ledger"
+        ],
+        "summary": "Get Summary",
+        "description": "Resumen financiero agrupado para un periodo dado.",
+        "operationId": "get_summary_api_v1_ledger_summary_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ledger/timeline": {
+      "get": {
+        "tags": [
+          "ledger"
+        ],
+        "summary": "Get Timeline",
+        "description": "Timeline de eventos financieros agrupados por d\u00eda.",
+        "operationId": "get_timeline_api_v1_ledger_timeline_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerTimelineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/intelligence/snapshot": {
       "get": {
         "tags": [
@@ -1847,6 +2352,163 @@
           }
         }
       }
+    },
+    "/api/v1/transfers": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Create Transfer",
+        "operationId": "create_transfer_api_v1_transfers_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "List Transfers",
+        "operationId": "list_transfers_api_v1_transfers_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransferResult"
+                  },
+                  "title": "Response List Transfers Api V1 Transfers Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{transfer_id}": {
+      "get": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Get Transfer",
+        "operationId": "get_transfer_api_v1_transfers__transfer_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "transfer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Transfer Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1954,6 +2616,54 @@
         ],
         "title": "AccountRead"
       },
+      "AccountRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "AccountRef"
+      },
+      "AccountSummary": {
+        "properties": {
+          "total_balance": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Balance"
+          },
+          "accounts_count": {
+            "type": "integer",
+            "title": "Accounts Count"
+          },
+          "active_accounts_count": {
+            "type": "integer",
+            "title": "Active Accounts Count"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_balance",
+          "accounts_count",
+          "active_accounts_count",
+          "currency"
+        ],
+        "title": "AccountSummary"
+      },
       "AccountType": {
         "type": "string",
         "enum": [
@@ -1977,6 +2687,17 @@
               }
             ],
             "title": "Name"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
           }
         },
         "type": "object",
@@ -2030,6 +2751,29 @@
           "source": {
             "$ref": "#/components/schemas/EventSource",
             "default": "api"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
           }
         },
         "type": "object",
@@ -2087,6 +2831,29 @@
           "source": {
             "$ref": "#/components/schemas/EventSource",
             "default": "api"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
           }
         },
         "type": "object",
@@ -2159,6 +2926,11 @@
             "format": "uuid",
             "title": "Id"
           },
+          "is_global": {
+            "type": "boolean",
+            "title": "Is Global",
+            "default": false
+          },
           "user_id": {
             "anyOf": [
               {
@@ -2200,6 +2972,25 @@
         ],
         "title": "CategoryRead"
       },
+      "CategoryRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "CategoryRef"
+      },
       "CategoryType": {
         "type": "string",
         "enum": [
@@ -2226,6 +3017,17 @@
               }
             ],
             "title": "Name"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
           }
         },
         "type": "object",
@@ -2412,6 +3214,29 @@
               }
             ],
             "title": "Amount"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
           }
         },
         "type": "object",
@@ -2519,6 +3344,29 @@
             "minimum": 1.0,
             "title": "Installments Total",
             "default": 1
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
           }
         },
         "type": "object",
@@ -2657,6 +3505,86 @@
         ],
         "title": "CreditCardRead"
       },
+      "CreditCardStatusRead": {
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Card Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "credit_limit": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Limit"
+          },
+          "total_debt": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Debt"
+          },
+          "billed_debt": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Billed Debt"
+          },
+          "unbilled_debt": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Unbilled Debt"
+          },
+          "available_credit": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Available Credit"
+          },
+          "monthly_cc_payment": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monthly Cc Payment"
+          },
+          "cutoff_day": {
+            "type": "integer",
+            "title": "Cutoff Day"
+          },
+          "payment_due_day": {
+            "type": "integer",
+            "title": "Payment Due Day"
+          },
+          "next_payment_due_date": {
+            "type": "string",
+            "title": "Next Payment Due Date"
+          },
+          "purchases_count": {
+            "type": "integer",
+            "title": "Purchases Count"
+          },
+          "payments_count": {
+            "type": "integer",
+            "title": "Payments Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "card_id",
+          "name",
+          "credit_limit",
+          "total_debt",
+          "billed_debt",
+          "unbilled_debt",
+          "available_credit",
+          "monthly_cc_payment",
+          "cutoff_day",
+          "payment_due_day",
+          "next_payment_due_date",
+          "purchases_count",
+          "payments_count"
+        ],
+        "title": "CreditCardStatusRead"
+      },
       "CreditCardUpdate": {
         "properties": {
           "name": {
@@ -2740,6 +3668,40 @@
         "type": "object",
         "title": "CreditCardUpdate"
       },
+      "CreditSummaryRead": {
+        "properties": {
+          "total_credit_limit": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Credit Limit"
+          },
+          "total_debt": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Debt"
+          },
+          "total_available_credit": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Available Credit"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/CreditCardStatusRead"
+            },
+            "type": "array",
+            "title": "Cards"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_credit_limit",
+          "total_debt",
+          "total_available_credit",
+          "cards"
+        ],
+        "title": "CreditSummaryRead"
+      },
       "EventSource": {
         "type": "string",
         "enum": [
@@ -2813,6 +3775,29 @@
               }
             ],
             "title": "Amount"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
           }
         },
         "type": "object",
@@ -2923,6 +3908,29 @@
               }
             ],
             "title": "Target Date"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
           }
         },
         "type": "object",
@@ -3240,6 +4248,30 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Estimated Current Debt"
           },
+          "billed_debt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billed Debt"
+          },
+          "unbilled_debt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unbilled Debt"
+          },
           "estimated_available_credit": {
             "anyOf": [
               {
@@ -3278,6 +4310,17 @@
               }
             ],
             "title": "Due Day"
+          },
+          "next_payment_due_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Payment Due Date"
           }
         },
         "type": "object",
@@ -3459,95 +4502,346 @@
       },
       "IntelligenceSnapshotRead": {
         "properties": {
-          "available_real": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Available Real"
+          "period": {
+            "$ref": "#/components/schemas/SnapshotPeriod"
           },
-          "safe_money": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Safe Money"
+          "cash": {
+            "$ref": "#/components/schemas/SnapshotCash"
           },
-          "free_money": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Free Money"
+          "cashflow": {
+            "$ref": "#/components/schemas/SnapshotCashflow"
           },
-          "total_income_current_month": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Income Current Month"
+          "debt": {
+            "$ref": "#/components/schemas/SnapshotDebt"
           },
-          "cash_consumption_outflow": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Cash Consumption Outflow"
+          "goals": {
+            "$ref": "#/components/schemas/SnapshotGoals"
           },
-          "credit_card_consumption_committed": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Credit Card Consumption Committed"
+          "obligations": {
+            "$ref": "#/components/schemas/SnapshotObligations"
           },
-          "total_consumption_committed": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Consumption Committed"
+          "transfers": {
+            "$ref": "#/components/schemas/SnapshotTransfers"
           },
-          "committed_outflow_current_month": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Committed Outflow Current Month"
-          },
-          "wealth_allocation_current_month": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Wealth Allocation Current Month"
-          },
-          "pending_obligations_total": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Pending Obligations Total"
-          },
-          "goals_required_this_period": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Goals Required This Period"
-          },
-          "credit_cards_required_payment": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Credit Cards Required Payment"
-          },
-          "total_credit_card_debt": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Credit Card Debt"
-          },
-          "calculated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Calculated At"
+          "recent_activity": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Recent Activity"
           }
         },
         "type": "object",
         "required": [
-          "available_real",
-          "safe_money",
-          "free_money",
-          "total_income_current_month",
-          "cash_consumption_outflow",
-          "credit_card_consumption_committed",
-          "total_consumption_committed",
-          "committed_outflow_current_month",
-          "wealth_allocation_current_month",
-          "pending_obligations_total",
-          "goals_required_this_period",
-          "credit_cards_required_payment",
-          "total_credit_card_debt",
-          "calculated_at"
+          "period",
+          "cash",
+          "cashflow",
+          "debt",
+          "goals",
+          "obligations",
+          "transfers",
+          "recent_activity"
         ],
         "title": "IntelligenceSnapshotRead"
+      },
+      "LedgerEventDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "account": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AccountRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CategoryRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "command_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Command Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "occurred_at",
+          "event_type",
+          "direction",
+          "amount",
+          "currency",
+          "description",
+          "source",
+          "created_at"
+        ],
+        "title": "LedgerEventDetail"
+      },
+      "LedgerEventsRef": {
+        "properties": {
+          "out_event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Out Event Id"
+          },
+          "in_event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "In Event Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "out_event_id",
+          "in_event_id"
+        ],
+        "title": "LedgerEventsRef"
+      },
+      "LedgerEventsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerEventDetail"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/LedgerPaginationInfo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "pagination"
+        ],
+        "title": "LedgerEventsResponse"
+      },
+      "LedgerPaginationInfo": {
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "limit",
+          "offset",
+          "total"
+        ],
+        "title": "LedgerPaginationInfo"
+      },
+      "LedgerSummaryResponse": {
+        "properties": {
+          "total_income": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Income"
+          },
+          "total_expense": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Expense"
+          },
+          "net_cashflow": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Cashflow"
+          },
+          "total_goal_contributions": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Goal Contributions"
+          },
+          "total_obligation_payments": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Obligation Payments"
+          },
+          "total_credit_card_payments": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Credit Card Payments"
+          },
+          "total_credit_card_purchases": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Credit Card Purchases"
+          },
+          "events_count": {
+            "type": "integer",
+            "title": "Events Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_income",
+          "total_expense",
+          "net_cashflow",
+          "total_goal_contributions",
+          "total_obligation_payments",
+          "total_credit_card_payments",
+          "total_credit_card_purchases",
+          "events_count"
+        ],
+        "title": "LedgerSummaryResponse"
+      },
+      "LedgerTimelineGroup": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "income": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Income"
+          },
+          "expense": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Expense"
+          },
+          "net": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerEventDetail"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "income",
+          "expense",
+          "net",
+          "items"
+        ],
+        "title": "LedgerTimelineGroup"
+      },
+      "LedgerTimelineResponse": {
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerTimelineGroup"
+            },
+            "type": "array",
+            "title": "Groups"
+          }
+        },
+        "type": "object",
+        "required": [
+          "groups"
+        ],
+        "title": "LedgerTimelineResponse"
       },
       "ObligationCreate": {
         "properties": {
@@ -3637,6 +4931,29 @@
               }
             ],
             "title": "Amount"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
           }
         },
         "type": "object",
@@ -3874,6 +5191,320 @@
         },
         "type": "object",
         "title": "ObligationUpdate"
+      },
+      "SnapshotCash": {
+        "properties": {
+          "total_balance": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Balance"
+          },
+          "active_accounts_count": {
+            "type": "integer",
+            "title": "Active Accounts Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_balance",
+          "active_accounts_count"
+        ],
+        "title": "SnapshotCash"
+      },
+      "SnapshotCashflow": {
+        "properties": {
+          "income": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Income"
+          },
+          "expenses": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Expenses"
+          },
+          "net_cashflow": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Cashflow"
+          }
+        },
+        "type": "object",
+        "required": [
+          "income",
+          "expenses",
+          "net_cashflow"
+        ],
+        "title": "SnapshotCashflow"
+      },
+      "SnapshotDebt": {
+        "properties": {
+          "credit_card_total_debt": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Card Total Debt"
+          },
+          "billed_debt": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Billed Debt"
+          },
+          "unbilled_debt": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Unbilled Debt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "credit_card_total_debt",
+          "billed_debt",
+          "unbilled_debt"
+        ],
+        "title": "SnapshotDebt"
+      },
+      "SnapshotGoals": {
+        "properties": {
+          "active_goals_count": {
+            "type": "integer",
+            "title": "Active Goals Count"
+          },
+          "total_target": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Target"
+          },
+          "total_saved": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Saved"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_goals_count",
+          "total_target",
+          "total_saved"
+        ],
+        "title": "SnapshotGoals"
+      },
+      "SnapshotObligations": {
+        "properties": {
+          "pending_count": {
+            "type": "integer",
+            "title": "Pending Count"
+          },
+          "pending_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Pending Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pending_count",
+          "pending_amount"
+        ],
+        "title": "SnapshotObligations"
+      },
+      "SnapshotPeriod": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "timezone"
+        ],
+        "title": "SnapshotPeriod"
+      },
+      "SnapshotTransfers": {
+        "properties": {
+          "monthly_transfer_volume": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monthly Transfer Volume"
+          }
+        },
+        "type": "object",
+        "required": [
+          "monthly_transfer_volume"
+        ],
+        "title": "SnapshotTransfers"
+      },
+      "TransferCreate": {
+        "properties": {
+          "source_account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Source Account Id"
+          },
+          "destination_account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Destination Account Id"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$"
+              }
+            ],
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 3,
+            "minLength": 3,
+            "title": "Currency",
+            "default": "COP"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "occurred_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred At"
+          },
+          "command_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Command Id"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "raw_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_account_id",
+          "destination_account_id",
+          "amount"
+        ],
+        "title": "TransferCreate",
+        "description": "Payload para crear transferencia."
+      },
+      "TransferResult": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source_account": {
+            "$ref": "#/components/schemas/AccountRead"
+          },
+          "destination_account": {
+            "$ref": "#/components/schemas/AccountRead"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "ledger_events": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LedgerEventsRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_account",
+          "destination_account",
+          "amount",
+          "currency",
+          "description",
+          "status",
+          "created_at"
+        ],
+        "title": "TransferResult"
       },
       "UserOnboardingRequest": {
         "properties": {

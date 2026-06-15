@@ -30,13 +30,19 @@ export default async function AppHome() {
   }
 
   let snapshot = null;
+  let recentEvents: any = null;
   let hasError = false;
   let isForbidden = false;
 
   try {
-    snapshot = await api.intelligence.snapshot(true);
+    const [snap, evts] = await Promise.all([
+      api.intelligence.snapshot(true),
+      api.ledger.events({ limit: 5 }, true).catch(() => null)
+    ]);
+    snapshot = snap;
+    recentEvents = evts;
   } catch (error: unknown) {
-    console.error('Failed to load snapshot:', error);
+    console.error('Failed to load dashboard data:', error);
     const err = error as { status?: number };
     if (err?.status === 401 || err?.status === 403) {
       isForbidden = true;
@@ -94,9 +100,9 @@ export default async function AppHome() {
   }
 
   const isCompletelyEmpty = 
-    parseFloat(snapshot.available_real) === 0 && 
-    parseFloat(snapshot.total_income_current_month) === 0 && 
-    parseFloat(snapshot.cash_consumption_outflow) === 0;
+    parseFloat(snapshot.cash.total_balance) === 0 && 
+    parseFloat(snapshot.cashflow.income) === 0 && 
+    parseFloat(snapshot.cashflow.expenses) === 0;
 
   if (isCompletelyEmpty) {
     return (
@@ -117,34 +123,64 @@ export default async function AppHome() {
     );
   }
 
+  const events = recentEvents?.items || [];
+
   return (
     <div className="flex flex-col gap-6">
       <FinancialHero 
-        availableReal={snapshot.available_real}
-        safeMoney={snapshot.safe_money}
-        freeMoney={snapshot.free_money}
+        availableReal={snapshot.cash.total_balance}
+        safeMoney={'0'} // No longer in snapshot
+        freeMoney={snapshot.cashflow.net_cashflow}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CashflowSummary 
-          income={snapshot.total_income_current_month}
-          cashOutflow={snapshot.cash_consumption_outflow}
-          committedOutflow={snapshot.committed_outflow_current_month}
+          income={snapshot.cashflow.income}
+          cashOutflow={snapshot.cashflow.expenses}
+          committedOutflow={'0'} // Replaced logic
         />
         
         <DebtOverview 
-          creditCardDebt={snapshot.total_credit_card_debt}
-          creditCardRequiredPayment={snapshot.credit_cards_required_payment}
+          creditCardDebt={snapshot.debt.credit_card_total_debt}
+          creditCardRequiredPayment={snapshot.debt.billed_debt}
         />
         
         <GoalsPreview 
-          wealthAllocation={snapshot.wealth_allocation_current_month}
-          goalsRequired={snapshot.goals_required_this_period}
+          wealthAllocation={snapshot.goals.total_saved}
+          goalsRequired={snapshot.goals.total_target}
         />
         
         <ObligationsPreview 
-          pendingObligationsTotal={snapshot.pending_obligations_total}
+          pendingObligationsTotal={snapshot.obligations.pending_amount}
         />
+      </div>
+
+      <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray mt-2">
+        <div className="flex justify-between items-center mb-5">
+          <h3 className="text-base font-semibold text-graphite-blue">Actividad Reciente</h3>
+          <Link href="/app/history" className="text-sm font-medium text-sage-green hover:underline">
+            Ver historial
+          </Link>
+        </div>
+        {events.length === 0 ? (
+          <div className="text-center py-6 text-gray-400 text-sm">
+            Aún no hay actividad reciente.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {events.map((evt: any) => (
+              <div key={evt.id} className="flex justify-between items-center pb-3 border-b border-soft-gray last:border-0 last:pb-0">
+                <div>
+                  <p className="text-sm font-medium text-gray-800 capitalize">{evt.event_type.replace(/_/g, ' ')}</p>
+                  <p className="text-xs text-gray-500">{new Date(evt.occurred_at).toLocaleDateString()}</p>
+                </div>
+                <span className={`text-sm font-semibold ${evt.direction === 'in' ? 'text-sage-green' : 'text-gray-800'}`}>
+                  {evt.direction === 'in' ? '+' : '-'}${parseFloat(evt.amount).toLocaleString('es-CO')}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

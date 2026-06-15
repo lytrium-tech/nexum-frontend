@@ -54,6 +54,20 @@ export const api = {
     creditCards: (isServer = false) => 
       apiClient<unknown>('/api/v1/intelligence/credit-cards', { method: 'GET' }, isServer),
   },
+  ledger: {
+    events: (params?: Record<string, any>, isServer = false) => {
+      const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+      return apiClient<components['schemas']['LedgerEventsResponse']>(`/api/v1/ledger/events${qs}`, { method: 'GET' }, isServer);
+    },
+    summary: (params?: Record<string, any>, isServer = false) => {
+      const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+      return apiClient<components['schemas']['LedgerSummaryResponse']>(`/api/v1/ledger/summary${qs}`, { method: 'GET' }, isServer);
+    },
+    timeline: (params?: Record<string, any>, isServer = false) => {
+      const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+      return apiClient<components['schemas']['LedgerTimelineResponse']>(`/api/v1/ledger/timeline${qs}`, { method: 'GET' }, isServer);
+    }
+  },
   conversations: {
     message: (data: { message: string; channel?: string; external_message_id?: string | null }, isServer = false) =>
       apiClient<{
