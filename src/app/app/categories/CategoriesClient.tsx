@@ -42,6 +42,17 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
       return;
     }
 
+    const lowerName = name.trim().toLowerCase();
+    const existing = categories.find(c => c.type === type && c.name.toLowerCase() === lowerName);
+    if (existing) {
+      if (existing.is_active === false) {
+        setError('Ya existe una categoría inactiva con este nombre. Reactívala en lugar de crear otra.');
+      } else {
+        setError('Ya existe una categoría con este nombre.');
+      }
+      return;
+    }
+
     setIsSubmitting(true);
     const result = await createCategoryAction({ name: name.trim(), type });
     setIsSubmitting(false);
@@ -204,17 +215,40 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                   <>
                     <div className="flex items-center gap-3">
                       <div className={`w-2 h-2 rounded-full ${cat.is_active !== false ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                      <div>
+                      <div className="flex items-center gap-2">
                         <p className={`font-medium ${cat.is_active !== false ? 'text-slate-800' : 'text-slate-500 line-through'}`}>{cat.name}</p>
-                        <p className="text-xs text-slate-400 capitalize">{cat.type ? TYPE_LABELS[cat.type] || cat.type : 'General'}</p>
+                        {cat.is_active === false && (
+                          <span className="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-semibold">Inactiva</span>
+                        )}
+                        <p className="text-xs text-slate-400 capitalize hidden sm:block">{cat.type ? TYPE_LABELS[cat.type] || cat.type : 'General'}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => startEdit(cat)}
-                      className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
-                    >
-                      Editar
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {cat.is_active === false && (
+                        <button
+                          onClick={async () => {
+                            setIsSubmitting(true);
+                            const result = await updateCategoryAction(cat.id, { is_active: true });
+                            setIsSubmitting(false);
+                            if (result.success && result.result) {
+                              setCategories(categories.map(c => c.id === cat.id ? result.result! : c));
+                            } else {
+                              setError(result.error || 'Error al reactivar la categoría.');
+                            }
+                          }}
+                          disabled={isSubmitting}
+                          className="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+                        >
+                          Reactivar
+                        </button>
+                      )}
+                      <button
+                        onClick={() => startEdit(cat)}
+                        className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+                      >
+                        Editar
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
