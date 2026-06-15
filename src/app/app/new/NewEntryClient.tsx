@@ -35,6 +35,7 @@ export default function NewEntryClient({
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const activeAccounts = initialAccounts.filter(a => a.is_active !== false);
   const filteredCategories = initialCategories.filter(c => c.type === type || c.type === 'transfer');
@@ -42,6 +43,7 @@ export default function NewEntryClient({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setShowSuccess(false);
 
     if (activeAccounts.length === 0) {
       setError('Debes tener al menos una cuenta activa para registrar movimientos.');
@@ -72,7 +74,9 @@ export default function NewEntryClient({
     setIsSubmitting(false);
 
     if (result.success) {
-      router.push('/app/history');
+      setShowSuccess(true);
+      setAmount('');
+      setDescription('');
     } else {
       setError(result.error || 'Error al registrar el movimiento.');
     }
@@ -89,6 +93,35 @@ export default function NewEntryClient({
         >
           Ir a Billeteras
         </button>
+      </div>
+    );
+  }
+
+  if (showSuccess) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center shadow-sm">
+        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-medium text-slate-800 mb-2">¡Movimiento registrado!</h3>
+        <p className="text-slate-500 mb-8">El {type === 'income' ? 'ingreso' : 'gasto'} ha sido guardado exitosamente.</p>
+        
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => router.push('/app/history')}
+            className="px-6 py-2.5 rounded-xl font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            Ver historial
+          </button>
+          <button
+            onClick={() => setShowSuccess(false)}
+            className="px-6 py-2.5 rounded-xl font-medium bg-slate-800 text-white hover:bg-slate-700 transition-colors"
+          >
+            Registrar otro
+          </button>
+        </div>
       </div>
     );
   }
