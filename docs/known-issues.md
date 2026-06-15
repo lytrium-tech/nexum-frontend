@@ -15,4 +15,6 @@
     - `PATCH /api/v1/categories/{id}` debe soportar `is_active` true/false de forma confiable.
     - Backend debe prevenir duplicados por `user_id + type + normalized_name` incluso si una categoría está inactiva.
     - Hasta que eso exista, el frontend V1 no expone desactivación ni eliminación de categorías.
+  * **Snapshot Money Semantics Review**: Pendiente Backend/Product V1.1 definir `available_real`, `safe_money`, `free_money`. Confirmar si `free_money` puede ser mayor que `available_real`, cómo `goal_contribution` afecta `free_money`, cómo se calcula `goals_required_this_period`, y alinear `ask_free_money` del Chat con Financial Snapshot.
+  * **Goals Edition/Elimination**: La edición y desactivación/cierre de metas está pendiente según el contrato. Por ahora en V1 solo se soporta creación y aportes a metas.
 * **Chat Bug (ask_free_money)**: Se ha detectado un bug funcional o de integración en el Chat relacionado con la consulta de dinero libre (`ask_free_money`). Queda documentado para su posterior resolución en coordinación con el backend.

@@ -25,8 +25,11 @@ export default function GoalsPreview({ wealthAllocation, goalsRequired }: GoalsP
       ) : (
         <div className="space-y-5">
           <div>
-            <p className="text-xs text-gray-500 mb-1">Requerido este periodo</p>
+            <p className="text-xs text-gray-500 mb-1">Objetivo total de metas</p>
             <p className="text-xl font-semibold text-graphite-blue">{formatCurrency(goalsRequired)}</p>
+            <p className="text-[10px] text-gray-400 mt-1">
+              El requerido mensual se muestra dentro de cada meta con fecha.
+            </p>
           </div>
           
           <div className="bg-warm-white p-4 rounded-2xl">

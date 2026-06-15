@@ -160,14 +160,14 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-nx-graphite">Metas</h1>
-          <p className="text-nx-graphite/60 mt-1">
+          <h1 className="text-3xl font-semibold text-graphite-blue">Metas</h1>
+          <p className="text-graphite-blue/60 mt-1">
             Convierte tu dinero en objetivos claros.
           </p>
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="bg-nx-graphite text-white px-5 py-2.5 rounded-full font-medium shadow-sm hover:bg-nx-graphite/90 transition-all active:scale-95 flex items-center gap-2"
+          className="bg-graphite-blue text-white px-5 py-2.5 rounded-full font-medium shadow-sm hover:bg-graphite-blue/90 transition-all active:scale-95 flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           <span>Nueva meta</span>
@@ -176,17 +176,17 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
 
       {/* Goal List */}
       {activeGoals.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-nx-graphite/10 shadow-sm mt-8">
-          <div className="w-16 h-16 bg-nx-sage/20 rounded-full flex items-center justify-center mb-4">
-            <Target className="w-8 h-8 text-nx-sage" />
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-graphite-blue/10 shadow-sm mt-8">
+          <div className="w-16 h-16 bg-sage-green/20 rounded-full flex items-center justify-center mb-4">
+            <Target className="w-8 h-8 text-sage-green" />
           </div>
-          <h3 className="text-xl font-medium text-nx-graphite mb-2">Aún no tienes metas</h3>
-          <p className="text-nx-graphite/60 max-w-sm mb-6">
+          <h3 className="text-xl font-medium text-graphite-blue mb-2">Aún no tienes metas</h3>
+          <p className="text-graphite-blue/60 max-w-sm mb-6">
             Crea una meta para empezar a separar dinero hacia algo importante.
           </p>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="text-nx-sage font-medium hover:text-nx-sage/80 flex items-center gap-1 transition-colors"
+            className="text-sage-green font-medium hover:text-sage-green/80 flex items-center gap-1 transition-colors"
           >
             <span>Crear mi primera meta</span>
             <ArrowRight className="w-4 h-4" />
@@ -209,7 +209,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
             return (
               <div 
                 key={goal.id} 
-                className="bg-white rounded-3xl p-6 border border-nx-graphite/10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col justify-between"
+                className="bg-white rounded-3xl p-6 border border-graphite-blue/10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col justify-between"
               >
                 {/* Decoration */}
                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
@@ -219,15 +219,20 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-2xl flex items-center justify-center shrink-0 ${isCompleted ? 'bg-green-100 text-green-600' : 'bg-nx-champagne/30 text-nx-graphite'}`}>
+                      <div className={`p-2.5 rounded-2xl flex items-center justify-center shrink-0 ${isCompleted ? 'bg-green-100 text-green-600' : 'bg-champagne-gold/30 text-graphite-blue'}`}>
                         {isCompleted ? <Target className="w-6 h-6" /> : <TrendingUp className="w-6 h-6" />}
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-nx-graphite truncate max-w-[200px]">{goal.name}</h3>
-                        {goal.target_date && (
-                          <div className="flex items-center gap-1.5 text-xs text-nx-graphite/50 mt-0.5">
+                        <h3 className="text-lg font-semibold text-graphite-blue truncate max-w-[200px]">{goal.name}</h3>
+                        {goal.target_date ? (
+                          <div className="flex items-center gap-1.5 text-xs text-graphite-blue/50 mt-0.5">
                             <Calendar className="w-3.5 h-3.5" />
                             <span>{new Date(goal.target_date).toLocaleDateString()}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs text-graphite-blue/50 mt-0.5">
+                            <Calendar className="w-3.5 h-3.5 opacity-50" />
+                            <span>Sin fecha objetivo</span>
                           </div>
                         )}
                       </div>
@@ -236,51 +241,53 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
 
                   <div className="mt-6 mb-2 flex justify-between items-end">
                     <div>
-                      <p className="text-sm font-medium text-nx-graphite/60 mb-1">Acumulado</p>
-                      <p className="text-2xl font-semibold text-nx-graphite flex items-baseline gap-1">
+                      <p className="text-sm font-medium text-graphite-blue/60 mb-1">Acumulado</p>
+                      <p className="text-2xl font-semibold text-graphite-blue flex items-baseline gap-1">
                         {formatCurrency(currentAmount, 'COP')}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-nx-graphite/50 mb-1">Objetivo</p>
-                      <p className="text-sm font-medium text-nx-graphite">
+                      <p className="text-sm font-medium text-graphite-blue/50 mb-1">Objetivo</p>
+                      <p className="text-sm font-medium text-graphite-blue">
                         {formatCurrency(targetAmount, 'COP')}
                       </p>
                     </div>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-nx-graphite/5 rounded-full h-2.5 mt-4 overflow-hidden relative">
+                  <div className="w-full bg-graphite-blue/5 rounded-full h-2.5 mt-4 overflow-hidden relative">
                     <div 
-                      className={`h-full rounded-full transition-all duration-1000 ease-out ${isCompleted ? 'bg-green-500' : 'bg-nx-sage'}`}
+                      className={`h-full rounded-full transition-all duration-1000 ease-out ${isCompleted ? 'bg-green-500' : 'bg-sage-green'}`}
                       style={{ width: `${displayProgress}%` }}
                     />
                   </div>
                   <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs font-medium text-nx-graphite/50">
+                    <p className="text-xs font-medium text-graphite-blue/50">
                       {displayProgress.toFixed(1)}% completado
                     </p>
-                    {goal.monthly_required && !isCompleted && (
-                      <p className="text-xs text-nx-graphite/40">
+                    {!goal.target_date && !isCompleted ? (
+                      <p className="text-xs text-graphite-blue/40 font-medium">Aporte flexible</p>
+                    ) : goal.monthly_required && !isCompleted ? (
+                      <p className="text-xs text-graphite-blue/40">
                         Req. mensual: {formatCurrency(parseFloat(goal.monthly_required), 'COP')}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 
-                <div className="mt-6 pt-5 border-t border-nx-graphite/5 flex gap-3">
+                <div className="mt-6 pt-5 border-t border-graphite-blue/5 flex gap-3">
                   <button
                     onClick={() => openContributeModal(goal)}
                     disabled={isCompleted}
                     className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2
                       ${isCompleted 
-                        ? 'bg-nx-graphite/5 text-nx-graphite/40 cursor-not-allowed' 
-                        : 'bg-nx-graphite/5 text-nx-graphite hover:bg-nx-graphite hover:text-white'}`}
+                        ? 'bg-graphite-blue/5 text-graphite-blue/40 cursor-not-allowed' 
+                        : 'bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white'}`}
                   >
                     <PiggyBank className="w-4 h-4" />
                     {isCompleted ? 'Completada' : 'Aportar'}
                   </button>
-                  <button className="p-2 rounded-xl bg-white border border-nx-graphite/10 text-nx-graphite/60 hover:text-nx-graphite hover:bg-nx-graphite/5 transition-colors">
+                  <button className="p-2 rounded-xl bg-white border border-graphite-blue/10 text-graphite-blue/60 hover:text-graphite-blue hover:bg-graphite-blue/5 transition-colors">
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -292,16 +299,16 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
 
       {/* Create Goal Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-nx-graphite/20 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-graphite-blue/20 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-nx-graphite flex items-center gap-2">
-                <Target className="w-5 h-5 text-nx-sage" />
+              <h2 className="text-xl font-semibold text-graphite-blue flex items-center gap-2">
+                <Target className="w-5 h-5 text-sage-green" />
                 Nueva meta
               </h2>
               <button 
                 onClick={closeModals}
-                className="text-nx-graphite/40 hover:text-nx-graphite transition-colors p-1"
+                className="text-graphite-blue/40 hover:text-graphite-blue transition-colors p-1"
                 disabled={isSubmitting}
               >
                 <X className="w-5 h-5" />
@@ -324,7 +331,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-nx-graphite/70 mb-1.5" htmlFor="name">
+                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="name">
                   ¿Qué quieres lograr? *
                 </label>
                 <input
@@ -333,17 +340,17 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                   type="text"
                   required
                   placeholder="Ej: Viaje a Japón, MacBook Pro"
-                  className="w-full px-4 py-3 rounded-xl bg-nx-graphite/5 border-transparent focus:border-nx-graphite focus:bg-white focus:ring-0 transition-colors placeholder:text-nx-graphite/30 outline-none"
+                  className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
                   disabled={isSubmitting || !!successMessage}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-nx-graphite/70 mb-1.5" htmlFor="targetAmount">
+                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="targetAmount">
                   Monto objetivo *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-nx-graphite/40 font-medium">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-graphite-blue/40 font-medium">
                     $
                   </span>
                   <input
@@ -354,14 +361,14 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                     step="0.01"
                     required
                     placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-nx-graphite/5 border-transparent focus:border-nx-graphite focus:bg-white focus:ring-0 transition-colors placeholder:text-nx-graphite/30 outline-none"
+                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
                     disabled={isSubmitting || !!successMessage}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-nx-graphite/70 mb-1.5" htmlFor="targetDate">
+                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="targetDate">
                   Fecha límite (opcional)
                 </label>
                 <input
@@ -369,7 +376,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                   name="targetDate"
                   type="date"
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 rounded-xl bg-nx-graphite/5 border-transparent focus:border-nx-graphite focus:bg-white focus:ring-0 transition-colors text-nx-graphite outline-none"
+                  className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none"
                   disabled={isSubmitting || !!successMessage}
                 />
               </div>
@@ -378,7 +385,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 <button
                   type="button"
                   onClick={closeModals}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium text-nx-graphite/70 hover:bg-nx-graphite/5 transition-colors"
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-graphite-blue/70 hover:bg-graphite-blue/5 transition-colors"
                   disabled={isSubmitting || !!successMessage}
                 >
                   Cancelar
@@ -386,7 +393,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 <button
                   type="submit"
                   disabled={isSubmitting || !!successMessage}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium bg-nx-graphite text-white hover:bg-nx-graphite/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                  className="flex-1 py-3 px-4 rounded-xl font-medium bg-graphite-blue text-white hover:bg-graphite-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                 >
                   {isSubmitting ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -400,28 +407,28 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
 
       {/* Contribute Goal Modal */}
       {isContributeModalOpen && selectedGoal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-nx-graphite/20 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-graphite-blue/20 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-nx-graphite flex items-center gap-2">
-                <PiggyBank className="w-5 h-5 text-nx-sage" />
+              <h2 className="text-xl font-semibold text-graphite-blue flex items-center gap-2">
+                <PiggyBank className="w-5 h-5 text-sage-green" />
                 Aportar a meta
               </h2>
               <button 
                 onClick={closeModals}
-                className="text-nx-graphite/40 hover:text-nx-graphite transition-colors p-1"
+                className="text-graphite-blue/40 hover:text-graphite-blue transition-colors p-1"
                 disabled={isSubmitting}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="bg-nx-graphite/5 rounded-2xl p-4 mb-6">
-              <p className="text-sm text-nx-graphite/60">Meta seleccionada</p>
-              <p className="font-semibold text-nx-graphite mt-0.5">{selectedGoal.name}</p>
+            <div className="bg-graphite-blue/5 rounded-2xl p-4 mb-6">
+              <p className="text-sm text-graphite-blue/60">Meta seleccionada</p>
+              <p className="font-semibold text-graphite-blue mt-0.5">{selectedGoal.name}</p>
               <div className="flex justify-between items-center mt-2 text-sm">
-                <span className="text-nx-graphite/50">Progreso actual</span>
-                <span className="font-medium text-nx-graphite">{formatCurrency(parseFloat(selectedGoal.current_amount), 'COP')}</span>
+                <span className="text-graphite-blue/50">Progreso actual</span>
+                <span className="font-medium text-graphite-blue">{formatCurrency(parseFloat(selectedGoal.current_amount), 'COP')}</span>
               </div>
             </div>
 
@@ -441,14 +448,14 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
 
             <form onSubmit={handleContributeSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-nx-graphite/70 mb-1.5" htmlFor="accountId">
+                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="accountId">
                   Cuenta origen *
                 </label>
                 <select
                   id="accountId"
                   name="accountId"
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-nx-graphite/5 border-transparent focus:border-nx-graphite focus:bg-white focus:ring-0 transition-colors text-nx-graphite outline-none appearance-none"
+                  className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
                   disabled={isSubmitting || !!successMessage}
                 >
                   <option value="">Selecciona una cuenta</option>
@@ -461,11 +468,11 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-nx-graphite/70 mb-1.5" htmlFor="amount">
+                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="amount">
                   Monto a aportar *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-nx-graphite/40 font-medium">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-graphite-blue/40 font-medium">
                     $
                   </span>
                   <input
@@ -476,7 +483,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                     step="0.01"
                     required
                     placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-nx-graphite/5 border-transparent focus:border-nx-graphite focus:bg-white focus:ring-0 transition-colors placeholder:text-nx-graphite/30 outline-none"
+                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
                     disabled={isSubmitting || !!successMessage}
                   />
                 </div>
@@ -486,7 +493,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 <button
                   type="button"
                   onClick={closeModals}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium text-nx-graphite/70 hover:bg-nx-graphite/5 transition-colors"
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-graphite-blue/70 hover:bg-graphite-blue/5 transition-colors"
                   disabled={isSubmitting || !!successMessage}
                 >
                   Cancelar
@@ -494,7 +501,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 <button
                   type="submit"
                   disabled={isSubmitting || !!successMessage}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium bg-nx-graphite text-white hover:bg-nx-graphite/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                  className="flex-1 py-3 px-4 rounded-xl font-medium bg-graphite-blue text-white hover:bg-graphite-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                 >
                   {isSubmitting ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
