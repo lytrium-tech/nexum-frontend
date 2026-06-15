@@ -58,7 +58,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
   let hasError = false;
 
   try {
-    const params: any = { limit: 50 };
+    const params: Record<string, string | number> = { limit: 50 };
     if (filterType) params.event_type = filterType;
     eventsData = await api.ledger.events(params, true);
   } catch (error) {
@@ -115,7 +115,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
       ) : (
         <div className="bg-white rounded-3xl shadow-sm border border-soft-gray overflow-hidden">
           <div className="divide-y divide-soft-gray">
-            {events.map((evt: any) => (
+            {events.map((evt: components['schemas']['LedgerEventDetail']) => (
               <div key={evt.id} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors flex items-center gap-4">
                 {getEventIcon(evt.event_type)}
                 <div className="flex-1 min-w-0">

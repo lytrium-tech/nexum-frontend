@@ -30,7 +30,7 @@ export default async function AppHome() {
   }
 
   let snapshot = null;
-  let recentEvents: any = null;
+  let recentEvents: components['schemas']['LedgerEventsResponse'] | null = null;
   let hasError = false;
   let isForbidden = false;
 
@@ -168,7 +168,7 @@ export default async function AppHome() {
           </div>
         ) : (
           <div className="space-y-4">
-            {events.map((evt: any) => (
+            {events.map((evt: components['schemas']['LedgerEventDetail']) => (
               <div key={evt.id} className="flex justify-between items-center pb-3 border-b border-soft-gray last:border-0 last:pb-0">
                 <div>
                   <p className="text-sm font-medium text-gray-800 capitalize">{evt.event_type.replace(/_/g, ' ')}</p>
