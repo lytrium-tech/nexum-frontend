@@ -25,7 +25,6 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
   const [name, setName] = useState('');
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [editName, setEditName] = useState('');
-  const [editActive, setEditActive] = useState(true);
   
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,11 +44,7 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
     const lowerName = name.trim().toLowerCase();
     const existing = categories.find(c => c.type === type && c.name.toLowerCase() === lowerName);
     if (existing) {
-      if (existing.is_active === false) {
-        setError('Ya existe una categoría inactiva con este nombre. Reactívala en lugar de crear otra.');
-      } else {
-        setError('Ya existe una categoría con este nombre.');
-      }
+      setError('Ya existe una categoría con este nombre.');
       return;
     }
 
@@ -75,11 +70,8 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
     }
 
     setIsSubmitting(true);
-    console.log('[DEBUG category update] category_id', id);
-    const payload = { name: editName.trim(), is_active: editActive };
-    console.log('[DEBUG category update] payload enviado', payload);
+    const payload = { name: editName.trim() };
     const result = await updateCategoryAction(id, payload);
-    console.log('[DEBUG category update] status/error recibido', result);
     setIsSubmitting(false);
 
     if (result.success && result.result) {
@@ -97,7 +89,6 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
   const startEdit = (cat: CategoryRead) => {
     setEditingId(cat.id);
     setEditName(cat.name);
-    setEditActive(cat.is_active !== false); // default true if undefined
     setError(null);
   };
 
@@ -192,16 +183,6 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                       className="flex-1 px-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
                       disabled={isSubmitting}
                     />
-                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={editActive}
-                        onChange={e => setEditActive(e.target.checked)}
-                        disabled={isSubmitting}
-                        className="rounded text-slate-800 focus:ring-slate-800"
-                      />
-                      Activa
-                    </label>
                     <div className="flex gap-2 mt-2 sm:mt-0 w-full sm:w-auto justify-end">
                       <button
                         onClick={() => handleUpdate(cat.id)}
@@ -222,38 +203,13 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                 ) : (
                   <>
                     <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${cat.is_active !== false ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
                       <div className="flex items-center gap-2">
-                        <p className={`font-medium ${cat.is_active !== false ? 'text-slate-800' : 'text-slate-500 line-through'}`}>{cat.name}</p>
-                        {cat.is_active === false && (
-                          <span className="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-semibold">Inactiva</span>
-                        )}
+                        <p className="font-medium text-slate-800">{cat.name}</p>
                         <p className="text-xs text-slate-400 capitalize hidden sm:block">{cat.type ? TYPE_LABELS[cat.type] || cat.type : 'General'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {cat.is_active === false && (
-                        <button
-                          onClick={async () => {
-                            setIsSubmitting(true);
-                            console.log('[DEBUG category update] category_id', cat.id);
-                            const payload = { is_active: true };
-                            console.log('[DEBUG category update] payload enviado', payload);
-                            const result = await updateCategoryAction(cat.id, payload);
-                            console.log('[DEBUG category update] status/error recibido', result);
-                            setIsSubmitting(false);
-                            if (result.success && result.result) {
-                              setCategories(categories.map(c => c.id === cat.id ? result.result! : c));
-                            } else {
-                              setError(typeof result.error === 'string' ? result.error : JSON.stringify(result.error) || 'Error al reactivar la categoría.');
-                            }
-                          }}
-                          disabled={isSubmitting}
-                          className="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
-                        >
-                          Reactivar
-                        </button>
-                      )}
                       <button
                         onClick={() => startEdit(cat)}
                         className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"

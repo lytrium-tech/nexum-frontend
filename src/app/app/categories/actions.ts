@@ -37,7 +37,6 @@ export async function updateCategoryAction(id: string, data: components['schemas
     console.error('Update category error:', err);
     let message = 'Ocurrió un error al actualizar la categoría. Intenta nuevamente.';
     const apiError = err as { status?: number; message?: string; data?: unknown };
-    console.error('Update category apiError details:', { status: apiError?.status, message: apiError?.message, data: apiError?.data });
     
     if (apiError?.status === 409) {
       message = 'Ya existe una categoría con este nombre.';

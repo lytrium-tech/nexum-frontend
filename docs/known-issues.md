@@ -10,5 +10,9 @@
   * `opening_balance` / `balance_adjustment` are pending Backend V1.1 to avoid faking opening balances as `income`.
   * `DELETE /api/v1/categories/{category_id}` existe en backend, pero no se expone en UI V1 por seguridad contable. La eliminación definitiva de categorías queda reservada para una futura experiencia admin o para una decisión backend/producto más segura. En UI usuario final solo se permite desactivar.
   * **Categorías del Sistema**: Actualmente el backend solo expone `sin_clasificar` como categoría global del sistema. Las categorías base de usuario se manejan como categorías personalizadas creadas durante onboarding. Queda pendiente decidir en Backend/Product V1.1 si debe existir un catálogo global base más amplio.
-  * **Categorías Inactivas y Duplicados**: El endpoint `GET /api/v1/categories` actualmente no expone ningún parámetro (ej. `include_inactive=true`) en OpenAPI para recuperar categorías inactivas. Esto provoca que las categorías desactivadas desaparezcan de la UI tras recargar, impidiendo su reactivación persistente. Como el frontend no recibe las inactivas, tampoco puede prevenir localmente la creación de duplicados (crear una activa cuando ya existía inactiva). Se requiere soporte backend V1.1 para traer inactivas.
+  * **Categorías Inactivas y Duplicados**: Categories inactive management is blocked pending Backend V1.1:
+    - `GET /api/v1/categories` debe soportar `include_inactive=true` o endpoint equivalente.
+    - `PATCH /api/v1/categories/{id}` debe soportar `is_active` true/false de forma confiable.
+    - Backend debe prevenir duplicados por `user_id + type + normalized_name` incluso si una categoría está inactiva.
+    - Hasta que eso exista, el frontend V1 no expone desactivación ni eliminación de categorías.
 * **Chat Bug (ask_free_money)**: Se ha detectado un bug funcional o de integración en el Chat relacionado con la consulta de dinero libre (`ask_free_money`). Queda documentado para su posterior resolución en coordinación con el backend.
