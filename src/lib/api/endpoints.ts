@@ -17,6 +17,11 @@ type GoalCreate = components['schemas']['GoalCreate'];
 type GoalUpdate = components['schemas']['GoalUpdate'];
 type GoalContributionCreate = components['schemas']['GoalContributionCreate'];
 type GoalContributionResult = components['schemas']['GoalContributionResult'];
+type ObligationRead = components['schemas']['ObligationRead'];
+type ObligationCreate = components['schemas']['ObligationCreate'];
+type ObligationUpdate = components['schemas']['ObligationUpdate'];
+type ObligationPaymentCreate = components['schemas']['ObligationPaymentCreate'];
+type ObligationPaymentResult = components['schemas']['ObligationPaymentResult'];
 
 export const api = {
   cash: {
@@ -97,6 +102,28 @@ export const api = {
       }, isServer),
     contribute: (id: string, data: GoalContributionCreate, idempotencyKey: string, isServer = false) =>
       apiClient<GoalContributionResult>(`/api/v1/goals/${id}/contributions`, {
+        method: 'POST',
+        headers: {
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(data),
+      }, isServer),
+  },
+  obligations: {
+    list: (isServer = false) =>
+      apiClient<ObligationRead[]>('/api/v1/obligations', { method: 'GET' }, isServer),
+    create: (data: ObligationCreate, isServer = false) =>
+      apiClient<ObligationRead>('/api/v1/obligations', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }, isServer),
+    update: (id: string, data: ObligationUpdate, isServer = false) =>
+      apiClient<ObligationRead>(`/api/v1/obligations/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }, isServer),
+    pay: (id: string, data: ObligationPaymentCreate, idempotencyKey: string, isServer = false) =>
+      apiClient<ObligationPaymentResult>(`/api/v1/obligations/${id}/payments`, {
         method: 'POST',
         headers: {
           'Idempotency-Key': idempotencyKey,
