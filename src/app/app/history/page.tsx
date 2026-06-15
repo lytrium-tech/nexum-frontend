@@ -37,7 +37,7 @@ const getEventIcon = (type: string) => {
   }
 };
 
-export default async function HistoryPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default async function HistoryPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const token = await getSessionToken(true);
   
   if (!token) {
@@ -52,8 +52,11 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
     );
   }
 
+  const resolvedSearchParams = await searchParams;
+
   // MVP Basic filters
-  const filterType = typeof searchParams.event_type === 'string' ? searchParams.event_type : null;
+  const filterType = typeof resolvedSearchParams.event_type === 'string' ? resolvedSearchParams.event_type : null;
+  console.log('[DEBUG /app/history] URL event_type:', filterType);
   
   let eventsData = null;
   let hasError = false;
@@ -61,6 +64,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
   try {
     const params: Record<string, string | number> = { limit: 50 };
     if (filterType) params.event_type = filterType;
+    console.log('[DEBUG /app/history] Request params to api.ledger.events:', params);
     eventsData = await api.ledger.events(params, true);
   } catch (error) {
     console.error('Error fetching ledger events:', error);
@@ -78,6 +82,13 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
 
   const events = eventsData?.items || [];
   const isEmpty = events.length === 0;
+
+  console.log('[DEBUG /app/history] First 3 events:', events.slice(0, 3).map((e: any) => ({
+    id: e.id,
+    event_type: e.event_type,
+    direction: e.direction,
+    amount: e.amount
+  })));
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full pb-10">

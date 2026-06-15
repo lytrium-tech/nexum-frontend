@@ -56,15 +56,21 @@ export const api = {
   },
   ledger: {
     events: (params?: Record<string, string | number | boolean>, isServer = false) => {
-      const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+      const qsObj: Record<string, string> = {};
+      if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qsObj[k] = String(v); });
+      const qs = Object.keys(qsObj).length > 0 ? '?' + new URLSearchParams(qsObj).toString() : '';
       return apiClient<components['schemas']['LedgerEventsResponse']>(`/api/v1/ledger/events${qs}`, { method: 'GET' }, isServer);
     },
     summary: (params?: Record<string, string | number | boolean>, isServer = false) => {
-      const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+      const qsObj: Record<string, string> = {};
+      if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qsObj[k] = String(v); });
+      const qs = Object.keys(qsObj).length > 0 ? '?' + new URLSearchParams(qsObj).toString() : '';
       return apiClient<components['schemas']['LedgerSummaryResponse']>(`/api/v1/ledger/summary${qs}`, { method: 'GET' }, isServer);
     },
     timeline: (params?: Record<string, string | number | boolean>, isServer = false) => {
-      const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+      const qsObj: Record<string, string> = {};
+      if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qsObj[k] = String(v); });
+      const qs = Object.keys(qsObj).length > 0 ? '?' + new URLSearchParams(qsObj).toString() : '';
       return apiClient<components['schemas']['LedgerTimelineResponse']>(`/api/v1/ledger/timeline${qs}`, { method: 'GET' }, isServer);
     }
   },
