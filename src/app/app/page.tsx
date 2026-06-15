@@ -172,11 +172,22 @@ export default async function AppHome() {
             {events.map((evt: components['schemas']['LedgerEventDetail']) => (
               <div key={evt.id} className="flex justify-between items-center pb-3 border-b border-soft-gray last:border-0 last:pb-0">
                 <div>
-                  <p className="text-sm font-medium text-gray-800 capitalize">{evt.event_type.replace(/_/g, ' ')}</p>
+                  <p className="text-sm font-medium text-gray-800 capitalize">
+                    {{
+                      income: 'Ingreso',
+                      expense: 'Gasto',
+                      transfer_in: 'Transferencia recibida',
+                      transfer_out: 'Transferencia enviada',
+                      goal_contribution: 'Aporte a meta',
+                      obligation_payment: 'Pago de obligación',
+                      credit_card_purchase: 'Compra con tarjeta',
+                      credit_card_payment: 'Pago de tarjeta'
+                    }[evt.event_type] || evt.event_type.replace(/_/g, ' ')}
+                  </p>
                   <p className="text-xs text-gray-500">{new Date(evt.occurred_at).toLocaleDateString()}</p>
                 </div>
                 <span className={`text-sm font-semibold ${evt.direction === 'in' ? 'text-sage-green' : 'text-gray-800'}`}>
-                  {evt.direction === 'in' ? '+' : '-'}${parseFloat(evt.amount).toLocaleString('es-CO')}
+                  {evt.direction === 'in' ? '+' : '-'}${Math.abs(parseFloat(evt.amount)).toLocaleString('es-CO')}
                 </span>
               </div>
             ))}

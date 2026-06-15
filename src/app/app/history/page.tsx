@@ -53,7 +53,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
   }
 
   // MVP Basic filters
-  const filterType = typeof searchParams.type === 'string' ? searchParams.type : null;
+  const filterType = typeof searchParams.event_type === 'string' ? searchParams.event_type : null;
   
   let eventsData = null;
   let hasError = false;
@@ -91,10 +91,10 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
           <Link href="/app/history" className={`px-4 py-2 text-sm rounded-full ${!filterType ? 'bg-graphite-blue text-white' : 'bg-gray-100 text-gray-600'}`}>
             Todos
           </Link>
-          <Link href="/app/history?type=income" className={`px-4 py-2 text-sm rounded-full ${filterType === 'income' ? 'bg-sage-green text-white' : 'bg-gray-100 text-gray-600'}`}>
+          <Link href="/app/history?event_type=income" className={`px-4 py-2 text-sm rounded-full ${filterType === 'income' ? 'bg-sage-green text-white' : 'bg-gray-100 text-gray-600'}`}>
             Ingresos
           </Link>
-          <Link href="/app/history?type=expense" className={`px-4 py-2 text-sm rounded-full ${filterType === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+          <Link href="/app/history?event_type=expense" className={`px-4 py-2 text-sm rounded-full ${filterType === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
             Gastos
           </Link>
         </div>
@@ -121,7 +121,16 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
                 {getEventIcon(evt.event_type)}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate capitalize">
-                    {evt.description || evt.event_type.replace(/_/g, ' ')}
+                    {evt.description || {
+                      income: 'Ingreso',
+                      expense: 'Gasto',
+                      transfer_in: 'Transferencia recibida',
+                      transfer_out: 'Transferencia enviada',
+                      goal_contribution: 'Aporte a meta',
+                      obligation_payment: 'Pago de obligación',
+                      credit_card_purchase: 'Compra con tarjeta',
+                      credit_card_payment: 'Pago de tarjeta'
+                    }[evt.event_type] || evt.event_type.replace(/_/g, ' ')}
                   </p>
                   <p className="text-xs text-gray-500">
                     {formatDate(evt.occurred_at)}
@@ -131,7 +140,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: { [k
                 </div>
                 <div className="text-right">
                   <p className={`text-base font-semibold ${evt.direction === 'in' ? 'text-sage-green' : 'text-gray-900'}`}>
-                    {evt.direction === 'in' ? '+' : '-'}{formatCurrency(evt.amount)}
+                    {evt.direction === 'in' ? '+' : '-'}{formatCurrency(Math.abs(parseFloat(evt.amount)))}
                   </p>
                   <p className="text-[10px] text-gray-400 uppercase">{evt.currency || 'COP'}</p>
                 </div>
