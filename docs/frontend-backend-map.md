@@ -15,5 +15,7 @@ Esta tabla correlaciona la UI o feature en el frontend con los endpoints autoriz
 
 ## Notas
 - Los endpoints de Ledger mencionados en algunos documentos de backend (Fase 6) han sido sincronizados exitosamente desde el `openapi.json` del backend local, exponiendo eventos, resumen y timeline.
+- A diferencia de otros flujos, en `Accounts` y `Cash Entry` el `idempotency-key` se autogenera en el frontend (`crypto.randomUUID()`) como header.
+- El endpoint `DELETE /api/v1/categories/{category_id}` existe en el backend y está envuelto en `src/lib/api/endpoints.ts`, pero **no se expone en la UI V1** por seguridad contable. La eliminación definitiva de categorías queda reservada para una futura experiencia admin o para una decisión backend/producto más segura. En UI usuario final solo se permite desactivar (`is_active: false`).
 - Por políticas estrictas, el frontend **no inventará endpoints ni DTOs** para estos servicios hasta que se formalicen y publiquen en el archivo `openapi.json` oficial.
 - **Opening Balance / Saldo Inicial**: Backend V1.1 pendiente por exponer operaciones como `opening_balance` o `balance_adjustment` en el ledger, para evitar que el frontend inyecte saldos iniciales como un `income` falso, lo cual contaminaría los snapshots. No se pedirá saldo inicial en UI hasta entonces.

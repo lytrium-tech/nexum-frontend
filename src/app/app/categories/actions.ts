@@ -50,19 +50,4 @@ export async function updateCategoryAction(id: string, data: components['schemas
   }
 }
 
-export async function deleteCategoryAction(id: string) {
-  try {
-    await api.categories.delete(id, true);
-    revalidatePath('/app/categories');
-    revalidatePath('/app/new');
-    return { success: true };
-  } catch (err: unknown) {
-    console.error('Delete category error:', err);
-    let message = 'Ocurrió un error al eliminar la categoría. Intenta nuevamente.';
-    const apiError = err as { message?: string };
-    if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado') {
-      message = apiError.message;
-    }
-    return { success: false, error: message };
-  }
-}
+

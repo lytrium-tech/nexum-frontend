@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createCategoryAction, updateCategoryAction, deleteCategoryAction } from './actions';
+import { createCategoryAction, updateCategoryAction } from './actions';
 
 type CategoryRead = components['schemas']['CategoryRead'];
 
@@ -197,26 +197,6 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                         className="text-xs font-medium text-slate-500 hover:bg-slate-100 px-3 py-1.5 rounded-lg"
                       >
                         Cancelar
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (confirm('¿Estás seguro de que quieres eliminar esta categoría? Esta acción no se puede deshacer.')) {
-                            setError(null);
-                            setIsSubmitting(true);
-                            const result = await deleteCategoryAction(cat.id);
-                            setIsSubmitting(false);
-                            if (result.success) {
-                              setCategories(categories.filter(c => c.id !== cat.id));
-                              setEditingId(null);
-                            } else {
-                              setError(result.error || 'Error al eliminar la categoría.');
-                            }
-                          }
-                        }}
-                        disabled={isSubmitting}
-                        className="text-xs font-medium bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1.5 rounded-lg ml-2"
-                      >
-                        Eliminar
                       </button>
                     </div>
                   </div>
