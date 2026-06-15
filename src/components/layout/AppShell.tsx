@@ -13,6 +13,7 @@ export default function AppShell({ children, userName }: { children: React.React
     { name: 'Historial', href: '/app/history', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
     { name: 'Nuevo', href: '/app/new', icon: 'M12 4v16m8-8H4' },
     { name: 'Billeteras', href: '/app/accounts', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
+    { name: 'Categorías', href: '/app/categories', icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z' },
     { name: 'Chat', href: '/app/chat', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
   ];
 
@@ -89,7 +90,7 @@ export default function AppShell({ children, userName }: { children: React.React
 
         {/* Mobile Bottom Navigation */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-soft-gray flex justify-around p-3 z-50">
-          {navItems.map((item) => {
+          {navItems.filter(item => item.name !== 'Categorías').map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link

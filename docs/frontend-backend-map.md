@@ -11,6 +11,7 @@ Esta tabla correlaciona la UI o feature en el frontend con los endpoints autoriz
 | **Actividad Reciente / Ledger**| `/app/history` | `GET /api/v1/ledger/events` | Estable |
 | **Accounts / Billeteras** | `/app/accounts` | `GET /api/v1/accounts`, `POST /api/v1/accounts`, `GET /api/v1/accounts/summary` | Estable |
 | **Cash Entry (Ingreso/Gasto)** | `/app/new` | `POST /api/v1/cash/income`, `POST /api/v1/cash/expense` | Estable |
+| **Categorías** | `/app/categories` | `GET /api/v1/categories`, `POST /api/v1/categories`, `PATCH /api/v1/categories/{id}`, `DELETE /api/v1/categories/{id}` | Estable |
 
 ## Notas
 - Los endpoints de Ledger mencionados en algunos documentos de backend (Fase 6) han sido sincronizados exitosamente desde el `openapi.json` del backend local, exponiendo eventos, resumen y timeline.

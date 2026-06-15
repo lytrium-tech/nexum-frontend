@@ -69,6 +69,13 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }, isServer),
+    update: (id: string, data: components['schemas']['CategoryUpdate'], isServer = false) =>
+      apiClient<CategoryRead>(`/api/v1/categories/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }, isServer),
+    delete: (id: string, isServer = false) =>
+      apiClient<unknown>(`/api/v1/categories/${id}`, { method: 'DELETE' }, isServer),
   },
   intelligence: {
     snapshot: (isServer = false) => 
