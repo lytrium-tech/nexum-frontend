@@ -12,6 +12,14 @@
 - UI mínima de creación de cuenta bajo `AccountCreate` DTO (limitado a Name, Type y Currency).
 - Constante temporal `TEMPORARY_ALPHA_CATEGORY_FALLBACK` para categorías del Alpha Privado.
 
+## [Unreleased] - Fase 10 (Goals)
+### Added
+- Pantalla `/app/goals` para visualizar y administrar metas financieras.
+- Flujo de creación de metas alineado con el contrato `GoalCreate`.
+- Flujo de aportes a metas asociado a cuentas de origen (reduciendo balance real) vía `GoalContributionCreate`.
+- Wrappers del cliente API en `src/lib/api/endpoints.ts` para los endpoints `/api/v1/goals`.
+- Exclusión de "Metas" en la barra de navegación móvil (limitada a Desktop Sidebar) para preservar espacio.
+
 ## [Unreleased] - Fase 3
 ### Added
 - Refactorización de flujo Bootstrap: se ejecuta de forma paralela e idempotente asegurando JWT previo.
