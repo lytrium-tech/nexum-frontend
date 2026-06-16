@@ -19,11 +19,8 @@ export async function createCreditCardAction(data: components['schemas']['Credit
       message = 'Ya existe una tarjeta con este nombre o características.';
     } else if (apiError?.status === 422) {
       message = 'Los datos ingresados no son válidos.';
-      if (apiError.message && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
-        message = apiError.message;
-      }
-    } else if (apiError?.message && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
-      message = apiError.message;
+    } else if (apiError?.status === 400 || apiError?.status === 403 || apiError?.status === 500) {
+      message = 'No pudimos registrar esta operación. Intenta nuevamente.';
     }
     
     return { success: false, error: message };
@@ -43,18 +40,23 @@ export async function purchaseCreditCardAction(cardId: string, data: components[
     
     const apiError = err as { status?: number; message?: string };
     if (apiError?.status === 422) {
-      message = 'Los datos ingresados no son válidos.';
-    } else if (apiError?.status === 400 || apiError?.status === 403) {
+      if (apiError.message && typeof apiError.message === 'string' && apiError.message.toLowerCase().includes('greater than 0')) {
+        message = 'El monto debe ser mayor a $0.';
+      } else {
+        message = 'Los datos ingresados no son válidos.';
+      }
+    } else if (apiError?.status === 400 || apiError?.status === 403 || apiError?.status === 500) {
+       message = 'No pudimos registrar esta operación. Intenta nuevamente.';
        if (apiError.message && apiError.message !== '{}') {
          const backendMsg = apiError.message.toLowerCase();
-         if (backendMsg.includes('insufficient limit') || backendMsg.includes('available credit') || backendMsg.includes('cupo')) {
-           message = 'No tienes cupo suficiente en esta tarjeta para realizar la compra.';
-         } else {
-           message = apiError.message;
+         if (backendMsg.includes('insufficient limit') || backendMsg.includes('available credit') || backendMsg.includes('cupo') || backendMsg.includes('exceed')) {
+           message = 'La compra supera el cupo disponible de la tarjeta.';
+         } else if (backendMsg.includes('inactive') || backendMsg.includes('inactiva')) {
+           message = 'La tarjeta está inactiva.';
+         } else if (backendMsg.includes('greater than 0') || backendMsg.includes('monto 0')) {
+           message = 'El monto debe ser mayor a $0.';
          }
        }
-    } else if (apiError?.message && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
-      message = apiError.message;
     }
     
     return { success: false, error: message };
@@ -75,20 +77,29 @@ export async function payCreditCardAction(cardId: string, data: components['sche
     
     const apiError = err as { status?: number; message?: string };
     if (apiError?.status === 422) {
-      message = 'Los datos ingresados no son válidos.';
-    } else if (apiError?.status === 400 || apiError?.status === 403) {
+      if (apiError.message && typeof apiError.message === 'string' && apiError.message.toLowerCase().includes('greater than 0')) {
+        message = 'El monto debe ser mayor a $0.';
+      } else {
+        message = 'Los datos ingresados no son válidos.';
+      }
+    } else if (apiError?.status === 400 || apiError?.status === 403 || apiError?.status === 500) {
+       message = 'No pudimos registrar esta operación. Intenta nuevamente.';
        if (apiError.message && apiError.message !== '{}') {
          const backendMsg = apiError.message.toLowerCase();
          if (backendMsg.includes('insufficient') && (backendMsg.includes('balance') || backendMsg.includes('funds'))) {
-           message = 'No tienes saldo suficiente en esta cuenta para realizar el pago.';
+           message = 'La cuenta seleccionada no tiene saldo suficiente.';
          } else if (backendMsg.includes('exceed') && backendMsg.includes('debt')) {
-           message = 'El pago no puede ser mayor a la deuda de la tarjeta.';
-         } else {
-           message = apiError.message;
+           message = 'El pago no puede ser mayor a la deuda actual.';
+         } else if (backendMsg.includes('inactive') || backendMsg.includes('inactiva')) {
+           if (backendMsg.includes('account') || backendMsg.includes('cuenta')) {
+             message = 'La cuenta seleccionada está inactiva.';
+           } else {
+             message = 'La tarjeta está inactiva.';
+           }
+         } else if (backendMsg.includes('greater than 0') || backendMsg.includes('monto 0')) {
+           message = 'El monto debe ser mayor a $0.';
          }
        }
-    } else if (apiError?.message && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
-      message = apiError.message;
     }
     
     return { success: false, error: message };

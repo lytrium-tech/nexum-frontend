@@ -118,9 +118,14 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                 {getEventIcon(evt.event_type)}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate capitalize">
-                    {evt.description || getLedgerEventName(evt.event_type)}
+                    {getLedgerEventName(evt.event_type)}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  {evt.description && (
+                    <p className="text-xs text-gray-600 truncate mb-0.5">
+                      {evt.description}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-gray-400">
                     {formatDate(evt.occurred_at)}
                     {evt.category?.name && ` • ${evt.category.name}`}
                     {evt.account?.name && ` • ${evt.account.name}`}
