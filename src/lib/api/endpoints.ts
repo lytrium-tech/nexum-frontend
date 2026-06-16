@@ -28,6 +28,8 @@ type CreditCardPurchaseCreate = components['schemas']['CreditCardPurchaseCreate'
 type CreditCardPurchaseResult = components['schemas']['CreditCardPurchaseResult'];
 type CreditCardPaymentCreate = components['schemas']['CreditCardPaymentCreate'];
 type CreditCardPaymentResult = components['schemas']['CreditCardPaymentResult'];
+type TransferCreate = components['schemas']['TransferCreate'];
+type TransferResult = components['schemas']['TransferResult'];
 
 export const api = {
   cash: {
@@ -128,16 +130,30 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(data),
       }, isServer),
-    pay: (id: string, data: ObligationPaymentCreate, idempotencyKey: string, isServer = false) =>
-      apiClient<ObligationPaymentResult>(`/api/v1/obligations/${id}/payments`, {
-        method: 'POST',
-        headers: {
-          'Idempotency-Key': idempotencyKey,
-        },
-        body: JSON.stringify(data),
-      }, isServer),
-  },
-  credit: {
+      pay: (id: string, data: ObligationPaymentCreate, idempotencyKey: string, isServer = false) =>
+        apiClient<ObligationPaymentResult>(`/api/v1/obligations/${id}/payments`, {
+          method: 'POST',
+          headers: {
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(data),
+        }, isServer),
+    },
+    transfers: {
+      list: (isServer = false) =>
+        apiClient<TransferResult[]>('/api/v1/transfers', { method: 'GET' }, isServer),
+      create: (data: TransferCreate, idempotencyKey: string, isServer = false) =>
+        apiClient<TransferResult>('/api/v1/transfers', {
+          method: 'POST',
+          headers: {
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(data),
+        }, isServer),
+      get: (id: string, isServer = false) =>
+        apiClient<TransferResult>(`/api/v1/transfers/${id}`, { method: 'GET' }, isServer),
+    },
+    credit: {
     cards: {
       list: (isServer = false) =>
         apiClient<CreditCardRead[]>('/api/v1/credit/cards', { method: 'GET' }, isServer),

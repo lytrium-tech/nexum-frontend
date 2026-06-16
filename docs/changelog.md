@@ -20,6 +20,13 @@
 - Wrappers del cliente API en `src/lib/api/endpoints.ts` para los endpoints `/api/v1/goals`.
 - Exclusión de "Metas" en la barra de navegación móvil (limitada a Desktop Sidebar) para preservar espacio.
 
+## [Unreleased] - Fase 13 (Transfers)
+### Added
+- Pantalla `/app/transfers` para listar y crear transferencias entre cuentas propias.
+- Flujo de creación de transferencias alineado con el contrato `TransferCreate` y el header `Idempotency-Key`.
+- Mapeo de errores y validaciones de interfaz para origen=destino y fondos insuficientes.
+- Integración en `src/lib/api/endpoints.ts` de los endpoints de Transfers.
+
 ## [Unreleased] - Fase 3
 ### Added
 - Refactorización de flujo Bootstrap: se ejecuta de forma paralela e idempotente asegurando JWT previo.
