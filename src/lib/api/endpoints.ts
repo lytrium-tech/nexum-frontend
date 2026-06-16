@@ -22,6 +22,12 @@ type ObligationCreate = components['schemas']['ObligationCreate'];
 type ObligationUpdate = components['schemas']['ObligationUpdate'];
 type ObligationPaymentCreate = components['schemas']['ObligationPaymentCreate'];
 type ObligationPaymentResult = components['schemas']['ObligationPaymentResult'];
+type CreditCardRead = components['schemas']['CreditCardRead'];
+type CreditCardCreate = components['schemas']['CreditCardCreate'];
+type CreditCardPurchaseCreate = components['schemas']['CreditCardPurchaseCreate'];
+type CreditCardPurchaseResult = components['schemas']['CreditCardPurchaseResult'];
+type CreditCardPaymentCreate = components['schemas']['CreditCardPaymentCreate'];
+type CreditCardPaymentResult = components['schemas']['CreditCardPaymentResult'];
 
 export const api = {
   cash: {
@@ -130,6 +136,39 @@ export const api = {
         },
         body: JSON.stringify(data),
       }, isServer),
+  },
+  credit: {
+    cards: {
+      list: (isServer = false) =>
+        apiClient<CreditCardRead[]>('/api/v1/credit/cards', { method: 'GET' }, isServer),
+      create: (data: CreditCardCreate, isServer = false) =>
+        apiClient<CreditCardRead>('/api/v1/credit/cards', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }, isServer),
+      get: (id: string, isServer = false) =>
+        apiClient<CreditCardRead>(`/api/v1/credit/cards/${id}`, { method: 'GET' }, isServer),
+    },
+    purchases: {
+      create: (cardId: string, data: CreditCardPurchaseCreate, idempotencyKey: string, isServer = false) =>
+        apiClient<CreditCardPurchaseResult>(`/api/v1/credit/cards/${cardId}/purchases`, {
+          method: 'POST',
+          headers: {
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(data),
+        }, isServer),
+    },
+    payments: {
+      create: (cardId: string, data: CreditCardPaymentCreate, idempotencyKey: string, isServer = false) =>
+        apiClient<CreditCardPaymentResult>(`/api/v1/credit/cards/${cardId}/payments`, {
+          method: 'POST',
+          headers: {
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(data),
+        }, isServer),
+    },
   },
   intelligence: {
     snapshot: (isServer = false) => 

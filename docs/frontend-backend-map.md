@@ -14,6 +14,7 @@ Esta tabla correlaciona la UI o feature en el frontend con los endpoints autoriz
 | **Categorías** | `/app/categories` | `GET /api/v1/categories`, `POST /api/v1/categories`, `PATCH /api/v1/categories/{id}`, `DELETE /api/v1/categories/{id}` | Estable |
 | **Metas / Goals** | `/app/goals` | `GET /api/v1/goals`, `POST /api/v1/goals`, `PATCH /api/v1/goals/{id}`, `POST /api/v1/goals/{id}/contributions` | Estable (Detalle, Edición/Cierre pendiente V1.1) |
 | **Obligaciones / Obligations** | `/app/obligations` | `GET /api/v1/obligations`, `POST /api/v1/obligations`, `PATCH /api/v1/obligations/{id}`, `POST /api/v1/obligations/{id}/payments` | Estable (Pagos parciales / Remaining Amount pendientes V1.1) |
+| **Tarjetas de Crédito / Credit** | `/app/credit` | `GET /api/v1/credit/cards`, `POST /api/v1/credit/cards`, `POST /api/v1/credit/cards/{id}/purchases`, `POST /api/v1/credit/cards/{id}/payments` | Estable |
 
 ## Notas
 - Los endpoints de Ledger mencionados en algunos documentos de backend (Fase 6) han sido sincronizados exitosamente desde el `openapi.json` del backend local, exponiendo eventos, resumen y timeline.
