@@ -40,3 +40,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local agent configuration and skills
+.agents/
+
+# local reference material
+/branding/**
+!/branding/**/
+!/branding/**/*.ttf
+!/branding/**/*.otf
+!/branding/**/*.woff
+!/branding/**/*.woff2
+
+# agent and historical documentation outputs
+/docs/agent/
+/docs/archive/

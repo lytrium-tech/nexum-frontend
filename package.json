@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "api:generate": "openapi-typescript docs/context/openapi.json -o src/lib/api/types.generated.ts"
+    "api:generate": "openapi-typescript docs/contracts/openapi.json -o src/lib/api/types.generated.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
