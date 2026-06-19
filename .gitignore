@@ -45,12 +45,7 @@ next-env.d.ts
 .agents/
 
 # local reference material
-/branding/**
-!/branding/**/
-!/branding/**/*.ttf
-!/branding/**/*.otf
-!/branding/**/*.woff
-!/branding/**/*.woff2
+/branding/
 
 # agent and historical documentation outputs
 /docs/agent/
