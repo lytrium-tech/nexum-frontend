@@ -63,9 +63,11 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
       cutoff_day: parseInt(formData.get('cutoff_day') as string, 10),
       due_day: parseInt(formData.get('due_day') as string, 10),
       currency: formData.get('currency') as string || 'COP',
-      management_fee: 0,
-      monthly_interest_rate: 0,
-      annual_interest_rate: 0,
+      management_fee: parseFloat(formData.get('management_fee') as string || '0'),
+      monthly_interest_rate: parseFloat(formData.get('monthly_interest_rate') as string || '0'),
+      annual_interest_rate: parseFloat(formData.get('annual_interest_rate') as string || '0'),
+      network: (formData.get('network') as string) || null,
+      franchise: (formData.get('franchise') as string) || null,
     };
 
     const result = await createCreditCardAction(data);
@@ -232,17 +234,47 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
 
                   <div className="space-y-4 mb-6">
                     <div>
-                      <p className="text-xs text-graphite-blue/50 mb-1">Deuda actual</p>
+                      <p className="text-xs text-graphite-blue/50 mb-1">Deuda total</p>
                       <p className="text-2xl font-medium text-graphite-blue">
-                        {formatMoney(card.estimated_current_debt, card.currency)}
+                        {formatMoney(card.total_debt ?? card.current_debt, card.currency)}
                       </p>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-graphite-blue/50 mb-1">Deuda facturada</p>
+                        <p className="text-sm font-medium text-graphite-blue/80">
+                          {formatMoney(card.billed_debt, card.currency)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-graphite-blue/50 mb-1">Deuda no facturada</p>
+                        <p className="text-sm font-medium text-graphite-blue/80">
+                          {formatMoney(card.unbilled_debt, card.currency)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-graphite-blue/50 mb-1">Pago requerido</p>
+                        <p className="text-sm font-medium text-graphite-blue/80">
+                          {formatMoney(card.payment_required, card.currency)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-graphite-blue/50 mb-1">Próximo estimado</p>
+                        <p className="text-sm font-medium text-graphite-blue/80">
+                          {formatMoney(card.next_payment_estimate, card.currency)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-graphite-blue/5">
                       <div>
                         <p className="text-xs text-graphite-blue/50 mb-1">Cupo disponible</p>
                         <p className="text-sm font-medium text-graphite-blue/80">
-                          {formatMoney(card.estimated_available_credit, card.currency)}
+                          {formatMoney(card.available_credit, card.currency)}
                         </p>
                       </div>
                       <div>
@@ -266,6 +298,14 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                           Día {card.due_day}
                         </p>
                       </div>
+                      {card.statement_balance != null && (
+                        <div className="col-span-2">
+                          <p className="text-xs text-graphite-blue/50 mb-1">Saldo de extracto</p>
+                          <p className="text-sm font-medium text-graphite-blue/80">
+                            {formatMoney(card.statement_balance, card.currency)}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -410,6 +450,70 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                           />
                         </div>
                       </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="management_fee">
+                            Cuota de manejo (Opcional)
+                          </label>
+                          <input
+                            id="management_fee"
+                            name="management_fee"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            defaultValue={0}
+                            className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="monthly_interest_rate">
+                            Tasa M. V. % (Opcional)
+                          </label>
+                          <input
+                            id="monthly_interest_rate"
+                            name="monthly_interest_rate"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            defaultValue={0}
+                            className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="network">
+                            Red (ej. Visa)
+                          </label>
+                          <input
+                            id="network"
+                            name="network"
+                            type="text"
+                            className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="franchise">
+                            Franquicia
+                          </label>
+                          <input
+                            id="franchise"
+                            name="franchise"
+                            type="text"
+                            className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs text-graphite-blue/40 mt-1.5">
+                        * Tasa y cuota de manejo son opcionales pero ayudan a mejorar las estimaciones futuras.
+                      </p>
                     </form>
                   )}
                 </div>
@@ -636,7 +740,7 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                           />
                         </div>
                         <p className="text-xs text-graphite-blue/50 mt-1.5">
-                          Deuda actual: {formatMoney(paymentCard.estimated_current_debt, paymentCard.currency)}
+                          Deuda facturada: {formatMoney(paymentCard.billed_debt, paymentCard.currency)} | Deuda actual: {formatMoney(paymentCard.current_debt, paymentCard.currency)}
                         </p>
                       </div>
                     </form>

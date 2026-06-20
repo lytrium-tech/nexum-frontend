@@ -12,6 +12,13 @@
 - UI mínima de creación de cuenta bajo `AccountCreate` DTO (limitado a Name, Type y Currency).
 - Constante temporal `TEMPORARY_ALPHA_CATEGORY_FALLBACK` para categorías del Alpha Privado.
 
+## [Unreleased] - Fase 6 (Credit Cards V1.1 Alignment)
+### Changed
+- Alineación del componente `CreditClient` y tarjetas visuales para renderizar campos estrictos de deuda e intereses del contrato backend (e.g. `total_debt`, `billed_debt`, `unbilled_debt`, `payment_required`, `next_payment_estimate`, `available_credit`, `statement_balance`).
+- Soporte explícito en el formulario de creación para `management_fee`, `monthly_interest_rate`, `annual_interest_rate`, `network` y `franchise`.
+- Integración de los endpoints tipados `summary`, `status` e `installments` para futuras vistas de resumen y cuotas en `api/endpoints.ts`.
+- Retiro progresivo de variables locales obsoletas de estimación (como `estimated_current_debt` y `estimated_available_credit`) a favor de las oficiales del backend.
+
 ## [Unreleased] - Fase 5 (Obligations V1.1 Payment Modes)
 ### Changed
 - El formulario de Creación de Obligación en `/app/obligations` ahora expone la opción explícita de `payment_mode` ("fixed_full_payment", "partial_allowed" y "variable_amount").

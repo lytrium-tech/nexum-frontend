@@ -63,3 +63,4 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 3:** Accounts V1.1 Alignment (Completado)
 * **Fase 4:** Goals V1.1 Alignment (Completado)
 * **Fase 5:** Obligations V1.1 Payment Modes (Completado)
+* **Fase 6:** Credit Cards V1.1 Alignment (Completado)

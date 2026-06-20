@@ -169,7 +169,13 @@ export const api = {
         }, isServer),
       get: (id: string, isServer = false) =>
         apiClient<CreditCardRead>(`/api/v1/credit/cards/${id}`, { method: 'GET' }, isServer),
+      status: (id: string, isServer = false) =>
+        apiClient<components['schemas']['CreditCardStatusRead']>(`/api/v1/credit/cards/${id}/status`, { method: 'GET' }, isServer),
+      installments: (id: string, isServer = false) =>
+        apiClient<components['schemas']['CreditCardInstallmentRead'][]>(`/api/v1/credit/cards/${id}/installments`, { method: 'GET' }, isServer),
     },
+    summary: (isServer = false) =>
+      apiClient<components['schemas']['CreditSummaryRead']>('/api/v1/credit/summary', { method: 'GET' }, isServer),
     purchases: {
       create: (cardId: string, data: CreditCardPurchaseCreate, idempotencyKey: string, isServer = false) =>
         apiClient<CreditCardPurchaseResult>(`/api/v1/credit/cards/${cardId}/purchases`, {
