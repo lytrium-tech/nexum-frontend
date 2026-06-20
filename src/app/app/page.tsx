@@ -130,30 +130,34 @@ export default async function AppHome() {
   return (
     <div className="flex flex-col gap-6">
       <FinancialHero 
-        availableReal={snapshot.cash.total_balance}
-        safeMoney={'0'} // No longer in snapshot
-        freeMoney={snapshot.cashflow.net_cashflow}
+        availableReal={snapshot.truth.available_real || '—'}
+        safeMoney={snapshot.truth.safe_money || '—'}
+        freeMoney={snapshot.truth.free_money || '—'}
+        warnings={snapshot.truth.calculation_warnings}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CashflowSummary 
-          income={snapshot.cashflow.income}
-          cashOutflow={snapshot.cashflow.expenses}
-          committedOutflow={'0'} // Replaced logic
+          income={snapshot.cashflow.income || '—'}
+          cashOutflow={snapshot.cashflow.expenses || '—'}
+          committedOutflow={snapshot.truth.committed_outflows || '—'}
+          netCashflow={snapshot.cashflow.net_cashflow || '—'}
         />
         
         <DebtOverview 
-          creditCardDebt={snapshot.debt.credit_card_total_debt}
-          creditCardRequiredPayment={snapshot.debt.billed_debt}
+          creditCardDebt={snapshot.debt.credit_card_total_debt || '—'}
+          creditCardRequiredPayment={snapshot.truth.payment_required || '—'}
+          nextPaymentEstimate={snapshot.debt.next_payment_estimate || '—'}
         />
         
         <GoalsPreview 
-          wealthAllocation={snapshot.goals.total_saved}
-          goalsRequired={snapshot.goals.total_target}
+          wealthAllocation={snapshot.goals.total_saved || '—'}
+          goalsTotal={snapshot.goals.total_target || '—'}
+          goalsRequired={snapshot.truth.goals_required_this_period || '—'}
         />
         
         <ObligationsPreview 
-          pendingObligationsTotal={snapshot.obligations.pending_amount}
+          pendingObligationsTotal={snapshot.obligations.pending_amount || '—'}
         />
       </div>
 

@@ -132,6 +132,23 @@ export interface paths {
         patch: operations["update_account_api_v1_accounts__account_id__patch"];
         trace?: never;
     };
+    "/api/v1/accounts/{account_id}/balance-adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Balance Adjustment */
+        post: operations["create_balance_adjustment_api_v1_accounts__account_id__balance_adjustments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/categories": {
         parameters: {
             query?: never;
@@ -407,6 +424,23 @@ export interface paths {
         };
         /** Get Card Status */
         get: operations["get_card_status_api_v1_credit_cards__card_id__status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit/cards/{card_id}/installments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Card Installments */
+        get: operations["list_card_installments_api_v1_credit_cards__card_id__installments_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -716,6 +750,12 @@ export interface components {
              * @default COP
              */
             currency: string;
+            /**
+             * Initial Balance
+             * @description Saldo inicial para abrir la cuenta
+             * @default 0.00
+             */
+            initial_balance: number | string;
         };
         /** AccountRead */
         AccountRead: {
@@ -771,6 +811,24 @@ export interface components {
             name?: string | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** BalanceAdjustmentCreate */
+        BalanceAdjustmentCreate: {
+            /**
+             * Amount
+             * @description Cantidad a ajustar (siempre positiva)
+             */
+            amount: number | string;
+            /**
+             * Direction
+             * @description Si aumenta o disminuye el balance
+             * @enum {string}
+             */
+            direction: "increase" | "decrease";
+            /** @description opening_balance o balance_adjustment */
+            type: components["schemas"]["EventType"];
+            /** Description */
+            description?: string | null;
         };
         /** CashExpenseCreate */
         CashExpenseCreate: {
@@ -948,10 +1006,59 @@ export interface components {
             /** Due Day */
             due_day: number;
             /**
+             * Management Fee
+             * @default 0.00
+             */
+            management_fee: number | string;
+            /**
+             * Monthly Interest Rate
+             * @default 0.00
+             */
+            monthly_interest_rate: number | string;
+            /**
+             * Annual Interest Rate
+             * @default 0.00
+             */
+            annual_interest_rate: number | string;
+            /** Network */
+            network?: string | null;
+            /** Franchise */
+            franchise?: string | null;
+            /**
              * Currency
              * @default COP
              */
             currency: string;
+        };
+        /** CreditCardInstallmentRead */
+        CreditCardInstallmentRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Credit Card Id
+             * Format: uuid
+             */
+            credit_card_id: string;
+            /**
+             * Purchase Transaction Id
+             * Format: uuid
+             */
+            purchase_transaction_id: string;
+            /** Installment Number */
+            installment_number: number;
+            /** Installments Total */
+            installments_total: number;
+            /** Principal Amount */
+            principal_amount: string;
+            /** Scheduled Period */
+            scheduled_period: string;
+            /** Status */
+            status: string;
+            /** Paid Amount */
+            paid_amount: string;
         };
         /** CreditCardPaymentCreate */
         CreditCardPaymentCreate: {
@@ -977,6 +1084,10 @@ export interface components {
             transaction_id?: string | null;
             /** Amount */
             amount: string;
+            /** Current Debt */
+            current_debt: string;
+            /** Available Credit */
+            available_credit: string;
             /** Estimated Current Debt */
             estimated_current_debt: string;
             /** Account Balance */
@@ -1010,6 +1121,10 @@ export interface components {
             transaction_id?: string | null;
             /** Amount */
             amount: string;
+            /** Current Debt */
+            current_debt: string;
+            /** Available Credit */
+            available_credit: string;
             /** Estimated Current Debt */
             estimated_current_debt: string;
             /** Estimated Available Credit */
@@ -1028,6 +1143,25 @@ export interface components {
             /** Due Day */
             due_day: number;
             /**
+             * Management Fee
+             * @default 0.00
+             */
+            management_fee: string;
+            /**
+             * Monthly Interest Rate
+             * @default 0.00
+             */
+            monthly_interest_rate: string;
+            /**
+             * Annual Interest Rate
+             * @default 0.00
+             */
+            annual_interest_rate: string;
+            /** Network */
+            network?: string | null;
+            /** Franchise */
+            franchise?: string | null;
+            /**
              * Currency
              * @default COP
              */
@@ -1039,6 +1173,47 @@ export interface components {
             id: string;
             /** Is Active */
             is_active: boolean;
+            /**
+             * Current Debt
+             * @default 0.00
+             */
+            current_debt: string;
+            /**
+             * Total Debt
+             * @default 0.00
+             */
+            total_debt: string;
+            /**
+             * Available Credit
+             * @default 0.00
+             */
+            available_credit: string;
+            /**
+             * Billed Debt
+             * @default 0.00
+             */
+            billed_debt: string;
+            /**
+             * Unbilled Debt
+             * @default 0.00
+             */
+            unbilled_debt: string;
+            /**
+             * Payment Required
+             * @default 0.00
+             */
+            payment_required: string;
+            /**
+             * Next Payment Estimate
+             * @default 0.00
+             */
+            next_payment_estimate: string;
+            /** Statement Balance */
+            statement_balance?: string | null;
+            /** Data Quality */
+            data_quality?: {
+                [key: string]: string;
+            };
             /**
              * Estimated Current Debt
              * @default 0.00
@@ -1063,6 +1238,30 @@ export interface components {
             name: string;
             /** Credit Limit */
             credit_limit: string;
+            /**
+             * Management Fee
+             * @default 0.00
+             */
+            management_fee: string;
+            /**
+             * Monthly Interest Rate
+             * @default 0.00
+             */
+            monthly_interest_rate: string;
+            /**
+             * Annual Interest Rate
+             * @default 0.00
+             */
+            annual_interest_rate: string;
+            /** Network */
+            network?: string | null;
+            /** Franchise */
+            franchise?: string | null;
+            /**
+             * Current Debt
+             * @default 0.00
+             */
+            current_debt: string;
             /** Total Debt */
             total_debt: string;
             /** Billed Debt */
@@ -1071,6 +1270,18 @@ export interface components {
             unbilled_debt: string;
             /** Available Credit */
             available_credit: string;
+            /**
+             * Payment Required
+             * @default 0.00
+             */
+            payment_required: string;
+            /**
+             * Next Payment Estimate
+             * @default 0.00
+             */
+            next_payment_estimate: string;
+            /** Statement Balance */
+            statement_balance?: string | null;
             /** Monthly Cc Payment */
             monthly_cc_payment: string;
             /** Cutoff Day */
@@ -1083,6 +1294,10 @@ export interface components {
             purchases_count: number;
             /** Payments Count */
             payments_count: number;
+            /** Data Quality */
+            data_quality?: {
+                [key: string]: string;
+            };
         };
         /** CreditCardUpdate */
         CreditCardUpdate: {
@@ -1096,6 +1311,16 @@ export interface components {
             cutoff_day?: number | null;
             /** Due Day */
             due_day?: number | null;
+            /** Management Fee */
+            management_fee?: number | string | null;
+            /** Monthly Interest Rate */
+            monthly_interest_rate?: number | string | null;
+            /** Annual Interest Rate */
+            annual_interest_rate?: number | string | null;
+            /** Network */
+            network?: string | null;
+            /** Franchise */
+            franchise?: string | null;
             /** Is Active */
             is_active?: boolean | null;
         };
@@ -1107,6 +1332,21 @@ export interface components {
             total_debt: string;
             /** Total Available Credit */
             total_available_credit: string;
+            /**
+             * Total Monthly Cc Payment
+             * @default 0.00
+             */
+            total_monthly_cc_payment: string;
+            /**
+             * Total Payment Required
+             * @default 0.00
+             */
+            total_payment_required: string;
+            /**
+             * Total Next Payment Estimate
+             * @default 0.00
+             */
+            total_next_payment_estimate: string;
             /** Cards */
             cards: components["schemas"]["CreditCardStatusRead"][];
         };
@@ -1115,6 +1355,13 @@ export interface components {
          * @enum {string}
          */
         EventSource: "api" | "pwa" | "manual" | "system";
+        /**
+         * EventType
+         * @description Catálogo central de eventos financieros de Nexum.
+         *     No define impactos financieros directamente, solo categoriza el evento.
+         * @enum {string}
+         */
+        EventType: "income" | "expense" | "goal_contribution" | "obligation_payment" | "credit_card_purchase" | "credit_card_payment" | "manual_adjustment" | "transfer_out" | "transfer_in" | "opening_balance" | "balance_adjustment";
         /** FreeMoneyRead */
         FreeMoneyRead: {
             /** Available Real */
@@ -1205,14 +1452,25 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+            /**
+             * Contributed This Period
+             * @default 0.00
+             */
+            contributed_this_period: string;
             /** Remaining Amount */
             readonly remaining_amount: string;
             /** Progress Percentage */
             readonly progress_percentage: string;
+            /** Is Flexible */
+            readonly is_flexible: boolean;
             /** Monthly Required */
             readonly monthly_required: string | null;
-            /** Daily Required */
-            readonly daily_required: string | null;
+            /** Required This Period */
+            readonly required_this_period: string;
+            /** Remaining Required This Period */
+            readonly remaining_required_this_period: string;
+            /** Period Status */
+            readonly period_status: string;
         };
         /** GoalUpdate */
         GoalUpdate: {
@@ -1283,12 +1541,22 @@ export interface components {
             credit_limit: string | null;
             /** Estimated Current Debt */
             estimated_current_debt: string;
+            /** Current Debt */
+            current_debt?: string | null;
             /** Billed Debt */
             billed_debt?: string | null;
             /** Unbilled Debt */
             unbilled_debt?: string | null;
             /** Estimated Available Credit */
             estimated_available_credit: string | null;
+            /** Available Credit */
+            available_credit?: string | null;
+            /** Payment Required */
+            payment_required?: string | null;
+            /** Next Payment Estimate */
+            next_payment_estimate?: string | null;
+            /** Statement Balance */
+            statement_balance?: string | null;
             /** Monthly Cc Payment */
             monthly_cc_payment: string;
             /** Cutoff Day */
@@ -1297,6 +1565,10 @@ export interface components {
             due_day: number | null;
             /** Next Payment Due Date */
             next_payment_due_date?: string | null;
+            /** Data Quality */
+            data_quality?: {
+                [key: string]: string;
+            };
         };
         /** IntelligenceDebtRead */
         IntelligenceDebtRead: {
@@ -1368,6 +1640,7 @@ export interface components {
             recent_activity: {
                 [key: string]: unknown;
             }[];
+            truth: components["schemas"]["SnapshotTruth"];
         };
         /** LedgerEventDetail */
         LedgerEventDetail: {
@@ -1482,7 +1755,12 @@ export interface components {
             /** Name */
             name: string;
             /** Amount */
-            amount: number | string;
+            amount?: number | string | null;
+            /**
+             * Payment Mode
+             * @default fixed_full_payment
+             */
+            payment_mode: string;
             /** Due Day */
             due_day?: number | null;
             /** Frequency */
@@ -1536,7 +1814,9 @@ export interface components {
             /** Name */
             name: string;
             /** Amount */
-            amount: string;
+            amount: string | null;
+            /** Payment Mode */
+            payment_mode: string;
             /** Due Day */
             due_day: number | null;
             /** Frequency */
@@ -1561,6 +1841,21 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+            /**
+             * Paid This Period
+             * @default 0.00
+             */
+            paid_this_period: string;
+            /** Last Payment At */
+            last_payment_at?: string | null;
+            /** Remaining Amount */
+            readonly remaining_amount: string | null;
+            /** Is Pending */
+            readonly is_pending: boolean;
+            /** Period Status */
+            readonly period_status: string;
+            /** Next Due Date */
+            readonly next_due_date: string | null;
         };
         /** ObligationUpdate */
         ObligationUpdate: {
@@ -1568,6 +1863,8 @@ export interface components {
             name?: string | null;
             /** Amount */
             amount?: number | string | null;
+            /** Payment Mode */
+            payment_mode?: string | null;
             /** Due Day */
             due_day?: number | null;
             /** Frequency */
@@ -1603,6 +1900,16 @@ export interface components {
             billed_debt: string;
             /** Unbilled Debt */
             unbilled_debt: string;
+            /**
+             * Payment Required
+             * @default 0.00
+             */
+            payment_required: string;
+            /**
+             * Next Payment Estimate
+             * @default 0.00
+             */
+            next_payment_estimate: string;
         };
         /** SnapshotGoals */
         SnapshotGoals: {
@@ -1631,6 +1938,27 @@ export interface components {
         SnapshotTransfers: {
             /** Monthly Transfer Volume */
             monthly_transfer_volume: string;
+        };
+        /** SnapshotTruth */
+        SnapshotTruth: {
+            /** Available Real */
+            available_real: string;
+            /** Committed Outflows */
+            committed_outflows: string;
+            /** Free Money */
+            free_money: string;
+            /** Safe Money */
+            safe_money: string;
+            /** Payment Required */
+            payment_required: string;
+            /** Goals Required This Period */
+            goals_required_this_period: string;
+            /** Calculation Warnings */
+            calculation_warnings: string[];
+            /** Data Quality */
+            data_quality: {
+                [key: string]: string;
+            };
         };
         /**
          * TransferCreate
@@ -2015,9 +2343,47 @@ export interface operations {
             };
         };
     };
-    list_categories_api_v1_categories_get: {
+    create_balance_adjustment_api_v1_accounts__account_id__balance_adjustments_post: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BalanceAdjustmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_categories_api_v1_categories_get: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+                type?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2031,6 +2397,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CategoryRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2834,6 +3209,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreditCardStatusRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_card_installments_api_v1_credit_cards__card_id__installments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditCardInstallmentRead"][];
                 };
             };
             /** @description Validation Error */

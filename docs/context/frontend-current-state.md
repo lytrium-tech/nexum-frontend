@@ -53,6 +53,13 @@ This document describes the current frontend state only. Backend truth lives in 
 ## Current Frontend Risks
 
 - `docs/contracts/openapi.json` may lag backend V1.1.
-- Some UI surfaces may still use placeholders or older generated types until the contract cache is synced.
-- Home financial cards should be reviewed so displayed values come from backend snapshot truth.
 - Category deletion/deactivation UX remains a frontend/product decision even when backend supports the lifecycle.
+
+## Status
+
+* **Fase 0:** Contract Sync V1.1 (Completado)
+* **Fase 1:** Build Recovery & Accounts (Completado)
+* **Fase 2:** SnapshotTruth & Home Alignment (Completado)
+* **Fase 3:** Accounts V1.1 Alignment (Completado)
+* **Fase 4:** Goals V1.1 Alignment (Completado)
+* **Fase 5:** Obligations V1.1 Payment Modes (Completado)

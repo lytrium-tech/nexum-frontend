@@ -4,20 +4,18 @@ interface CashflowSummaryProps {
   income: string;
   cashOutflow: string;
   committedOutflow: string;
+  netCashflow: string;
 }
 
-export default function CashflowSummary({ income, cashOutflow, committedOutflow }: CashflowSummaryProps) {
+export default function CashflowSummary({ income, cashOutflow, committedOutflow, netCashflow }: CashflowSummaryProps) {
   const formatCurrency = (val: string) => {
+    if (val === '—') return '—';
     const num = parseFloat(val);
-    if (isNaN(num)) return '$0';
+    if (isNaN(num)) return '—';
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(num);
   };
 
-  const incomeNum = parseFloat(income) || 0;
-  const cashOutNum = parseFloat(cashOutflow) || 0;
-  const committedOutNum = parseFloat(committedOutflow) || 0;
-  const totalOutflow = cashOutNum + committedOutNum;
-  const balance = incomeNum - totalOutflow;
+  const isNetPositive = netCashflow !== '—' && parseFloat(netCashflow) >= 0;
 
   return (
     <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
@@ -51,8 +49,8 @@ export default function CashflowSummary({ income, cashOutflow, committedOutflow 
         <div className="border-t border-soft-gray pt-4 mt-2">
           <div className="flex justify-between items-center">
             <span className="text-sm font-semibold text-gray-500">Balance Neto</span>
-            <span className={`text-sm font-semibold ${balance >= 0 ? 'text-sage-green' : 'text-red-500'}`}>
-              {formatCurrency(balance.toString())}
+            <span className={`text-sm font-semibold ${netCashflow === '—' ? 'text-gray-500' : isNetPositive ? 'text-sage-green' : 'text-red-500'}`}>
+              {formatCurrency(netCashflow)}
             </span>
           </div>
         </div>

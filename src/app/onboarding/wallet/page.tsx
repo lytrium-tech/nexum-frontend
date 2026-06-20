@@ -62,6 +62,26 @@ export default async function WalletOnboardingPage(props: { searchParams?: Promi
             </select>
           </div>
 
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium" htmlFor="initial_balance">¿Cuánto dinero tienes ahora en esta cuenta?</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+              <input
+                id="initial_balance"
+                name="initial_balance"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+                defaultValue="0"
+                className="w-full pl-8 pr-4 py-2 border border-soft-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-champagne-gold"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Esto será tu saldo inicial y no contará como ingreso del mes.
+            </p>
+          </div>
+
           <button
             type="submit"
             className="mt-4 bg-graphite-blue text-warm-white py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors font-medium"

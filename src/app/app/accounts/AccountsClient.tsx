@@ -47,7 +47,7 @@ export default function AccountsClient({
   initialSummary: AccountSummary | null;
 }) {
   const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({ name: '', type: 'bank', currency: 'COP' });
+  const [formData, setFormData] = useState({ name: '', type: 'bank', currency: 'COP', initial_balance: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,14 +70,15 @@ export default function AccountsClient({
     const result = await createAccountAction({
       name: formData.name.trim(),
       type: formData.type,
-      currency: formData.currency
+      currency: formData.currency,
+      initial_balance: formData.initial_balance.trim() === '' ? 0 : formData.initial_balance.trim()
     });
 
     setIsSubmitting(false);
 
     if (result.success) {
       setIsCreating(false);
-      setFormData({ name: '', type: 'bank', currency: 'COP' });
+      setFormData({ name: '', type: 'bank', currency: 'COP', initial_balance: '' });
     } else {
       setError(result.error || 'Error al crear la cuenta.');
     }
@@ -145,6 +146,25 @@ export default function AccountsClient({
                   <option value="cash">Efectivo</option>
                   <option value="savings">Ahorros</option>
                 </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Saldo inicial (opcional)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                  <input 
+                    type="number" 
+                    min="0"
+                    step="0.01"
+                    className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-graphite-blue outline-none"
+                    placeholder="Ej. 50000"
+                    value={formData.initial_balance}
+                    onChange={(e) => setFormData({...formData, initial_balance: e.target.value})}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Este saldo representa dinero que ya tienes. No contará como ingreso.
+                </p>
               </div>
             </div>
             <div className="flex gap-3 justify-end mt-2">

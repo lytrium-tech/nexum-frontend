@@ -12,6 +12,37 @@
 - UI mínima de creación de cuenta bajo `AccountCreate` DTO (limitado a Name, Type y Currency).
 - Constante temporal `TEMPORARY_ALPHA_CATEGORY_FALLBACK` para categorías del Alpha Privado.
 
+## [Unreleased] - Fase 5 (Obligations V1.1 Payment Modes)
+### Changed
+- El formulario de Creación de Obligación en `/app/obligations` ahora expone la opción explícita de `payment_mode` ("fixed_full_payment", "partial_allowed" y "variable_amount").
+- Eliminado el hardcode silencioso de "fixed_full_payment" que limitaba el contrato.
+- Las tarjetas de Obligaciones visualizan el estado temporal delegando cálculos al Backend (`paid_this_period`, `remaining_amount`, `period_status`, `is_pending`, `next_due_date`).
+- El modal de pago se adapta de forma dinámica según el modo de pago: bloqueando la edición del campo (para cobros fijos de cuota) o permitiendo edición libre de montos (para abonos o montos variables).
+
+## [Unreleased] - Fase 4 (Goals V1.1 Alignment)
+### Changed
+- Las tarjetas de `/app/goals` se actualizaron para usar la estructura de datos extendida y consumir directamente los cálculos del backend para `current_amount`, `progress_percentage`, `period_status`, `monthly_required`, `required_this_period` y `remaining_required_this_period`.
+- Eliminado el cálculo de progreso local y validaciones locales de límites de periodo; ahora toda la representación del estado temporal de las metas proviene del backend.
+- Flujo de aportes ahora refresca `accounts`, `history`, `home` y `goals` sin validaciones o bloqueos locales que restrinjan aportes anticipados o fuera de fecha.
+
+## [Unreleased] - Fase 3 (Accounts V1.1 Alignment)
+### Added
+- Flujo de creación de cuenta en `/app/accounts` y en `/onboarding/wallet` actualizado para enviar de forma correcta el `initial_balance` al backend, asegurando que no cuente como un ingreso mensual.
+- Soporte visual para el evento contable `opening_balance` y `balance_adjustment` en el mapeador del historial de transacciones (Ledger), garantizando que se muestren las etiquetas correctas.
+- Wrapper para el endpoint `/accounts/{id}/balance-adjustments` expuesto en `api.accounts.createBalanceAdjustment`.
+
+## [Unreleased] - Fase 2 (Snapshot Truth Alignment)
+### Changed
+- Dashboard (`/app/page.tsx`) actualizado para usar `snapshot.truth` como única fuente de cálculos de liquidez (`available_real`, `safe_money`, `free_money`).
+- Eliminada toda lógica de cálculo local de saldos y flujo de caja en componentes de Home (`CashflowSummary`, `DebtOverview`, `GoalsPreview`).
+- Componente `FinancialHero` ahora muestra avisos y advertencias de cálculo (`calculation_warnings`) directamente desde el backend.
+
+## [Unreleased] - Fase 1 (Build Recovery & Accounts Contract)
+### Fixed
+- Recuperación del build tras la adopción del OpenAPI V1.1 resolviendo campos requeridos y tipos nulos en `Accounts`, `CreditCards` y `Obligations`.
+- El flujo de creación de cuenta y el onboarding (wallet) ahora envían `initial_balance` al backend y manejan UI básica de ingreso opcional.
+- Se añadió el endpoint `balance-adjustments` al cliente API local.
+
 ## [Unreleased] - Fase 10 (Goals)
 ### Added
 - Pantalla `/app/goals` para visualizar y administrar metas financieras.

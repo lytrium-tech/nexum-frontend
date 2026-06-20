@@ -6,12 +6,13 @@ interface ObligationsPreviewProps {
 
 export default function ObligationsPreview({ pendingObligationsTotal }: ObligationsPreviewProps) {
   const formatCurrency = (val: string) => {
+    if (val === '—') return '—';
     const num = parseFloat(val);
-    if (isNaN(num)) return '$0';
+    if (isNaN(num)) return '—';
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(num);
   };
 
-  const hasObligations = parseFloat(pendingObligationsTotal) > 0;
+  const hasObligations = pendingObligationsTotal !== '—' && parseFloat(pendingObligationsTotal) > 0;
 
   return (
     <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">

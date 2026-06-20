@@ -26,7 +26,7 @@ export function formatLedgerAmount({
   } else {
     // Fallback based on eventType
     const normalizedType = eventType?.toLowerCase();
-    if (normalizedType === 'income' || normalizedType === 'transfer_in') {
+    if (normalizedType === 'income' || normalizedType === 'transfer_in' || normalizedType === 'opening_balance') {
       isPositive = true;
     } else {
       isPositive = false;
@@ -52,7 +52,9 @@ export function getLedgerEventName(eventType: string): string {
     goal_contribution: 'Aporte a meta',
     obligation_payment: 'Pago de obligación',
     credit_card_purchase: 'Compra con tarjeta',
-    credit_card_payment: 'Pago de tarjeta'
+    credit_card_payment: 'Pago de tarjeta',
+    opening_balance: 'Saldo inicial',
+    balance_adjustment: 'Ajuste de saldo'
   };
   return mapper[eventType?.toLowerCase()] || eventType?.replace(/_/g, ' ') || 'Desconocido';
 }

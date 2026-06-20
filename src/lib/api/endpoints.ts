@@ -78,6 +78,11 @@ export const api = {
       }, isServer),
     delete: (id: string, isServer = false) =>
       apiClient<unknown>(`/api/v1/accounts/${id}`, { method: 'DELETE' }, isServer),
+    createBalanceAdjustment: (id: string, data: components['schemas']['BalanceAdjustmentCreate'], isServer = false) =>
+      apiClient<AccountRead>(`/api/v1/accounts/${id}/balance-adjustments`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }, isServer),
   },
   categories: {
     list: (isServer = false) => 

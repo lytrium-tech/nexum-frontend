@@ -61,12 +61,13 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name') as string;
     const amountStr = formData.get('amount') as string;
+    const paymentMode = formData.get('paymentMode') as string || 'fixed_full_payment';
     const dueDayStr = formData.get('dueDay') as string;
     const frequency = formData.get('frequency') as string;
 
     const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) {
-      setError('El monto debe ser mayor a 0');
+    if (paymentMode !== 'variable_amount' && (isNaN(amount) || amount <= 0)) {
+      setError('El monto base es requerido para este modo de pago');
       setIsSubmitting(false);
       return;
     }
@@ -79,7 +80,8 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
 
     const payload: components['schemas']['ObligationCreate'] = {
       name: name.trim(),
-      amount,
+      amount: isNaN(amount) ? undefined : amount,
+      payment_mode: paymentMode,
     };
 
     if (dueDayStr) {
@@ -162,6 +164,36 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     return dict[freq.toLowerCase()] || freq;
   };
 
+  const getPaymentModeLabel = (mode: string | null | undefined) => {
+    if (!mode) return 'Desconocido';
+    const dict: Record<string, string> = {
+      'fixed_full_payment': 'Fijo',
+      'partial_allowed': 'Permite abonos',
+      'variable_amount': 'Variable'
+    };
+    return dict[mode.toLowerCase()] || mode;
+  };
+
+  const getPeriodStatusLabel = (status: string | null | undefined) => {
+    if (!status) return '—';
+    const dict: Record<string, string> = {
+      'pending': 'Pendiente',
+      'partial': 'Parcial',
+      'paid': 'Cubierta',
+      'covered': 'Cubierta',
+      'overdue': 'Atrasada',
+      'inactive': 'Inactiva'
+    };
+    return dict[status.toLowerCase()] || status;
+  };
+
+  const formatVal = (val: string | number | null | undefined, curr = 'COP') => {
+    if (val == null || val === '—' || val === '') return '—';
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    if (isNaN(num)) return '—';
+    return formatCurrency(num, curr);
+  };
+
   return (
     <div className="mx-auto max-w-4xl p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-8">
       {/* Header */}
@@ -202,8 +234,6 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           {activeObligations.map(obligation => {
-            const amountVal = parseFloat(obligation.amount);
-
             return (
               <div 
                 key={obligation.id} 
@@ -225,10 +255,13 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                         <span className="bg-graphite-blue/5 px-2 py-0.5 rounded-md font-medium text-graphite-blue/70">
                           {getFrequencyLabel(obligation.frequency)}
                         </span>
-                        {obligation.due_day && (
+                        <span className="bg-graphite-blue/5 px-2 py-0.5 rounded-md font-medium text-graphite-blue/70">
+                          {getPaymentModeLabel(obligation.payment_mode)}
+                        </span>
+                        {obligation.next_due_date && (
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            <span>Día {obligation.due_day}</span>
+                            <span>Vence: {new Date(obligation.next_due_date).toLocaleDateString()}</span>
                           </div>
                         )}
                       </div>
@@ -239,13 +272,24 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                     <div>
                       <p className="text-sm font-medium text-graphite-blue/60 mb-1">Monto base</p>
                       <p className="text-2xl font-semibold text-graphite-blue flex items-baseline gap-1">
-                        {formatCurrency(amountVal, obligation.currency || 'COP')}
+                        {formatVal(obligation.amount, obligation.currency)}
                       </p>
                     </div>
                     <div className="text-right">
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-sage-green bg-sage-green/10 px-2 py-1 rounded-full">
-                        <CheckCircle className="w-3.5 h-3.5" /> Activa
+                        <CheckCircle className="w-3.5 h-3.5" /> {getPeriodStatusLabel(obligation.period_status)}
                       </span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-graphite-blue/5 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-graphite-blue/50 block">Pagado este periodo:</span>
+                      <span className="font-medium text-graphite-blue">{formatVal(obligation.paid_this_period, obligation.currency)}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-graphite-blue/50 block">Restante:</span>
+                      <span className="font-medium text-graphite-blue">{formatVal(obligation.remaining_amount, obligation.currency)}</span>
                     </div>
                   </div>
                 </div>
@@ -253,10 +297,11 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 <div className="mt-6 pt-5 border-t border-graphite-blue/5 flex gap-3">
                   <button
                     onClick={() => openPayModal(obligation)}
-                    className="flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2 bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white"
+                    disabled={!obligation.is_pending}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2 ${obligation.is_pending ? 'bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white' : 'bg-graphite-blue/5 text-graphite-blue/40 cursor-not-allowed'}`}
                   >
                     <CreditCard className="w-4 h-4" />
-                    Registrar pago
+                    {obligation.is_pending ? 'Registrar pago' : 'Periodo cubierto'}
                   </button>
                 </div>
               </div>
@@ -311,6 +356,22 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
                   disabled={isSubmitting || !!successMessage}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="paymentMode">
+                  Modo de pago
+                </label>
+                <select
+                  id="paymentMode"
+                  name="paymentMode"
+                  className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
+                  disabled={isSubmitting || !!successMessage}
+                >
+                  <option value="fixed_full_payment">Pago completo fijo</option>
+                  <option value="partial_allowed">Permite abonos</option>
+                  <option value="variable_amount">Monto variable</option>
+                </select>
               </div>
 
               <div>
@@ -464,13 +525,18 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                     id="amount"
                     name="amount"
                     type="number"
-                    value={parseFloat(selectedObligation.amount)}
-                    readOnly
-                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/10 border-transparent focus:ring-0 transition-colors text-graphite-blue font-medium outline-none cursor-not-allowed opacity-80"
+                    min="1"
+                    step="0.01"
+                    defaultValue={parseFloat(String(selectedObligation.remaining_amount || selectedObligation.amount || "0"))}
+                    readOnly={selectedObligation.payment_mode === 'fixed_full_payment'}
+                    className={`w-full pl-8 pr-4 py-3 rounded-xl border-transparent focus:ring-0 transition-colors text-graphite-blue font-medium outline-none ${selectedObligation.payment_mode === 'fixed_full_payment' ? 'bg-graphite-blue/10 cursor-not-allowed opacity-80' : 'bg-graphite-blue/5 focus:bg-white focus:border-graphite-blue'}`}
+                    disabled={isSubmitting || !!successMessage}
                   />
                 </div>
                 <p className="text-xs text-graphite-blue/40 mt-1.5">
-                  Esta obligación se paga por el monto completo de la cuota.
+                  {selectedObligation.payment_mode === 'fixed_full_payment' && "Esta obligación se paga por el monto completo del periodo."}
+                  {selectedObligation.payment_mode === 'partial_allowed' && "Puedes hacer abonos hasta cubrir el periodo."}
+                  {selectedObligation.payment_mode === 'variable_amount' && "Esta obligación permite pagos variables."}
                 </p>
               </div>
 

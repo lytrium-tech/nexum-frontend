@@ -3,16 +3,18 @@ import React from 'react';
 interface DebtOverviewProps {
   creditCardDebt: string;
   creditCardRequiredPayment: string;
+  nextPaymentEstimate?: string;
 }
 
-export default function DebtOverview({ creditCardDebt, creditCardRequiredPayment }: DebtOverviewProps) {
-  const formatCurrency = (val: string) => {
+export default function DebtOverview({ creditCardDebt, creditCardRequiredPayment, nextPaymentEstimate }: DebtOverviewProps) {
+  const formatCurrency = (val: string | undefined) => {
+    if (!val || val === '—') return '—';
     const num = parseFloat(val);
-    if (isNaN(num)) return '$0';
+    if (isNaN(num)) return '—';
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(num);
   };
 
-  const hasDebt = parseFloat(creditCardDebt) > 0;
+  const hasDebt = creditCardDebt !== '—' && parseFloat(creditCardDebt) > 0;
 
   return (
     <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
@@ -32,7 +34,11 @@ export default function DebtOverview({ creditCardDebt, creditCardRequiredPayment
           <div className="bg-warm-white p-4 rounded-2xl">
             <p className="text-xs text-gray-500 mb-1">Pago Requerido</p>
             <p className="text-lg font-semibold text-red-500">{formatCurrency(creditCardRequiredPayment)}</p>
-            <p className="text-[10px] text-gray-400 mt-1">Estimado a pagar este periodo</p>
+            {nextPaymentEstimate && nextPaymentEstimate !== '0' && nextPaymentEstimate !== '—' ? (
+              <p className="text-[10px] text-gray-400 mt-1">Estimación próximo pago: {formatCurrency(nextPaymentEstimate)}</p>
+            ) : (
+              <p className="text-[10px] text-gray-400 mt-1">Estimado a pagar este periodo</p>
+            )}
           </div>
         </div>
       )}

@@ -8,12 +8,14 @@ export async function createAccountAction(data: {
   name: string;
   type: string;
   currency: string;
+  initial_balance: string | number;
 }) {
   try {
     const account = await api.accounts.create({
       name: data.name,
       type: data.type as components['schemas']['AccountType'],
-      currency: data.currency
+      currency: data.currency,
+      initial_balance: data.initial_balance
     }, true);
     
     revalidatePath('/app/accounts');

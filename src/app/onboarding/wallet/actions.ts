@@ -10,6 +10,8 @@ export async function createFirstAccount(formData: FormData) {
   const name = formData.get('name') as string
   const type = formData.get('type') as AccountType
   const currency = formData.get('currency') as string || 'COP'
+  const initial_balance_str = formData.get('initial_balance') as string
+  const initial_balance = initial_balance_str ? parseFloat(initial_balance_str) : 0
 
   let creationError = '';
   try {
@@ -17,6 +19,7 @@ export async function createFirstAccount(formData: FormData) {
       name,
       type,
       currency,
+      initial_balance,
     }, true)
   } catch (error: unknown) {
     const err = error as { status?: number, data?: { detail?: string } };

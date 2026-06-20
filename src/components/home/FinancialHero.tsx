@@ -4,14 +4,16 @@ interface FinancialHeroProps {
   availableReal: string;
   safeMoney: string;
   freeMoney: string;
+  warnings?: string[];
   currency?: string;
   period?: string;
 }
 
-export default function FinancialHero({ availableReal, safeMoney, freeMoney, currency = 'COP', period = 'Mes actual' }: FinancialHeroProps) {
+export default function FinancialHero({ availableReal, safeMoney, freeMoney, warnings, currency = 'COP', period = 'Mes actual' }: FinancialHeroProps) {
   const formatCurrency = (val: string | number) => {
+    if (val === '—') return '—';
     const num = typeof val === 'string' ? parseFloat(val) : val;
-    if (isNaN(num)) return '$0';
+    if (isNaN(num)) return '—';
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency, minimumFractionDigits: 0 }).format(num);
   };
 
@@ -42,6 +44,15 @@ export default function FinancialHero({ availableReal, safeMoney, freeMoney, cur
             <p className="text-lg font-medium">{formatCurrency(freeMoney)}</p>
           </div>
         </div>
+
+        {warnings && warnings.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-white/10 text-xs text-white/60">
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              {warnings[0]}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

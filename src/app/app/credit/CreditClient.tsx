@@ -63,6 +63,9 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
       cutoff_day: parseInt(formData.get('cutoff_day') as string, 10),
       due_day: parseInt(formData.get('due_day') as string, 10),
       currency: formData.get('currency') as string || 'COP',
+      management_fee: 0,
+      monthly_interest_rate: 0,
+      annual_interest_rate: 0,
     };
 
     const result = await createCreditCardAction(data);

@@ -194,16 +194,27 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           {activeGoals.map(goal => {
-            const currentAmount = parseFloat(goal.current_amount);
-            const targetAmount = parseFloat(goal.target_amount);
-            const progressVal = goal.progress_percentage 
-              ? parseFloat(goal.progress_percentage)
-              : targetAmount > 0 
-                ? (currentAmount / targetAmount) * 100 
-                : 0;
-                
-            const displayProgress = Math.min(Math.max(progressVal, 0), 100);
-            const isCompleted = displayProgress >= 100 || goal.status === 'completed';
+            const isCompleted = goal.status === 'completed';
+
+            const formatVal = (val: string | null | undefined) => {
+              if (val == null || val === '—' || val === '') return '—';
+              const num = parseFloat(val);
+              if (isNaN(num)) return '—';
+              return formatCurrency(num, 'COP');
+            };
+
+            const periodStatusLabels: Record<string, string> = {
+              pending: 'Pendiente',
+              partial: 'Parcial',
+              covered: 'Cubierta',
+              paid: 'Cubierta',
+              overdue: 'Atrasada',
+              flexible: 'Flexible'
+            };
+
+            const periodStatusHuman = goal.period_status ? (periodStatusLabels[goal.period_status] || goal.period_status) : '—';
+            const progressVal = goal.progress_percentage != null ? parseFloat(goal.progress_percentage) : null;
+            const displayProgress = progressVal !== null && !isNaN(progressVal) ? Math.min(Math.max(progressVal, 0), 100) : null;
 
             return (
               <div 
@@ -242,36 +253,52 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                     <div>
                       <p className="text-sm font-medium text-graphite-blue/60 mb-1">Acumulado</p>
                       <p className="text-2xl font-semibold text-graphite-blue flex items-baseline gap-1">
-                        {formatCurrency(currentAmount, 'COP')}
+                        {formatVal(goal.current_amount)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-graphite-blue/50 mb-1">Objetivo</p>
                       <p className="text-sm font-medium text-graphite-blue">
-                        {formatCurrency(targetAmount, 'COP')}
+                        {formatVal(goal.target_amount)}
                       </p>
                     </div>
                   </div>
 
                   {/* Progress Bar */}
                   <div className="w-full bg-graphite-blue/5 rounded-full h-2.5 mt-4 overflow-hidden relative">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-1000 ease-out ${isCompleted ? 'bg-green-500' : 'bg-sage-green'}`}
-                      style={{ width: `${displayProgress}%` }}
-                    />
+                    {displayProgress !== null && (
+                      <div 
+                        className={`h-full rounded-full transition-all duration-1000 ease-out ${isCompleted ? 'bg-green-500' : 'bg-sage-green'}`}
+                        style={{ width: `${displayProgress}%` }}
+                      />
+                    )}
                   </div>
                   <div className="flex justify-between items-center mt-2">
                     <p className="text-xs font-medium text-graphite-blue/50">
-                      {displayProgress.toFixed(1)}% completado
+                      {goal.progress_percentage != null ? `${parseFloat(goal.progress_percentage).toFixed(1)}% completado` : '—'}
                     </p>
-                    {!goal.target_date && !isCompleted ? (
-                      <p className="text-xs text-graphite-blue/40 font-medium">Aporte flexible</p>
-                    ) : goal.monthly_required && !isCompleted ? (
+                    {goal.is_flexible ? (
+                      <p className="text-xs text-graphite-blue/40 font-medium">Aporta cuando quieras</p>
+                    ) : (
                       <p className="text-xs text-graphite-blue/40">
-                        Req. mensual: {formatCurrency(parseFloat(goal.monthly_required), 'COP')}
+                        Req. mensual: {formatVal(goal.monthly_required)}
                       </p>
-                    ) : null}
+                    )}
                   </div>
+
+                  {/* Period info if not flexible */}
+                  {!goal.is_flexible && (
+                    <div className="mt-4 pt-4 border-t border-graphite-blue/5 grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-graphite-blue/50 block">Estado Periodo:</span>
+                        <span className="font-medium text-graphite-blue">{periodStatusHuman}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-graphite-blue/50 block">Restante Periodo:</span>
+                        <span className="font-medium text-graphite-blue">{formatVal(goal.remaining_required_this_period)}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-graphite-blue/5 flex gap-3">
