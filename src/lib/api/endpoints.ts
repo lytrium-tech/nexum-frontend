@@ -236,7 +236,7 @@ export const api = {
     }
   },
   conversations: {
-    message: (data: { message: string; channel?: string; external_message_id?: string | null }, isServer = false) =>
+    message: (data: { message: string; channel?: string; external_message_id?: string | null; pending_action_id?: string | null }, isServer = false) =>
       apiClient<{
         response_text: string;
         intent?: string;

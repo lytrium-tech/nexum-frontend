@@ -9,6 +9,7 @@ type Message = {
   content: string;
   status?: 'sending' | 'error' | 'sent';
   isPendingAction?: boolean;
+  structured_data?: unknown;
 };
 
 export default function ChatInterface() {
@@ -85,7 +86,8 @@ export default function ChatInterface() {
           id: crypto.randomUUID(),
           role: 'assistant',
           content: response.response_text,
-          isPendingAction: response.status === 'awaiting_clarification' || response.status === 'awaiting_confirmation'
+          isPendingAction: response.status === 'awaiting_clarification' || response.status === 'awaiting_confirmation',
+          structured_data: response.structured_data
         }
       ]);
     } catch (error: unknown) {
@@ -160,6 +162,11 @@ export default function ChatInterface() {
                 }`}
               >
                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                {process.env.NEXT_PUBLIC_DEBUG_CHAT === 'true' && msg.structured_data && typeof msg.structured_data === 'object' ? (
+                  <div className="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs overflow-x-auto text-slate-600">
+                    <pre>{JSON.stringify(msg.structured_data, null, 2)}</pre>
+                  </div>
+                ) : null}
                 {msg.status === 'error' && (
                   <span className="text-xs text-red-300 mt-2 block">No se pudo enviar.</span>
                 )}

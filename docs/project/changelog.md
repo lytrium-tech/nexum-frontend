@@ -12,6 +12,13 @@
 - UI mínima de creación de cuenta bajo `AccountCreate` DTO (limitado a Name, Type y Currency).
 - Constante temporal `TEMPORARY_ALPHA_CATEGORY_FALLBACK` para categorías del Alpha Privado.
 
+## [Unreleased] - Fase 9 (Chat Alignment with Backend V1.1)
+### Changed
+- Añadido el manejo de `pending_action_id` y su estado persistente a lo largo de una conversación.
+- Reflejado visualmente el estado de una acción pendiente si el backend retorna `awaiting_confirmation` o `awaiting_clarification`.
+- Actualizado el tipo de mensaje y estado devuelto en `ChatInterface.tsx` y `endpoints.ts`.
+- Añadido renderizado en modo "read-only" visual para `structured_data` en respuestas del chat. No se deriva nueva lógica financiera.
+
 ## [Unreleased] - Fase 8 (Categories V1.1 Alignment)
 ### Changed
 - Añadido el parámetro `include_inactive` al endpoint de lista de categorías en `endpoints.ts`.
