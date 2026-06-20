@@ -295,14 +295,20 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-graphite-blue/5 flex gap-3">
-                  <button
-                    onClick={() => openPayModal(obligation)}
-                    disabled={!obligation.is_pending}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2 ${obligation.is_pending ? 'bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white' : 'bg-graphite-blue/5 text-graphite-blue/40 cursor-not-allowed'}`}
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    {obligation.is_pending ? 'Registrar pago' : 'Periodo cubierto'}
-                  </button>
+                  {(() => {
+                    const remaining = parseFloat(String(obligation.remaining_amount || "0"));
+                    const canPay = obligation.is_pending || remaining > 0;
+                    return (
+                      <button
+                        onClick={() => openPayModal(obligation)}
+                        disabled={!canPay}
+                        className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2 ${canPay ? 'bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white' : 'bg-graphite-blue/5 text-graphite-blue/40 cursor-not-allowed'}`}
+                      >
+                        <CreditCard className="w-4 h-4" />
+                        {canPay ? 'Registrar pago' : 'Periodo cubierto'}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             );

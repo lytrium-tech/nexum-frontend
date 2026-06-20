@@ -13,6 +13,7 @@ Backend behavior itself is documented in the backend repository. Do not duplicat
 | Goal requirements can return unrounded decimal values for COP. | Goals UI | UX friction because users usually pay whole currency units. Backend should return rounded values. | Open |
 | Home / Cashflow Summary mixes historical and monthly metrics. | Home Dashboard | Net Balance is confusing due to mixed periods. SnapshotCashflow should reflect the current month. | Open |
 | `credit_card_payment` semantics not clear in cashflow. | Ledger UI | It should reduce `available_real` and credit card debt, but not duplicate consumption expenses. Backend should separate consumption and debt payments. | Open |
+| Obligation creation handles overdue dates poorly. | Obligations UI | When creating an obligation with a due day already passed in the current period, the product needs a backend-supported onboarding choice (Already paid this period, Still pending / overdue, Start next period) to avoid double cash deduction. | Open |
 
 ## Handoff Rules
 
