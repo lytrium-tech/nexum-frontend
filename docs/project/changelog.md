@@ -12,6 +12,10 @@
 - UI mínima de creación de cuenta bajo `AccountCreate` DTO (limitado a Name, Type y Currency).
 - Constante temporal `TEMPORARY_ALPHA_CATEGORY_FALLBACK` para categorías del Alpha Privado.
 
+## [Unreleased] - Fase 10 (Frontend Alpha Readiness Audit)
+### Changed
+- Auditoría general estática completada exitosamente. Se certifica el frontend como apto para inicio de Alpha Cerrada V1.1.
+
 ## [Unreleased] - Fase 9 (Chat Alignment with Backend V1.1)
 ### Changed
 - Añadido el manejo de `pending_action_id` y su estado persistente a lo largo de una conversación.
