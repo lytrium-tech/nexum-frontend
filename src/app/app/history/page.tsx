@@ -22,12 +22,18 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const getEventIcon = (type: string) => {
-  switch (type) {
+const getEventIcon = (type: string | null | undefined) => {
+  if (!type) return <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">·</div>;
+  switch (type.toLowerCase()) {
     case 'income': return <div className="w-8 h-8 rounded-full bg-sage-green/20 flex items-center justify-center text-sage-green">↓</div>;
     case 'expense': return <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500">↑</div>;
     case 'transfer_out':
     case 'transfer_in': return <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">↔</div>;
+    case 'credit_card_purchase': return <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">💳</div>;
+    case 'credit_card_payment':
+    case 'obligation_payment': return <div className="w-8 h-8 rounded-full bg-sage-green/10 flex items-center justify-center text-sage-green">✓</div>;
+    case 'goal_contribution': return <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-500">★</div>;
+    case 'opening_balance': return <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-500">+</div>;
     default: return <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">·</div>;
   }
 };
@@ -78,21 +84,32 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full pb-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
+      <div className="flex flex-col gap-4 bg-white p-6 rounded-3xl shadow-sm border border-soft-gray overflow-hidden">
         <div>
           <h1 className="text-2xl font-semibold text-graphite-blue">Historial Financiero</h1>
           <p className="text-sm text-gray-500">Revisa tus movimientos recientes y pasados.</p>
         </div>
-        <div className="flex gap-2">
-          {/* Very basic MVP Filter links */}
-          <Link href="/app/history" className={`px-4 py-2 text-sm rounded-full ${!filterType ? 'bg-graphite-blue text-white' : 'bg-gray-100 text-gray-600'}`}>
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
+          <Link href="/app/history" className={`shrink-0 px-4 py-2 text-sm rounded-full ${!filterType ? 'bg-graphite-blue text-white' : 'bg-gray-100 text-gray-600'}`}>
             Todos
           </Link>
-          <Link href="/app/history?event_type=income" className={`px-4 py-2 text-sm rounded-full ${filterType === 'income' ? 'bg-sage-green text-white' : 'bg-gray-100 text-gray-600'}`}>
+          <Link href="/app/history?event_type=income" className={`shrink-0 px-4 py-2 text-sm rounded-full ${filterType === 'income' ? 'bg-sage-green text-white' : 'bg-gray-100 text-gray-600'}`}>
             Ingresos
           </Link>
-          <Link href="/app/history?event_type=expense" className={`px-4 py-2 text-sm rounded-full ${filterType === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+          <Link href="/app/history?event_type=expense" className={`shrink-0 px-4 py-2 text-sm rounded-full ${filterType === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
             Gastos
+          </Link>
+          <Link href="/app/history?event_type=transfer_out" className={`shrink-0 px-4 py-2 text-sm rounded-full ${filterType === 'transfer_out' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+            Transf. Enviadas
+          </Link>
+          <Link href="/app/history?event_type=transfer_in" className={`shrink-0 px-4 py-2 text-sm rounded-full ${filterType === 'transfer_in' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+            Transf. Recibidas
+          </Link>
+          <Link href="/app/history?event_type=credit_card_purchase" className={`shrink-0 px-4 py-2 text-sm rounded-full ${filterType === 'credit_card_purchase' ? 'bg-graphite-blue text-white' : 'bg-gray-100 text-gray-600'}`}>
+            Compras Tarjeta
+          </Link>
+          <Link href="/app/history?event_type=goal_contribution" className={`shrink-0 px-4 py-2 text-sm rounded-full ${filterType === 'goal_contribution' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+            Aportes Metas
           </Link>
         </div>
       </div>

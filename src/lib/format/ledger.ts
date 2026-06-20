@@ -4,46 +4,47 @@ export function formatLedgerAmount({
   direction,
   eventType
 }: {
-  amount: string | number;
-  currency?: string;
-  direction?: string;
-  eventType?: string;
+  amount: string | number | null | undefined;
+  currency?: string | null;
+  direction?: string | null;
+  eventType?: string | null;
 }): string {
+  if (amount == null || amount === '') return '—';
+  
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  if (isNaN(num)) return '$0';
+  if (isNaN(num)) return '—';
 
   const absNum = Math.abs(num);
 
-  // Normalize direction to lowercase to avoid IN vs in issues
   const normalizedDirection = direction?.toLowerCase();
+  const normalizedType = eventType?.toLowerCase();
   
-  let isPositive = false;
+  let sign = '';
   
   if (normalizedDirection === 'in' || normalizedDirection === 'inflow') {
-    isPositive = true;
+    sign = '+';
   } else if (normalizedDirection === 'out' || normalizedDirection === 'outflow') {
-    isPositive = false;
+    sign = '-';
   } else {
-    // Fallback based on eventType
-    const normalizedType = eventType?.toLowerCase();
-    if (normalizedType === 'income' || normalizedType === 'transfer_in' || normalizedType === 'opening_balance') {
-      isPositive = true;
+    // Si direction falta y no es opening_balance, se deja neutral
+    if (normalizedType === 'opening_balance') {
+      sign = '+';
     } else {
-      isPositive = false;
+      sign = '';
     }
   }
 
-  const sign = isPositive ? '+' : '-';
   const formattedAbs = new Intl.NumberFormat('es-CO', { 
     style: 'currency', 
-    currency: currency, 
+    currency: currency || 'COP', 
     minimumFractionDigits: 0 
   }).format(absNum);
 
   return `${sign}${formattedAbs}`;
 }
 
-export function getLedgerEventName(eventType: string): string {
+export function getLedgerEventName(eventType: string | null | undefined): string {
+  if (!eventType) return 'Desconocido';
   const mapper: Record<string, string> = {
     income: 'Ingreso',
     expense: 'Gasto',
@@ -54,7 +55,8 @@ export function getLedgerEventName(eventType: string): string {
     credit_card_purchase: 'Compra con tarjeta',
     credit_card_payment: 'Pago de tarjeta',
     opening_balance: 'Saldo inicial',
-    balance_adjustment: 'Ajuste de saldo'
+    balance_adjustment: 'Ajuste de saldo',
+    manual_adjustment: 'Ajuste manual'
   };
-  return mapper[eventType?.toLowerCase()] || eventType?.replace(/_/g, ' ') || 'Desconocido';
+  return mapper[eventType.toLowerCase()] || eventType.replace(/_/g, ' ') || 'Desconocido';
 }

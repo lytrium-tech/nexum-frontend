@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { createGoalAction, contributeGoalAction } from './actions';
-const formatCurrency = (val: number | string, currency = 'COP') => new Intl.NumberFormat('es-CO', { style: 'currency', currency }).format(Number(val));
+import { formatMoneyOrDash } from '@/lib/format/money';
 
 const Target = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22a10 10 0 110-20 10 10 0 010 20z M12 16a4 4 0 110-8 4 4 0 010 8z M12 12a1 1 0 110-2 1 1 0 010 2z" /></svg>;
 const Plus = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>;
@@ -196,12 +196,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
           {activeGoals.map(goal => {
             const isCompleted = goal.status === 'completed';
 
-            const formatVal = (val: string | null | undefined) => {
-              if (val == null || val === '—' || val === '') return '—';
-              const num = parseFloat(val);
-              if (isNaN(num)) return '—';
-              return formatCurrency(num, 'COP');
-            };
+            const formatVal = (val: string | null | undefined) => formatMoneyOrDash(val, 'COP');
 
             const periodStatusLabels: Record<string, string> = {
               pending: 'Pendiente',
@@ -451,7 +446,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
               <p className="font-semibold text-graphite-blue mt-0.5">{selectedGoal.name}</p>
               <div className="flex justify-between items-center mt-2 text-sm">
                 <span className="text-graphite-blue/50">Progreso actual</span>
-                <span className="font-medium text-graphite-blue">{formatCurrency(parseFloat(selectedGoal.current_amount), 'COP')}</span>
+                <span className="font-medium text-graphite-blue">{formatMoneyOrDash(selectedGoal.current_amount, 'COP')}</span>
               </div>
             </div>
 
@@ -484,7 +479,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                   <option value="">Selecciona una cuenta</option>
                   {accounts.filter(a => a.is_active).map(acc => (
                     <option key={acc.id} value={acc.id}>
-                      {acc.name} — {formatCurrency(parseFloat(acc.balance), acc.currency)}
+                      {acc.name} — {formatMoneyOrDash(acc.balance, acc.currency)}
                     </option>
                   ))}
                 </select>

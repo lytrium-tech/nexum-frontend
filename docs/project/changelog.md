@@ -12,6 +12,22 @@
 - UI mínima de creación de cuenta bajo `AccountCreate` DTO (limitado a Name, Type y Currency).
 - Constante temporal `TEMPORARY_ALPHA_CATEGORY_FALLBACK` para categorías del Alpha Privado.
 
+## [Unreleased] - Fase 7.1 (Goals Money Formatting Hotfix + Backend Handoff)
+### Changed
+- Refactorizado el sistema de formateo monetario con un nuevo utilitario central (`formatMoneyOrDash`) en `src/lib/format/money.ts`.
+- Aplicado el nuevo formateador determinista a `GoalsClient.tsx` para solucionar el "Hydration Error" por diferencias de Locale entre cliente y servidor.
+- Agregados tres nuevos reportes de "Backend Findings" en los docs compartidos y de frontend:
+  1. Necesidad de redondeo de métricas periódicas de metas según reglas de la moneda.
+  2. Aclaración de la semántica de la pantalla principal / Cashflow Dashboard (mezcla actual de métricas históricas y mensuales).
+  3. Semántica de transacciones de tarjetas de crédito y distinción entre consumo de crédito, pago de deudas y salidas operativas en el backend.
+
+## [Unreleased] - Fase 7 (History / Ledger V1.1 Alignment)
+### Changed
+- Refactorización de `formatLedgerAmount` en `src/lib/format/ledger.ts` para que soporte campos neutrales y no falsee como positivos/negativos eventos no marcados explícitamente cuando `direction` es nulo, respetando el contrato estricto del backend V1.1.
+- Agregados los nuevos nombres descriptivos de eventos contables al mapa de labels (`getLedgerEventName`) incluyendo `manual_adjustment` y todos los flujos de tarjetas y créditos.
+- Interfaz gráfica ampliada en `/app/history` incluyendo íconos para cada nuevo tipo de transacción V1.1 (💳, ✓, ★, +).
+- Filtros extendidos para permitir navegación por tipos de transacciones avanzadas sin violar la lógica transaccional limpia del backend.
+
 ## [Unreleased] - Fase 6 (Credit Cards V1.1 Alignment)
 ### Changed
 - Alineación del componente `CreditClient` y tarjetas visuales para renderizar campos estrictos de deuda e intereses del contrato backend (e.g. `total_debt`, `billed_debt`, `unbilled_debt`, `payment_required`, `next_payment_estimate`, `available_credit`, `statement_balance`).

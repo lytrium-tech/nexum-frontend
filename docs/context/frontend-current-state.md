@@ -64,3 +64,10 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 4:** Goals V1.1 Alignment (Completado)
 * **Fase 5:** Obligations V1.1 Payment Modes (Completado)
 * **Fase 6:** Credit Cards V1.1 Alignment (Completado)
+* **Fase 7:** History / Ledger V1.1 Alignment (Completado)
+* **Fase 7.1:** Goals Money Formatting Hotfix + Backend Handoff (Completado)
+
+## Product Notes
+
+**Dashboard/Home Semantics:**
+El Home principal (Snapshot) debe priorizar sistemáticamente las métricas del periodo actual / mes actual, tanto para el Cashflow Summary como para el neto. Los acumulados históricos quedarán reservados para analítica y revisiones pasadas, no para la pantalla del pulso financiero activo.

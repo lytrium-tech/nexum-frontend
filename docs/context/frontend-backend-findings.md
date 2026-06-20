@@ -10,6 +10,9 @@ Backend behavior itself is documented in the backend repository. Do not duplicat
 |---|---|---|---|
 | Frontend OpenAPI cache may lag backend OpenAPI. | Frontend docs audit | New backend fields cannot be consumed safely until the cache and generated types are synced. | Open |
 | Public `/openapi.json` and `/docs` are unavailable from the public backend URL. | Frontend contract sync attempt | Frontend contract sync requires local/exported backend OpenAPI. | Open |
+| Goal requirements can return unrounded decimal values for COP. | Goals UI | UX friction because users usually pay whole currency units. Backend should return rounded values. | Open |
+| Home / Cashflow Summary mixes historical and monthly metrics. | Home Dashboard | Net Balance is confusing due to mixed periods. SnapshotCashflow should reflect the current month. | Open |
+| `credit_card_payment` semantics not clear in cashflow. | Ledger UI | It should reduce `available_real` and credit card debt, but not duplicate consumption expenses. Backend should separate consumption and debt payments. | Open |
 
 ## Handoff Rules
 
