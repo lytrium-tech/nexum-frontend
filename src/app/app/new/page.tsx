@@ -25,7 +25,7 @@ export default async function NewEntryPage() {
     // We can fetch both accounts and categories in parallel
     const [accountsData, categoriesData] = await Promise.all([
       api.accounts.list(true),
-      api.categories.list(true)
+      api.categories.list(undefined, true)
     ]);
     accounts = accountsData;
     categories = categoriesData;

@@ -40,7 +40,7 @@ export async function createFirstAccount(formData: FormData) {
 
   let hasCategories = false
   try {
-    const categories = await api.categories.list(true)
+    const categories = await api.categories.list(undefined, true)
     hasCategories = categories.length > 0
   } catch (error) {
     console.error('Failed to fetch categories:', error)

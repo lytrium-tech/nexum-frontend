@@ -46,7 +46,7 @@ export default async function AppLayout({
     // 4. Get accounts and categories concurrently
     [accounts, categories] = await Promise.all([
       api.accounts.list(true),
-      api.categories.list(true)
+      api.categories.list(undefined, true)
     ]);
 
   } catch (error: unknown) {

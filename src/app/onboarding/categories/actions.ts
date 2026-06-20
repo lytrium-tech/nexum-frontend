@@ -34,7 +34,7 @@ export async function createCategories(formData: FormData) {
 
   let creationError = '';
   try {
-    const existingCategories = await api.categories.list(true).catch(() => []);
+    const existingCategories = await api.categories.list(undefined, true).catch(() => []);
     const existingNames = new Set(existingCategories.map(c => c.name.toLowerCase()));
 
     // Create sequentially to avoid overwhelming the server

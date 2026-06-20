@@ -53,7 +53,6 @@ This document describes the current frontend state only. Backend truth lives in 
 ## Current Frontend Risks
 
 - `docs/contracts/openapi.json` may lag backend V1.1.
-- Category deletion/deactivation UX remains a frontend/product decision even when backend supports the lifecycle.
 
 ## Status
 
@@ -66,6 +65,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 6:** Credit Cards V1.1 Alignment (Completado)
 * **Fase 7:** History / Ledger V1.1 Alignment (Completado)
 * **Fase 7.1:** Goals Money Formatting Hotfix + Backend Handoff (Completado)
+* **Fase 8:** Categories V1.1 Alignment (Completado)
 
 ## Product Notes
 

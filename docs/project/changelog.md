@@ -12,6 +12,14 @@
 - UI mínima de creación de cuenta bajo `AccountCreate` DTO (limitado a Name, Type y Currency).
 - Constante temporal `TEMPORARY_ALPHA_CATEGORY_FALLBACK` para categorías del Alpha Privado.
 
+## [Unreleased] - Fase 8 (Categories V1.1 Alignment)
+### Changed
+- Añadido el parámetro `include_inactive` al endpoint de lista de categorías en `endpoints.ts`.
+- Refactorizado `/app/categories` para usar `is_active` en lugar de borrar categorías.
+- Categorías inactivas personalizadas se muestran bajo una sección desplegable de "Categorías Inactivas".
+- Permitida la desactivación y reactivación de categorías personalizadas mediante toggle.
+- Etiqueta correcta y descripción clara para la categoría `sin_clasificar` (fallback de sistema).
+
 ## [Unreleased] - Fase 7.1 (Goals Money Formatting Hotfix + Backend Handoff)
 ### Changed
 - Refactorizado el sistema de formateo monetario con un nuevo utilitario central (`formatMoneyOrDash`) en `src/lib/format/money.ts`.

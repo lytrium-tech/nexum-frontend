@@ -21,7 +21,7 @@ export default async function CategoriesPage() {
   let hasError = false;
 
   try {
-    categories = await api.categories.list(true);
+    categories = await api.categories.list({ include_inactive: true }, true);
   } catch (error) {
     console.error('Error fetching categories:', error);
     hasError = true;

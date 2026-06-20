@@ -30,7 +30,10 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const globalCategories = categories.filter(c => c.is_global);
-  const customCategories = categories.filter(c => !c.is_global);
+  const activeCustomCategories = categories.filter(c => !c.is_global && c.is_active !== false);
+  const inactiveCustomCategories = categories.filter(c => !c.is_global && c.is_active === false);
+
+  const [showInactive, setShowInactive] = useState(false);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +47,11 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
     const lowerName = name.trim().toLowerCase();
     const existing = categories.find(c => c.type === type && c.name.toLowerCase() === lowerName);
     if (existing) {
-      setError('Ya existe una categoría con este nombre.');
+      if (existing.is_active === false) {
+        setError('Ya existe una categoría inactiva con este nombre. Puedes reactivarla en la sección de inactivas.');
+      } else {
+        setError('Ya existe una categoría con este nombre.');
+      }
       return;
     }
 
@@ -83,6 +90,19 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
         errMsg = 'No se pudo guardar la categoría. Intenta nuevamente.';
       }
       setError(errMsg);
+    }
+  };
+
+  const handleToggleActive = async (id: string, is_active: boolean) => {
+    setError(null);
+    setIsSubmitting(true);
+    const result = await updateCategoryAction(id, { is_active });
+    setIsSubmitting(false);
+
+    if (result.success && result.result) {
+      setCategories(categories.map(c => c.id === id ? result.result! : c));
+    } else {
+      setError(typeof result.error === 'string' ? result.error : 'Error al cambiar estado de la categoría.');
     }
   };
 
@@ -169,10 +189,10 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
         )}
 
         <div className="space-y-3">
-          {customCategories.length === 0 ? (
+          {activeCustomCategories.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-4">No has creado ninguna categoría personalizada aún.</p>
           ) : (
-            customCategories.map(cat => (
+            activeCustomCategories.map(cat => (
               <div key={cat.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 transition-colors gap-3">
                 {editingId === cat.id ? (
                   <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full">
@@ -216,6 +236,13 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                       >
                         Editar
                       </button>
+                      <button
+                        onClick={() => handleToggleActive(cat.id, false)}
+                        disabled={isSubmitting}
+                        className="text-sm font-medium text-slate-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                      >
+                        Desactivar
+                      </button>
                     </div>
                   </>
                 )}
@@ -229,6 +256,46 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
           )}
         </div>
       </div>
+
+      {/* Inactive Section */}
+      {inactiveCustomCategories.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-medium text-slate-800">Categorías Inactivas</h2>
+            <button
+              onClick={() => setShowInactive(!showInactive)}
+              className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              {showInactive ? 'Ocultar' : 'Mostrar'}
+            </button>
+          </div>
+          
+          {showInactive && (
+            <div className="space-y-3">
+              {inactiveCustomCategories.map(cat => (
+                <div key={cat.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-slate-300" />
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-slate-500 line-through">{cat.name}</p>
+                      <p className="text-xs text-slate-400 capitalize hidden sm:block">{cat.type ? TYPE_LABELS[cat.type] || cat.type : 'General'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleToggleActive(cat.id, true)}
+                      disabled={isSubmitting}
+                      className="text-sm font-medium text-slate-500 hover:text-emerald-600 transition-colors disabled:opacity-50"
+                    >
+                      Reactivar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Global Section */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
