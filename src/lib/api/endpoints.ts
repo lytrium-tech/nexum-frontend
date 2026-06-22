@@ -127,8 +127,10 @@ export const api = {
       }, isServer),
   },
   obligations: {
-    list: (isServer = false) =>
-      apiClient<ObligationRead[]>('/api/v1/obligations', { method: 'GET' }, isServer),
+    list: (isServer = false, params?: { include_archived?: boolean }) => {
+      const qs = params?.include_archived ? '?include_archived=true' : '';
+      return apiClient<ObligationRead[]>(`/api/v1/obligations${qs}`, { method: 'GET' }, isServer);
+    },
     create: (data: ObligationCreate, isServer = false) =>
       apiClient<ObligationRead>('/api/v1/obligations', {
         method: 'POST',

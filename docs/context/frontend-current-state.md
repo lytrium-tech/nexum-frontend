@@ -78,6 +78,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 2:** Obligations Covered Status (Completado)
 * **Fase 3/4:** Ledger & Dashboard Multi-Currency (Completado)
 * **Fase 5:** Accounts Cleanup (Completado)
+* **Fase 6:** Obligations Archive Lifecycle (Completado)
 
 ## Product Notes
 

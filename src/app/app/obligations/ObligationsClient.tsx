@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createObligationAction, payObligationAction } from './actions';
+import { createObligationAction, payObligationAction, updateObligationAction } from './actions';
 
 const formatCurrency = (val: number | string, currency = 'COP') => new Intl.NumberFormat('es-CO', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(val));
 
@@ -33,14 +33,21 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [isProcessingId, setIsProcessingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
+
   const [dueDay, setDueDay] = useState<string>('');
   const [initialStatus, setInitialStatus] = useState<'pending' | 'paid' | 'next_period'>('pending');
 
   const currentDay = useMemo(() => new Date().getDate(), []);
   const isPastDue = dueDay ? parseInt(dueDay, 10) < currentDay : false;
 
-  const activeObligations = obligations.filter(o => o.is_active);
-  const activeAccounts = accounts.filter(a => a.is_active);
+  const activeObligations = obligations.filter(o => o.is_active !== false);
+  const archivedObligations = obligations.filter(o => o.is_active === false);
+  const displayedObligations = activeTab === 'active' ? activeObligations : archivedObligations;
+
+  const activeAccounts = accounts.filter(a => a.is_active !== false);
 
   const openPayModal = (obligation: ObligationRead) => {
     setSelectedObligation(obligation);
@@ -216,6 +223,18 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     return formatCurrency(num, curr);
   };
 
+  const handleToggleStatus = async (id: string, newStatus: boolean) => {
+    setIsProcessingId(id);
+    setActionError(null);
+    const result = await updateObligationAction(id, { is_active: newStatus });
+    if (result.success) {
+      setObligations(obligations.map(o => o.id === id ? { ...o, is_active: newStatus } : o));
+    } else {
+      setActionError({ id, message: result.error || 'Error al actualizar la obligación.' });
+    }
+    setIsProcessingId(null);
+  };
+
   return (
     <div className="mx-auto max-w-4xl p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-8">
       {/* Header */}
@@ -235,27 +254,68 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
         </button>
       </div>
 
+      {obligations.length > 0 && (
+        <div className="flex gap-2 border-b border-graphite-blue/10 px-2 pb-2">
+          <button
+            onClick={() => { setActiveTab('active'); setActionError(null); }}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'active' 
+                ? 'bg-graphite-blue text-white' 
+                : 'text-graphite-blue/50 hover:bg-graphite-blue/5'
+            }`}
+          >
+            Activas ({activeObligations.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab('archived'); setActionError(null); }}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'archived' 
+                ? 'bg-graphite-blue text-white' 
+                : 'text-graphite-blue/50 hover:bg-graphite-blue/5'
+            }`}
+          >
+            Archivadas ({archivedObligations.length})
+          </button>
+        </div>
+      )}
+
       {/* List */}
-      {activeObligations.length === 0 ? (
+      {displayedObligations.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-graphite-blue/10 shadow-sm mt-8">
           <div className="w-16 h-16 bg-sage-green/20 rounded-full flex items-center justify-center mb-4">
             <DocumentIcon className="w-8 h-8 text-sage-green" />
           </div>
-          <h3 className="text-xl font-medium text-graphite-blue mb-2">No tienes obligaciones pendientes.</h3>
-          <p className="text-graphite-blue/60 max-w-sm mb-6">
-            Cuando agregues compromisos financieros, aparecerán aquí de forma clara y ordenada.
-          </p>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="text-sage-green font-medium hover:text-sage-green/80 flex items-center gap-1 transition-colors"
-          >
-            <span>Crear obligación</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <h3 className="text-xl font-medium text-graphite-blue mb-2">
+            {obligations.length === 0 
+              ? 'No tienes obligaciones registradas.' 
+              : activeTab === 'archived' 
+                ? 'No tienes obligaciones archivadas.' 
+                : 'No tienes obligaciones activas.'}
+          </h3>
+          {obligations.length === 0 || activeTab === 'active' ? (
+            <>
+              <p className="text-graphite-blue/60 max-w-sm mb-6">
+                {obligations.length === 0 
+                  ? 'Cuando agregues compromisos financieros, aparecerán aquí de forma clara y ordenada.'
+                  : 'Puedes crear una nueva o reactivar una archivada.'}
+              </p>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="text-sage-green font-medium hover:text-sage-green/80 flex items-center gap-1 transition-colors"
+              >
+                <span>Crear obligación</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+             <p className="text-graphite-blue/60 max-w-sm mb-6">
+               Las obligaciones archivadas no generan pagos pendientes ni movimientos.
+             </p>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          {activeObligations.map(obligation => {
+          {displayedObligations.map(obligation => {
             return (
               <div 
                 key={obligation.id} 
@@ -271,22 +331,29 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                     <div className="p-2.5 rounded-2xl flex items-center justify-center shrink-0 bg-graphite-blue/5 text-graphite-blue">
                       <DocumentIcon className="w-6 h-6" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-graphite-blue truncate max-w-[200px]">{obligation.name}</h3>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-graphite-blue/50 mt-1">
-                        <span className="bg-graphite-blue/5 px-2 py-0.5 rounded-md font-medium text-graphite-blue/70">
-                          {getFrequencyLabel(obligation.frequency)}
-                        </span>
-                        <span className="bg-graphite-blue/5 px-2 py-0.5 rounded-md font-medium text-graphite-blue/70">
-                          {getPaymentModeLabel(obligation.payment_mode)}
-                        </span>
-                        {obligation.next_due_date && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>Vence: {new Date(obligation.next_due_date).toLocaleDateString()}</span>
-                          </div>
-                        )}
+                    <div className="flex-1 flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-semibold text-graphite-blue truncate max-w-[200px]">{obligation.name}</h3>
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-graphite-blue/50 mt-1">
+                          <span className="bg-graphite-blue/5 px-2 py-0.5 rounded-md font-medium text-graphite-blue/70">
+                            {getFrequencyLabel(obligation.frequency)}
+                          </span>
+                          <span className="bg-graphite-blue/5 px-2 py-0.5 rounded-md font-medium text-graphite-blue/70">
+                            {getPaymentModeLabel(obligation.payment_mode)}
+                          </span>
+                          {obligation.next_due_date && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>Vence: {new Date(obligation.next_due_date).toLocaleDateString()}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      {obligation.is_active === false && (
+                        <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-md uppercase font-semibold shrink-0 ml-2 mt-1">
+                          Archivada
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -327,27 +394,52 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   </div>
                 </div>
 
-                <div className="mt-6 pt-5 border-t border-graphite-blue/5 flex gap-3">
-                  {(() => {
-                    const remaining = parseFloat(String(obligation.remaining_amount || "0"));
-                    const canPay = obligation.is_pending || remaining > 0;
-                    
-                    let buttonText = 'Registrar pago';
-                    if (!canPay) {
-                      buttonText = obligation.period_status === 'covered' ? 'Cubierta sin pago local' : 'Periodo pagado';
-                    }
+                  {actionError?.id === obligation.id && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-600 font-medium">
+                      {actionError.message}
+                    </div>
+                  )}
 
-                    return (
+                <div className="mt-6 pt-5 border-t border-graphite-blue/5 flex gap-3">
+                  {obligation.is_active !== false ? (
+                    <>
                       <button
-                        onClick={() => openPayModal(obligation)}
-                        disabled={!canPay}
-                        className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2 ${canPay ? 'bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white' : 'bg-graphite-blue/5 text-graphite-blue/40 cursor-not-allowed'}`}
+                        onClick={() => handleToggleStatus(obligation.id, false)}
+                        disabled={isProcessingId === obligation.id}
+                        className="flex-1 py-2 bg-graphite-blue/5 text-graphite-blue/70 hover:bg-graphite-blue/10 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
                       >
-                        <CreditCard className="w-4 h-4" />
-                        {buttonText}
+                        Archivar
                       </button>
-                    );
-                  })()}
+                      {(() => {
+                        const remaining = parseFloat(String(obligation.remaining_amount || "0"));
+                        const canPay = obligation.is_pending || remaining > 0;
+                        
+                        let buttonText = 'Registrar pago';
+                        if (!canPay) {
+                          buttonText = obligation.period_status === 'covered' ? 'Cubierta' : 'Pagada';
+                        }
+
+                        return (
+                          <button
+                            onClick={() => openPayModal(obligation)}
+                            disabled={!canPay}
+                            className={`flex-[2] py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2 ${canPay ? 'bg-graphite-blue text-white hover:bg-graphite-blue/90' : 'bg-graphite-blue/5 text-graphite-blue/40 cursor-not-allowed'}`}
+                          >
+                            <CreditCard className="w-4 h-4" />
+                            {buttonText}
+                          </button>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleStatus(obligation.id, true)}
+                      disabled={isProcessingId === obligation.id}
+                      className="flex-1 py-2 bg-graphite-blue/5 text-graphite-blue/70 hover:bg-graphite-blue/10 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+                    >
+                      Reactivar
+                    </button>
+                  )}
                 </div>
               </div>
             );

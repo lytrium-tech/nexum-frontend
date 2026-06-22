@@ -19,8 +19,8 @@ export default async function ObligationsPage() {
   let obligations = [];
   let accounts = [];
   try {
-    const obligationsPromise = api.obligations.list(true);
-    const accountsPromise = api.accounts.list(true);
+    const obligationsPromise = api.obligations.list(true, { include_archived: true });
+    const accountsPromise = api.accounts.list(true, { include_archived: true });
     
     const results = await Promise.all([obligationsPromise, accountsPromise]);
     obligations = results[0];
