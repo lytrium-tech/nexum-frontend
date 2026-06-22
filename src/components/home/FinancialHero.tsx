@@ -68,13 +68,13 @@ export default function FinancialHero({
           <div className="mt-2 border-white/10 pt-2">
             <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-3">Saldos por moneda</p>
             <div className="space-y-2">
-              {totalsList.map((item: any) => (
+              {totalsList.map((item: { currency: string; available_real?: string }) => (
                 <div key={item.currency} className="flex justify-between items-center text-sm">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-white/90 w-10">{item.currency}</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-champagne-gold font-medium">{formatMoneyOrDash(item.available_real, item.currency)}</span>
+                    <span className="text-champagne-gold font-medium">{formatMoneyOrDash(item.available_real || '0', item.currency)}</span>
                   </div>
                 </div>
               ))}

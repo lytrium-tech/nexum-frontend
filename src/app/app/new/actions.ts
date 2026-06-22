@@ -8,6 +8,7 @@ export async function createEntryAction(data: {
   type: 'income' | 'expense';
   accountId: string;
   amount: number;
+  currency: string;
   categoryId?: string;
   description?: string;
 }) {
@@ -16,6 +17,7 @@ export async function createEntryAction(data: {
     const payload = {
       account_id: data.accountId,
       amount: data.amount,
+      currency: data.currency,
       category_id: data.categoryId || null,
       description: data.description || null,
       source: 'manual' as const

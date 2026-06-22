@@ -64,10 +64,18 @@ export default function NewEntryClient({
 
     setIsSubmitting(true);
 
+    const selectedAccount = activeAccounts.find(a => a.id === accountId);
+    if (!selectedAccount || !selectedAccount.currency) {
+      setError('No pudimos identificar la moneda de esta cuenta. Intenta seleccionarla nuevamente.');
+      return;
+    }
+    const currency = selectedAccount.currency;
+
     const result = await createEntryAction({
       type,
       accountId,
       amount: numAmount,
+      currency,
       categoryId: categoryId || undefined,
       description: description.trim() || undefined
     });

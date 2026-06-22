@@ -62,6 +62,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
     const name = formData.get('name') as string;
     const targetAmountStr = formData.get('targetAmount') as string;
     const targetDateStr = formData.get('targetDate') as string;
+    const currency = formData.get('currency') as string || 'COP';
 
     const target_amount = parseFloat(targetAmountStr);
     if (isNaN(target_amount) || target_amount <= 0) {
@@ -80,7 +81,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
       name: name.trim(),
       target_amount: target_amount,
       target_date: targetDateStr || undefined,
-      currency: "COP", // TODO: V1.4 Alignment
+      currency: currency,
     };
 
     const res = await createGoalAction(payload);
@@ -369,6 +370,24 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                   className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
                   disabled={isSubmitting || !!successMessage}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="currency">
+                  Moneda *
+                </label>
+                <select
+                  id="currency"
+                  name="currency"
+                  required
+                  defaultValue="COP"
+                  className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
+                  disabled={isSubmitting || !!successMessage}
+                >
+                  <option value="COP">COP - Peso Colombiano</option>
+                  <option value="USD">USD - Dólar Estadounidense</option>
+                  <option value="EUR">EUR - Euro</option>
+                </select>
               </div>
 
               <div>

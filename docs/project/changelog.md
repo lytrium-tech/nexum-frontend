@@ -27,11 +27,10 @@
 ### Changed
 - Auditoría general estática completada exitosamente. Se certifica el frontend como apto para inicio de Alpha Cerrada V1.1.
 
-## [Unreleased] - Fase 1 (Frontend V1.4 OpenAPI Sync + Type Recovery)
+## [Unreleased] - Frontend V1.4
 ### Changed
-- Sincronizado el contrato OpenAPI con Backend V1.4, requiriendo validación de tipos por obligatoriedad de la moneda (`currency`) en los esquemas de creación (`GoalCreate`, `ObligationCreate`, etc).
-- Agregados los tipos auxiliares temporales `currency: "COP"` a nivel local en `GoalsClient` y `ObligationsClient` para recuperar el build tras regenerar tipos generados, posibilitando el avance hacia las fases de formularios multi-moneda completos.
-- Verificado el nuevo modelo de snapshot incorporando soporte a la capa de agregación `estimated_totals` para futuras vistas de Net Worth.
+- **Fase 1**: Sincronizado el contrato OpenAPI con Backend V1.4, requiriendo validación de tipos por obligatoriedad de la moneda (`currency`) en los esquemas de creación (`GoalCreate`, `ObligationCreate`, etc). Agregados los tipos auxiliares temporales `currency: "COP"` para recuperar el build. Verificado el nuevo modelo de snapshot incorporando soporte a la capa de agregación `estimated_totals`.
+- **Fase 2**: Reemplazados los hotfixes temporales `currency: "COP"` por selectores explícitos de moneda (COP/USD/EUR) en los formularios de creación de Goals, Obligations y Credit Cards (Accounts ya lo tenía). Para nuevos movimientos manuales, la moneda se hereda automáticamente de la cuenta seleccionada (`NewEntryClient`). Tipos estrictos aplicados en `FinancialHero`.
 
 ## [Unreleased] - Fase 9 (Chat Alignment with Backend V1.1)
 ### Changed

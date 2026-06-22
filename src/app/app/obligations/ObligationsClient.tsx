@@ -78,6 +78,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     const amountStr = formData.get('amount') as string;
     const paymentMode = formData.get('paymentMode') as string || 'fixed_full_payment';
     const frequency = formData.get('frequency') as string;
+    const currency = formData.get('currency') as string || 'COP';
 
     const amount = parseFloat(amountStr);
     if (paymentMode !== 'variable_amount' && (isNaN(amount) || amount <= 0)) {
@@ -99,7 +100,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       already_paid_this_period: false,
       start_next_period: false,
       pending_this_period: true,
-      currency: "COP", // TODO: V1.4 Alignment
+      currency: currency,
     };
 
     if (isPastDue) {
@@ -494,6 +495,24 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
                   disabled={isSubmitting || !!successMessage}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="currency">
+                  Moneda *
+                </label>
+                <select
+                  id="currency"
+                  name="currency"
+                  required
+                  defaultValue="COP"
+                  className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
+                  disabled={isSubmitting || !!successMessage}
+                >
+                  <option value="COP">COP - Peso Colombiano</option>
+                  <option value="USD">USD - Dólar Estadounidense</option>
+                  <option value="EUR">EUR - Euro</option>
+                </select>
               </div>
 
               <div>

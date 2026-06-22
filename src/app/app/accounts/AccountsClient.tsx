@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { createAccountAction, deleteAccountAction, updateAccountStatusAction } from './actions';
+import { createAccountAction, updateAccountStatusAction } from './actions';
 
 type AccountRead = {
   id: string;
@@ -12,12 +12,7 @@ type AccountRead = {
   is_active?: boolean | null;
 };
 
-type AccountSummary = {
-  total_balance: string;
-  accounts_count: number;
-  active_accounts_count: number;
-  currency: string;
-};
+
 
 const getAccountIcon = (type: string) => {
   switch (type) {
@@ -97,16 +92,7 @@ export default function AccountsClient({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de que deseas intentar eliminar esta cuenta?')) return;
-    setIsProcessingId(id);
-    setActionError(null);
-    const result = await deleteAccountAction(id);
-    if (!result.success) {
-      setActionError({ id, message: result.error || 'Error al eliminar la cuenta.' });
-    }
-    setIsProcessingId(null);
-  };
+
 
   const handleToggleStatus = async (id: string, newStatus: boolean) => {
     setIsProcessingId(id);

@@ -400,6 +400,24 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                       </div>
 
                       <div>
+                        <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="currency">
+                          Moneda *
+                        </label>
+                        <select
+                          id="currency"
+                          name="currency"
+                          required
+                          defaultValue="COP"
+                          className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
+                          disabled={isSubmitting}
+                        >
+                          <option value="COP">COP - Peso Colombiano</option>
+                          <option value="USD">USD - Dólar Estadounidense</option>
+                          <option value="EUR">EUR - Euro</option>
+                        </select>
+                      </div>
+
+                      <div>
                         <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="credit_limit">
                           Cupo total *
                         </label>
