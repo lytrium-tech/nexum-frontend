@@ -37,3 +37,40 @@ export async function createAccountAction(data: {
     return { success: false, error: message };
   }
 }
+
+export async function deleteAccountAction(id: string) {
+  try {
+    await api.accounts.delete(id, true);
+    revalidatePath('/app/accounts');
+    return { success: true };
+  } catch (err: unknown) {
+    console.error('Delete account action error:', err);
+    let message = 'No pudimos eliminar la cuenta.';
+    
+    const apiError = err as { status?: number; message?: string };
+    // If backend rejects because of history, suggest archiving
+    if (apiError?.status === 409 || (apiError?.message && typeof apiError.message === 'string' && apiError.message.includes('history'))) {
+      message = 'No se puede eliminar esta billetera porque tiene movimientos. Puedes archivarla para ocultarla de la vista principal.';
+    } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado') {
+      message = apiError.message;
+    }
+    
+    return { success: false, error: message };
+  }
+}
+
+export async function updateAccountStatusAction(id: string, is_active: boolean) {
+  try {
+    await api.accounts.update(id, { is_active }, true);
+    revalidatePath('/app/accounts');
+    return { success: true };
+  } catch (err: unknown) {
+    console.error('Update account status error:', err);
+    let message = 'No pudimos actualizar el estado de la cuenta.';
+    const apiError = err as { status?: number; message?: string };
+    if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado') {
+      message = apiError.message;
+    }
+    return { success: false, error: message };
+  }
+}

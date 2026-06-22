@@ -63,6 +63,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 1:** OpenAPI Sync + Type Recovery (Completado)
 * **Fase 2:** Home Snapshot + Multi-currency (Completado)
 * **Fase 3:** Goals Daily Required (Completado)
+* **Fase 4:** Accounts Archiving (Completado)
 
 ## Product Notes
 

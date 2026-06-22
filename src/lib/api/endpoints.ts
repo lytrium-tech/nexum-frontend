@@ -60,8 +60,10 @@ export const api = {
       }, isServer),
   },
   accounts: {
-    list: (isServer = false) => 
-      apiClient<AccountRead[]>('/api/v1/accounts', { method: 'GET' }, isServer),
+    list: (isServer = false, params?: { include_archived?: boolean }) => {
+      const qs = params?.include_archived ? '?include_archived=true' : '';
+      return apiClient<AccountRead[]>(`/api/v1/accounts${qs}`, { method: 'GET' }, isServer);
+    },
     summary: (isServer = false) =>
       apiClient<components['schemas']['AccountSummary']>('/api/v1/accounts/summary', { method: 'GET' }, isServer),
     get: (id: string, isServer = false) =>

@@ -32,7 +32,7 @@ export default async function AccountsPage() {
 
   try {
     const [accountsData, summaryData] = await Promise.all([
-      api.accounts.list(true),
+      api.accounts.list(true, { include_archived: true }),
       api.accounts.summary(true).catch(() => null) // Optional summary
     ]);
     accounts = accountsData;

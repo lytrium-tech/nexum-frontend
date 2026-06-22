@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { createAccountAction } from './actions';
+import { createAccountAction, deleteAccountAction, updateAccountStatusAction } from './actions';
 
 type AccountRead = {
   id: string;
@@ -51,10 +51,22 @@ export default function AccountsClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
+  const [isProcessingId, setIsProcessingId] = useState<string | null>(null);
+
+  const activeAccounts = initialAccounts.filter(a => a.is_active !== false);
+  const archivedAccounts = initialAccounts.filter(a => a.is_active === false);
+  const displayedAccounts = activeTab === 'active' ? activeAccounts : archivedAccounts;
+
   const formatBalance = (val: string | number, currency: string = 'COP') => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
     if (isNaN(num)) return '$0';
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency, minimumFractionDigits: 0 }).format(num);
+    
+    if (currency === 'COP') {
+      return new Intl.NumberFormat('es-CO', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+    }
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,6 +94,27 @@ export default function AccountsClient({
     } else {
       setError(result.error || 'Error al crear la cuenta.');
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de que deseas intentar eliminar esta cuenta?')) return;
+    setIsProcessingId(id);
+    setActionError(null);
+    const result = await deleteAccountAction(id);
+    if (!result.success) {
+      setActionError({ id, message: result.error || 'Error al eliminar la cuenta.' });
+    }
+    setIsProcessingId(null);
+  };
+
+  const handleToggleStatus = async (id: string, newStatus: boolean) => {
+    setIsProcessingId(id);
+    setActionError(null);
+    const result = await updateAccountStatusAction(id, newStatus);
+    if (!result.success) {
+      setActionError({ id, message: result.error || 'Error al actualizar la cuenta.' });
+    }
+    setIsProcessingId(null);
   };
 
   return (
@@ -113,7 +146,7 @@ export default function AccountsClient({
       )}
 
       {isCreating && (
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray animate-in fade-in zoom-in-95 duration-200">
           <h2 className="text-lg font-medium text-graphite-blue mb-4">Crear nueva cuenta</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {error && (
@@ -188,26 +221,57 @@ export default function AccountsClient({
         </div>
       )}
 
-      {initialAccounts.length === 0 ? (
+      {initialAccounts.length > 0 && (
+        <div className="flex gap-2 border-b border-gray-200 px-2 pb-2">
+          <button
+            onClick={() => { setActiveTab('active'); setActionError(null); }}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'active' 
+                ? 'bg-graphite-blue text-white' 
+                : 'text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            Activas ({activeAccounts.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab('archived'); setActionError(null); }}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'archived' 
+                ? 'bg-graphite-blue text-white' 
+                : 'text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            Archivadas ({archivedAccounts.length})
+          </button>
+        </div>
+      )}
+
+      {displayedAccounts.length === 0 ? (
         <div className="bg-white p-12 rounded-3xl shadow-sm border border-soft-gray text-center mt-4">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
             💳
           </div>
-          <h2 className="text-xl font-medium text-graphite-blue mb-2">No tienes cuentas</h2>
-          <p className="text-gray-500 mb-6">Agrega tu primera cuenta para empezar a registrar movimientos.</p>
-          {!isCreating && (
-            <button 
-              onClick={() => setIsCreating(true)}
-              className="bg-graphite-blue text-white py-2 px-6 rounded-xl hover:bg-graphite-blue/90 font-medium transition-colors"
-            >
-              Crear mi primera cuenta
-            </button>
+          <h2 className="text-xl font-medium text-graphite-blue mb-2">No hay cuentas {activeTab === 'archived' ? 'archivadas' : 'activas'}</h2>
+          {activeTab === 'active' ? (
+            <>
+              <p className="text-gray-500 mb-6">Agrega tu primera cuenta para empezar a registrar movimientos.</p>
+              {!isCreating && (
+                <button 
+                  onClick={() => setIsCreating(true)}
+                  className="bg-graphite-blue text-white py-2 px-6 rounded-xl hover:bg-graphite-blue/90 font-medium transition-colors"
+                >
+                  Crear mi primera cuenta
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-500">Las cuentas archivadas se ocultan de tu balance principal pero conservan su historial.</p>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-          {initialAccounts.map(account => (
-            <div key={account.id} className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray hover:shadow-md transition-shadow flex flex-col justify-between h-full relative overflow-hidden group">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          {displayedAccounts.map(account => (
+            <div key={account.id} className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray hover:shadow-md transition-shadow flex flex-col justify-between relative group">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-lg shadow-sm border border-gray-100">
@@ -220,15 +284,52 @@ export default function AccountsClient({
                 </div>
                 {!account.is_active && (
                   <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-md uppercase font-semibold">
-                    Inactiva
+                    Archivada
                   </span>
                 )}
               </div>
-              <div>
+              
+              <div className="mb-4">
                 <p className={`text-2xl font-semibold tracking-tight ${account.balance?.startsWith('-') ? 'text-red-500' : 'text-graphite-blue'}`}>
                   {formatBalance(account.balance || '0', account.currency)}
                 </p>
                 <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{account.currency}</p>
+              </div>
+
+              {actionError?.id === account.id && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-600 font-medium">
+                  {actionError.message}
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-gray-100 flex gap-2">
+                {account.is_active !== false ? (
+                  <>
+                    <button
+                      onClick={() => handleToggleStatus(account.id, false)}
+                      disabled={isProcessingId === account.id}
+                      className="flex-1 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-xl text-xs font-medium transition-colors disabled:opacity-50"
+                      title="Archivar oculta la billetera de tu vista principal sin borrar su historial."
+                    >
+                      Archivar
+                    </button>
+                    <button
+                      onClick={() => handleDelete(account.id)}
+                      disabled={isProcessingId === account.id}
+                      className="py-2 px-3 text-red-500 hover:bg-red-50 rounded-xl text-xs font-medium transition-colors disabled:opacity-50"
+                    >
+                      Eliminar
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => handleToggleStatus(account.id, true)}
+                    disabled={isProcessingId === account.id}
+                    className="flex-1 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-xl text-xs font-medium transition-colors disabled:opacity-50"
+                  >
+                    Reactivar
+                  </button>
+                )}
               </div>
             </div>
           ))}
