@@ -22,8 +22,13 @@ export default function FinancialHero({
   totalsByCurrency
 }: FinancialHeroProps) {
 
+  const isTotalsArray = Array.isArray(totalsByCurrency);
+  const totalsList = isTotalsArray 
+    ? totalsByCurrency 
+    : (totalsByCurrency ? Object.entries(totalsByCurrency).map(([curr, metrics]) => ({ currency: curr, ...(metrics as object) })) : []);
+
   const hasWarning = warnings?.includes('cross_currency_global_totals_disabled') || false;
-  const hasMultipleCurrencies = hasWarning || (totalsByCurrency && Object.keys(totalsByCurrency).length > 1);
+  const hasMultipleCurrencies = hasWarning || totalsList.length > 1;
 
   const displayWarnings = warnings?.filter(w => w !== 'cross_currency_global_totals_disabled') || [];
 
@@ -63,13 +68,13 @@ export default function FinancialHero({
           <div className="mt-2 border-white/10 pt-2">
             <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-3">Saldos por moneda</p>
             <div className="space-y-2">
-              {totalsByCurrency && Object.entries(totalsByCurrency).map(([curr, metrics]) => (
-                <div key={curr} className="flex justify-between items-center text-sm">
+              {totalsList.map((item: any) => (
+                <div key={item.currency} className="flex justify-between items-center text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-white/90 w-10">{curr}</span>
+                    <span className="font-semibold text-white/90 w-10">{item.currency}</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-champagne-gold font-medium">{formatMoneyOrDash(metrics.available_real, curr)}</span>
+                    <span className="text-champagne-gold font-medium">{formatMoneyOrDash(item.available_real, item.currency)}</span>
                   </div>
                 </div>
               ))}
