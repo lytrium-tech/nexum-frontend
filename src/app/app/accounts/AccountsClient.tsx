@@ -140,7 +140,11 @@ export default function AccountsClient({
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
             <p className="text-sm text-gray-500 mb-1">Cuentas Activas</p>
-            <p className="text-xl font-semibold text-graphite-blue">{initialSummary.active_accounts_count} <span className="text-sm text-gray-400 font-normal">/ {initialSummary.accounts_count}</span></p>
+            <p className="text-xl font-semibold text-graphite-blue">{initialSummary.active_accounts_count}</p>
+          </div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
+            <p className="text-sm text-gray-500 mb-1">Cuentas Archivadas</p>
+            <p className="text-xl font-semibold text-graphite-blue">{initialSummary.accounts_count - initialSummary.active_accounts_count}</p>
           </div>
         </div>
       )}
@@ -180,7 +184,20 @@ export default function AccountsClient({
                   <option value="savings">Ahorros</option>
                 </select>
               </div>
-              <div className="md:col-span-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
+                <select 
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-graphite-blue outline-none bg-white"
+                  value={formData.currency}
+                  onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                  disabled={isSubmitting}
+                >
+                  <option value="COP">COP - Peso Colombiano</option>
+                  <option value="USD">USD - Dólar Estadounidense</option>
+                  <option value="EUR">EUR - Euro</option>
+                </select>
+              </div>
+              <div className="md:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Saldo inicial (opcional)</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
@@ -254,13 +271,17 @@ export default function AccountsClient({
           <h2 className="text-xl font-medium text-graphite-blue mb-2">No hay cuentas {activeTab === 'archived' ? 'archivadas' : 'activas'}</h2>
           {activeTab === 'active' ? (
             <>
-              <p className="text-gray-500 mb-6">Agrega tu primera cuenta para empezar a registrar movimientos.</p>
+              <p className="text-gray-500 mb-6">
+                {(initialSummary && initialSummary.accounts_count > initialSummary.active_accounts_count)
+                  ? 'No tienes billeteras activas. Crea una nueva o reactiva una billetera archivada.' 
+                  : 'Agrega tu primera cuenta para empezar a registrar movimientos.'}
+              </p>
               {!isCreating && (
                 <button 
                   onClick={() => setIsCreating(true)}
                   className="bg-graphite-blue text-white py-2 px-6 rounded-xl hover:bg-graphite-blue/90 font-medium transition-colors"
                 >
-                  Crear mi primera cuenta
+                  {(initialSummary && initialSummary.accounts_count > initialSummary.active_accounts_count) ? 'Crear nueva cuenta' : 'Crear mi primera cuenta'}
                 </button>
               )}
             </>
@@ -312,13 +333,6 @@ export default function AccountsClient({
                       title="Archivar oculta la billetera de tu vista principal sin borrar su historial."
                     >
                       Archivar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(account.id)}
-                      disabled={isProcessingId === account.id}
-                      className="py-2 px-3 text-red-500 hover:bg-red-50 rounded-xl text-xs font-medium transition-colors disabled:opacity-50"
-                    >
-                      Eliminar
                     </button>
                   </>
                 ) : (

@@ -17,6 +17,7 @@ export default async function AppLayout({
 
   let accounts: unknown[] = [];
   let categories: unknown[] = [];
+  let summary: { accounts_count: number } | null = null;
   let sessionExpired = false;
   let userName: string | null = null;
 
@@ -44,9 +45,10 @@ export default async function AppLayout({
     await api.users.me(true);
 
     // 4. Get accounts and categories concurrently
-    [accounts, categories] = await Promise.all([
-      api.accounts.list(true),
-      api.categories.list(undefined, true)
+    [accounts, categories, summary] = await Promise.all([
+      api.accounts.list(true, { include_archived: true }),
+      api.categories.list(undefined, true),
+      api.accounts.summary(true).catch(() => null)
     ]);
 
   } catch (error: unknown) {
@@ -67,7 +69,8 @@ export default async function AppLayout({
     redirect('/login');
   }
 
-  if (accounts.length === 0) {
+  const hasAccounts = accounts.length > 0 || (summary && summary.accounts_count > 0);
+  if (!hasAccounts) {
     redirect('/onboarding/wallet');
   }
 

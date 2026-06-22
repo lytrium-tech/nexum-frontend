@@ -34,23 +34,27 @@ export default function FinancialHero({
           <span className="text-xs bg-white/10 px-3 py-1 rounded-full text-white/90">{period}</span>
         </div>
 
-        <div className="mb-8">
-          <p className="text-sm text-white/70 mb-1">Disponible Real</p>
-          <p className="text-4xl md:text-5xl font-semibold tracking-tight text-champagne-gold">
-            {formatMoneyOrDash(availableReal, currency)}
-          </p>
-        </div>
+        {!hasMultipleCurrencies && (
+          <>
+            <div className="mb-8">
+              <p className="text-sm text-white/70 mb-1">Disponible Real</p>
+              <p className="text-4xl md:text-5xl font-semibold tracking-tight text-champagne-gold">
+                {formatMoneyOrDash(availableReal, currency)}
+              </p>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
-          <div>
-            <p className="text-xs text-white/60 mb-1">Dinero Seguro</p>
-            <p className="text-lg font-medium">{formatMoneyOrDash(safeMoney, currency)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/60 mb-1">Dinero Libre</p>
-            <p className="text-lg font-medium">{formatMoneyOrDash(freeMoney, currency)}</p>
-          </div>
-        </div>
+            <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+              <div>
+                <p className="text-xs text-white/60 mb-1">Dinero Seguro</p>
+                <p className="text-lg font-medium">{formatMoneyOrDash(safeMoney, currency)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60 mb-1">Dinero Libre</p>
+                <p className="text-lg font-medium">{formatMoneyOrDash(freeMoney, currency)}</p>
+              </div>
+            </div>
+          </>
+        )}
 
         {hasMultipleCurrencies && (
           <div className="mt-6 border-t border-white/10 pt-4">
