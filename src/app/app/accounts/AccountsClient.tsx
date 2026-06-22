@@ -40,11 +40,9 @@ const getAccountTypeName = (type: string) => {
 };
 
 export default function AccountsClient({
-  initialAccounts,
-  initialSummary
+  initialAccounts
 }: {
   initialAccounts: AccountRead[];
-  initialSummary: AccountSummary | null;
 }) {
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({ name: '', type: 'bank', currency: 'COP', initial_balance: '' });
@@ -58,6 +56,9 @@ export default function AccountsClient({
   const activeAccounts = initialAccounts.filter(a => a.is_active !== false);
   const archivedAccounts = initialAccounts.filter(a => a.is_active === false);
   const displayedAccounts = activeTab === 'active' ? activeAccounts : archivedAccounts;
+  
+  const totalBalance = activeAccounts.reduce((acc, account) => acc + (parseFloat(account.balance || '0') || 0), 0).toString();
+  const baseCurrency = activeAccounts[0]?.currency || 'COP';
 
   const formatBalance = (val: string | number, currency: string = 'COP') => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
@@ -132,7 +133,7 @@ export default function AccountsClient({
         </button>
       </div>
 
-      {initialSummary && (
+      {initialAccounts.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from(new Set(activeAccounts.map(a => a.currency))).length > 1 ? (
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray col-span-2 md:col-span-1">
@@ -156,16 +157,16 @@ export default function AccountsClient({
           ) : (
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
               <p className="text-sm text-gray-500 mb-1">Balance Total</p>
-              <p className="text-xl font-semibold text-graphite-blue">{formatBalance(initialSummary.total_balance, initialSummary.currency)}</p>
+              <p className="text-xl font-semibold text-graphite-blue">{formatBalance(totalBalance, baseCurrency)}</p>
             </div>
           )}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
             <p className="text-sm text-gray-500 mb-1">Cuentas Activas</p>
-            <p className="text-xl font-semibold text-graphite-blue">{initialSummary.active_accounts_count}</p>
+            <p className="text-xl font-semibold text-graphite-blue">{activeAccounts.length}</p>
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
             <p className="text-sm text-gray-500 mb-1">Cuentas Archivadas</p>
-            <p className="text-xl font-semibold text-graphite-blue">{initialSummary.accounts_count - initialSummary.active_accounts_count}</p>
+            <p className="text-xl font-semibold text-graphite-blue">{archivedAccounts.length}</p>
           </div>
         </div>
       )}
@@ -293,7 +294,7 @@ export default function AccountsClient({
           {activeTab === 'active' ? (
             <>
               <p className="text-gray-500 mb-6">
-                {(initialSummary && initialSummary.accounts_count > initialSummary.active_accounts_count)
+                {(archivedAccounts.length > 0)
                   ? 'No tienes billeteras activas. Crea una nueva o reactiva una billetera archivada.' 
                   : 'Agrega tu primera cuenta para empezar a registrar movimientos.'}
               </p>
@@ -302,7 +303,7 @@ export default function AccountsClient({
                   onClick={() => setIsCreating(true)}
                   className="bg-graphite-blue text-white py-2 px-6 rounded-xl hover:bg-graphite-blue/90 font-medium transition-colors"
                 >
-                  {(initialSummary && initialSummary.accounts_count > initialSummary.active_accounts_count) ? 'Crear nueva cuenta' : 'Crear mi primera cuenta'}
+                  {(archivedAccounts.length > 0) ? 'Crear nueva cuenta' : 'Crear mi primera cuenta'}
                 </button>
               )}
             </>

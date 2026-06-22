@@ -75,6 +75,9 @@ This document describes the current frontend state only. Backend truth lives in 
 
 **Frontend V1.3**
 * **Fase 1:** OpenAPI Sync + Type Recovery (Completado)
+* **Fase 2:** Obligations Covered Status (Completado)
+* **Fase 3/4:** Ledger & Dashboard Multi-Currency (Completado)
+* **Fase 5:** Accounts Cleanup (Completado)
 
 ## Product Notes
 

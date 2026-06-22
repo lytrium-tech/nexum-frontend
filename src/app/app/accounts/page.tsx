@@ -27,16 +27,10 @@ export default async function AccountsPage() {
   }
 
   let accounts: components['schemas']['AccountRead'][] = [];
-  let summary: components['schemas']['AccountSummary'] | null = null;
   let hasError = false;
 
   try {
-    const [accountsData, summaryData] = await Promise.all([
-      api.accounts.list(true, { include_archived: true }),
-      api.accounts.summary(true).catch(() => null) // Optional summary
-    ]);
-    accounts = accountsData;
-    summary = summaryData;
+    accounts = await api.accounts.list(true, { include_archived: true });
   } catch (error) {
     console.error('Error fetching accounts data:', error);
     hasError = true;
@@ -51,5 +45,5 @@ export default async function AccountsPage() {
     );
   }
 
-  return <AccountsClient initialAccounts={accounts} initialSummary={summary} />;
+  return <AccountsClient initialAccounts={accounts} />;
 }
