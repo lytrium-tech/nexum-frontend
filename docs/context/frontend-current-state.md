@@ -56,18 +56,13 @@ This document describes the current frontend state only. Backend truth lives in 
 
 ## Status
 
-* **Fase 0:** Contract Sync V1.1 (Completado)
-* **Fase 1:** Build Recovery & Accounts (Completado)
-* **Fase 2:** SnapshotTruth & Home Alignment (Completado)
-* **Fase 3:** Accounts V1.1 Alignment (Completado)
-* **Fase 4:** Goals V1.1 Alignment (Completado)
-* **Fase 5:** Obligations V1.1 Payment Modes (Completado)
-* **Fase 6:** Credit Cards V1.1 Alignment (Completado)
-* **Fase 7:** History / Ledger V1.1 Alignment (Completado)
-* **Fase 7.1:** Goals Money Formatting Hotfix + Backend Handoff (Completado)
-* **Fase 8:** Categories V1.1 Alignment (Completado)
-* **Fase 9:** Chat Alignment with Backend V1.1 (Completado)
-* **Fase 10:** Frontend Alpha Readiness Audit (Completado)
+**Frontend V1.1**
+* **Fase 0-10:** Alineación V1.1 y Closed Alpha Candidate (Completado)
+
+**Frontend V1.2**
+* **Fase 1:** OpenAPI Sync + Type Recovery (Completado)
+* **Fase 2:** Home Snapshot + Multi-currency (Completado)
+* **Fase 3:** Goals Daily Required (Completado)
 
 ## Product Notes
 
@@ -77,9 +72,9 @@ El Home principal (Snapshot) debe priorizar sistemáticamente las métricas del 
 **Multi-moneda Home:**
 Usar lista apilada compacta, no carrusel.
 Si solo hay una moneda, no agregar complejidad visual.
-No sumar COP + USD + EUR sin conversi�n.
+No sumar COP + USD + EUR sin conversión.
 
 **Cuentas archivadas:**
 La vista principal de Accounts muestra solo cuentas activas.
-Las cuentas archivadas se muestran mediante filtro/toggle/secci�n separada.
+Las cuentas archivadas se muestran mediante filtro/toggle/sección separada.
 No mostrar archivadas mezcladas por defecto en la lista principal.

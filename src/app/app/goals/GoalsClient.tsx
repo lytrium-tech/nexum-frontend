@@ -196,7 +196,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
           {activeGoals.map(goal => {
             const isCompleted = goal.status === 'completed';
 
-            const formatVal = (val: string | null | undefined) => formatMoneyOrDash(val, 'COP');
+            const formatVal = (val: string | null | undefined) => formatMoneyOrDash(val, goal.currency || 'COP');
 
             const periodStatusLabels: Record<string, string> = {
               pending: 'Pendiente',
@@ -268,16 +268,23 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                       />
                     )}
                   </div>
-                  <div className="flex justify-between items-center mt-2">
+                  <div className="flex justify-between items-start mt-2">
                     <p className="text-xs font-medium text-graphite-blue/50">
                       {goal.progress_percentage != null ? `${parseFloat(goal.progress_percentage).toFixed(1)}% completado` : '—'}
                     </p>
                     {goal.is_flexible ? (
-                      <p className="text-xs text-graphite-blue/40 font-medium">Aporta cuando quieras</p>
+                      <p className="text-xs text-graphite-blue/40 font-medium text-right">Aporta cuando quieras</p>
                     ) : (
-                      <p className="text-xs text-graphite-blue/40">
-                        Req. mensual: {formatVal(goal.monthly_required)}
-                      </p>
+                      <div className="text-right">
+                        <p className="text-xs text-graphite-blue/40">
+                          Req. mensual: {formatVal(goal.monthly_required)}
+                        </p>
+                        {goal.daily_required_this_period && parseFloat(goal.daily_required_this_period) > 0 && (
+                          <p className="text-xs text-graphite-blue/40 mt-0.5">
+                            Para llegar a tiempo: {formatVal(goal.daily_required_this_period)} diarios
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
 
