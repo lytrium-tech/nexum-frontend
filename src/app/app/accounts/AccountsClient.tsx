@@ -134,10 +134,31 @@ export default function AccountsClient({
 
       {initialSummary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
-            <p className="text-sm text-gray-500 mb-1">Balance Total</p>
-            <p className="text-xl font-semibold text-graphite-blue">{formatBalance(initialSummary.total_balance, initialSummary.currency)}</p>
-          </div>
+          {Array.from(new Set(activeAccounts.map(a => a.currency))).length > 1 ? (
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray col-span-2 md:col-span-1">
+              <p className="text-sm text-gray-500 mb-2">Saldos por moneda</p>
+              <div className="space-y-1">
+                {Object.entries(
+                  activeAccounts.reduce((acc, account) => {
+                    const val = parseFloat(account.balance || '0');
+                    if (!acc[account.currency]) acc[account.currency] = 0;
+                    if (!isNaN(val)) acc[account.currency] += val;
+                    return acc;
+                  }, {} as Record<string, number>)
+                ).map(([curr, total]) => (
+                  <div key={curr} className="flex justify-between items-center text-sm">
+                    <span className="font-medium text-gray-600">{curr}</span>
+                    <span className="font-semibold text-graphite-blue">{formatBalance(total, curr)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
+              <p className="text-sm text-gray-500 mb-1">Balance Total</p>
+              <p className="text-xl font-semibold text-graphite-blue">{formatBalance(initialSummary.total_balance, initialSummary.currency)}</p>
+            </div>
+          )}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
             <p className="text-sm text-gray-500 mb-1">Cuentas Activas</p>
             <p className="text-xl font-semibold text-graphite-blue">{initialSummary.active_accounts_count}</p>
