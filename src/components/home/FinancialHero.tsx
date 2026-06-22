@@ -22,7 +22,10 @@ export default function FinancialHero({
   totalsByCurrency
 }: FinancialHeroProps) {
 
-  const hasMultipleCurrencies = totalsByCurrency && Object.keys(totalsByCurrency).length > 1;
+  const hasWarning = warnings?.includes('cross_currency_global_totals_disabled') || false;
+  const hasMultipleCurrencies = hasWarning || (totalsByCurrency && Object.keys(totalsByCurrency).length > 1);
+
+  const displayWarnings = warnings?.filter(w => w !== 'cross_currency_global_totals_disabled') || [];
 
   return (
     <div className="bg-graphite-blue p-6 rounded-3xl shadow-sm text-white relative overflow-hidden flex flex-col justify-between">
@@ -57,28 +60,33 @@ export default function FinancialHero({
         )}
 
         {hasMultipleCurrencies && (
-          <div className="mt-6 border-t border-white/10 pt-4">
+          <div className="mt-2 border-white/10 pt-2">
             <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-3">Saldos por moneda</p>
             <div className="space-y-2">
-              {Object.entries(totalsByCurrency).map(([curr, metrics]) => (
+              {totalsByCurrency && Object.entries(totalsByCurrency).map(([curr, metrics]) => (
                 <div key={curr} className="flex justify-between items-center text-sm">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-white/90 w-10">{curr}</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-champagne-gold">{formatMoneyOrDash(metrics.available_real, curr)}</span>
+                    <span className="text-champagne-gold font-medium">{formatMoneyOrDash(metrics.available_real, curr)}</span>
                   </div>
                 </div>
               ))}
             </div>
+            {hasWarning && (
+              <p className="text-[10px] text-white/40 mt-4 italic">
+                Totales separados por moneda
+              </p>
+            )}
           </div>
         )}
 
-        {warnings && warnings.length > 0 && (
+        {displayWarnings.length > 0 && (
           <div className="mt-4 pt-3 border-t border-white/10 text-xs text-white/60">
             <span className="flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              {warnings[0]}
+              <svg className="w-3.5 h-3.5 text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              {displayWarnings[0]}
             </span>
           </div>
         )}

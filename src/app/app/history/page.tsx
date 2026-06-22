@@ -152,7 +152,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                   <p className={`text-base font-semibold ${formatLedgerAmount({ amount: evt.amount, currency: evt.currency, direction: evt.direction, eventType: evt.event_type }).startsWith('+') ? 'text-sage-green' : 'text-gray-900'}`}>
                     {formatLedgerAmount({ amount: evt.amount, currency: evt.currency, direction: evt.direction, eventType: evt.event_type })}
                   </p>
-                  <p className="text-[10px] text-gray-400 uppercase">{evt.currency || 'COP'}</p>
+                  <p className="text-[10px] text-gray-400 uppercase">{evt.currency || '???'}</p>
                 </div>
               </div>
             ))}

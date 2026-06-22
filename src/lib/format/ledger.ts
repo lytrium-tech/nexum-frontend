@@ -1,6 +1,6 @@
 export function formatLedgerAmount({
   amount,
-  currency = 'COP',
+  currency,
   direction,
   eventType
 }: {
@@ -34,10 +34,18 @@ export function formatLedgerAmount({
     }
   }
 
+  if (!currency) {
+    return `${sign}${absNum}`;
+  }
+
+  const isWholeCurrency = currency.toUpperCase() === 'COP';
+  const digits = isWholeCurrency ? 0 : 2;
+
   const formattedAbs = new Intl.NumberFormat('es-CO', { 
     style: 'currency', 
-    currency: currency || 'COP', 
-    minimumFractionDigits: 0 
+    currency: currency, 
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
   }).format(absNum);
 
   return `${sign}${formattedAbs}`;
