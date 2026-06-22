@@ -82,6 +82,9 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       name: name.trim(),
       amount: isNaN(amount) ? undefined : amount,
       payment_mode: paymentMode,
+      already_paid_this_period: false,
+      start_next_period: false,
+      pending_this_period: true,
     };
 
     if (dueDayStr) {

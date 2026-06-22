@@ -1258,6 +1258,11 @@ export interface components {
             /** Franchise */
             franchise?: string | null;
             /**
+             * Currency
+             * @default COP
+             */
+            currency: string;
+            /**
              * Current Debt
              * @default 0.00
              */
@@ -1350,6 +1355,64 @@ export interface components {
             /** Cards */
             cards: components["schemas"]["CreditCardStatusRead"][];
         };
+        /** CurrencyMetrics */
+        CurrencyMetrics: {
+            /**
+             * Available Real
+             * @default 0.00
+             */
+            available_real: string;
+            /**
+             * Committed Outflows
+             * @default 0.00
+             */
+            committed_outflows: string;
+            /**
+             * Free Money
+             * @default 0.00
+             */
+            free_money: string;
+            /**
+             * Safe Money
+             * @default 0.00
+             */
+            safe_money: string;
+            /**
+             * Income Current Period
+             * @default 0.00
+             */
+            income_current_period: string;
+            /**
+             * Cash Expenses Current Period
+             * @default 0.00
+             */
+            cash_expenses_current_period: string;
+            /**
+             * Credit Card Consumption Current Period
+             * @default 0.00
+             */
+            credit_card_consumption_current_period: string;
+            /**
+             * Debt Payments Current Period
+             * @default 0.00
+             */
+            debt_payments_current_period: string;
+            /**
+             * Goal Contributions Current Period
+             * @default 0.00
+             */
+            goal_contributions_current_period: string;
+            /**
+             * Obligation Payments Current Period
+             * @default 0.00
+             */
+            obligation_payments_current_period: string;
+            /**
+             * Net Cashflow Current Period
+             * @default 0.00
+             */
+            net_cashflow_current_period: string;
+        };
         /**
          * EventSource
          * @enum {string}
@@ -1438,6 +1501,11 @@ export interface components {
             current_amount: string;
             /** Target Date */
             target_date: string | null;
+            /**
+             * Currency
+             * @default COP
+             */
+            currency: string;
             /** Status */
             status: string;
             /** Is Active */
@@ -1461,16 +1529,22 @@ export interface components {
             readonly remaining_amount: string;
             /** Progress Percentage */
             readonly progress_percentage: string;
+            /** Currency Minimum Unit */
+            readonly currency_minimum_unit: string;
             /** Is Flexible */
             readonly is_flexible: boolean;
             /** Monthly Required */
-            readonly monthly_required: string | null;
+            readonly monthly_required: string;
             /** Required This Period */
             readonly required_this_period: string;
             /** Remaining Required This Period */
             readonly remaining_required_this_period: string;
             /** Period Status */
             readonly period_status: string;
+            /** Days Remaining In Period */
+            readonly days_remaining_in_period: number;
+            /** Daily Required This Period */
+            readonly daily_required_this_period: string;
         };
         /** GoalUpdate */
         GoalUpdate: {
@@ -1495,6 +1569,24 @@ export interface components {
             status: string;
             /** Service */
             service: string;
+        };
+        /** HistoricalCashflow */
+        HistoricalCashflow: {
+            /**
+             * Income
+             * @default 0.00
+             */
+            income: string;
+            /**
+             * Expenses
+             * @default 0.00
+             */
+            expenses: string;
+            /**
+             * Net Cashflow
+             * @default 0.00
+             */
+            net_cashflow: string;
         };
         /** IntelligenceBalanceRead */
         IntelligenceBalanceRead: {
@@ -1632,6 +1724,7 @@ export interface components {
             period: components["schemas"]["SnapshotPeriod"];
             cash: components["schemas"]["SnapshotCash"];
             cashflow: components["schemas"]["SnapshotCashflow"];
+            historical?: components["schemas"]["HistoricalCashflow"] | null;
             debt: components["schemas"]["SnapshotDebt"];
             goals: components["schemas"]["SnapshotGoals"];
             obligations: components["schemas"]["SnapshotObligations"];
@@ -1641,6 +1734,10 @@ export interface components {
                 [key: string]: unknown;
             }[];
             truth: components["schemas"]["SnapshotTruth"];
+            /** Totals By Currency */
+            totals_by_currency?: {
+                [key: string]: components["schemas"]["CurrencyMetrics"];
+            };
         };
         /** LedgerEventDetail */
         LedgerEventDetail: {
@@ -1771,6 +1868,21 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             };
+            /**
+             * Already Paid This Period
+             * @default false
+             */
+            already_paid_this_period: boolean;
+            /**
+             * Start Next Period
+             * @default false
+             */
+            start_next_period: boolean;
+            /**
+             * Pending This Period
+             * @default false
+             */
+            pending_this_period: boolean;
         };
         /** ObligationPaymentCreate */
         ObligationPaymentCreate: {
@@ -1885,12 +1997,61 @@ export interface components {
         };
         /** SnapshotCashflow */
         SnapshotCashflow: {
-            /** Income */
+            /**
+             * Income
+             * @description [DEPRECATED] Use income_current_period or historical instead.
+             */
             income: string;
-            /** Expenses */
+            /**
+             * Expenses
+             * @description [DEPRECATED] Use cash_expenses_current_period or historical instead.
+             */
             expenses: string;
-            /** Net Cashflow */
+            /**
+             * Net Cashflow
+             * @description [DEPRECATED] Use net_cashflow_current_period or historical instead.
+             */
             net_cashflow: string;
+            /**
+             * Income Current Period
+             * @default 0.00
+             */
+            income_current_period: string;
+            /**
+             * Cash Expenses Current Period
+             * @default 0.00
+             */
+            cash_expenses_current_period: string;
+            /**
+             * Credit Card Consumption Current Period
+             * @default 0.00
+             */
+            credit_card_consumption_current_period: string;
+            /**
+             * Debt Payments Current Period
+             * @default 0.00
+             */
+            debt_payments_current_period: string;
+            /**
+             * Goal Contributions Current Period
+             * @default 0.00
+             */
+            goal_contributions_current_period: string;
+            /**
+             * Obligation Payments Current Period
+             * @default 0.00
+             */
+            obligation_payments_current_period: string;
+            /**
+             * Committed Outflows Current Period
+             * @default 0.00
+             */
+            committed_outflows_current_period: string;
+            /**
+             * Net Cashflow Current Period
+             * @default 0.00
+             */
+            net_cashflow_current_period: string;
         };
         /** SnapshotDebt */
         SnapshotDebt: {
@@ -2177,7 +2338,9 @@ export interface operations {
     };
     list_accounts_api_v1_accounts_get: {
         parameters: {
-            query?: never;
+            query?: {
+                include_archived?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2191,6 +2354,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

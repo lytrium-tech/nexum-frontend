@@ -73,3 +73,13 @@ This document describes the current frontend state only. Backend truth lives in 
 
 **Dashboard/Home Semantics:**
 El Home principal (Snapshot) debe priorizar sistemáticamente las métricas del periodo actual / mes actual, tanto para el Cashflow Summary como para el neto. Los acumulados históricos quedarán reservados para analítica y revisiones pasadas, no para la pantalla del pulso financiero activo.
+
+**Multi-moneda Home:**
+Usar lista apilada compacta, no carrusel.
+Si solo hay una moneda, no agregar complejidad visual.
+No sumar COP + USD + EUR sin conversi�n.
+
+**Cuentas archivadas:**
+La vista principal de Accounts muestra solo cuentas activas.
+Las cuentas archivadas se muestran mediante filtro/toggle/secci�n separada.
+No mostrar archivadas mezcladas por defecto en la lista principal.

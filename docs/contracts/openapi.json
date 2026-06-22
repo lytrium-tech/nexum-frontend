@@ -129,27 +129,49 @@
         ],
         "summary": "List Accounts",
         "operationId": "list_accounts_api_v1_accounts_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/AccountRead"
                   },
-                  "type": "array",
                   "title": "Response List Accounts Api V1 Accounts Get"
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       },
       "post": {
         "tags": [
@@ -157,15 +179,20 @@
         ],
         "summary": "Create Account",
         "operationId": "create_account_api_v1_accounts_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AccountCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -188,12 +215,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/accounts/summary": {
@@ -4020,6 +4042,11 @@
             ],
             "title": "Franchise"
           },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "COP"
+          },
           "current_debt": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -4326,6 +4353,78 @@
         ],
         "title": "CreditSummaryRead"
       },
+      "CurrencyMetrics": {
+        "properties": {
+          "available_real": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Available Real",
+            "default": "0.00"
+          },
+          "committed_outflows": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Committed Outflows",
+            "default": "0.00"
+          },
+          "free_money": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Free Money",
+            "default": "0.00"
+          },
+          "safe_money": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Safe Money",
+            "default": "0.00"
+          },
+          "income_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Income Current Period",
+            "default": "0.00"
+          },
+          "cash_expenses_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cash Expenses Current Period",
+            "default": "0.00"
+          },
+          "credit_card_consumption_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Card Consumption Current Period",
+            "default": "0.00"
+          },
+          "debt_payments_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Debt Payments Current Period",
+            "default": "0.00"
+          },
+          "goal_contributions_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Goal Contributions Current Period",
+            "default": "0.00"
+          },
+          "obligation_payments_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Obligation Payments Current Period",
+            "default": "0.00"
+          },
+          "net_cashflow_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Cashflow Current Period",
+            "default": "0.00"
+          }
+        },
+        "type": "object",
+        "title": "CurrencyMetrics"
+      },
       "EventSource": {
         "type": "string",
         "enum": [
@@ -4615,6 +4714,11 @@
             ],
             "title": "Target Date"
           },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "COP"
+          },
           "status": {
             "type": "string",
             "title": "Status"
@@ -4651,21 +4755,20 @@
             "title": "Progress Percentage",
             "readOnly": true
           },
+          "currency_minimum_unit": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Currency Minimum Unit",
+            "readOnly": true
+          },
           "is_flexible": {
             "type": "boolean",
             "title": "Is Flexible",
             "readOnly": true
           },
           "monthly_required": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Monthly Required",
             "readOnly": true
           },
@@ -4685,6 +4788,17 @@
             "type": "string",
             "title": "Period Status",
             "readOnly": true
+          },
+          "days_remaining_in_period": {
+            "type": "integer",
+            "title": "Days Remaining In Period",
+            "readOnly": true
+          },
+          "daily_required_this_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Daily Required This Period",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -4700,11 +4814,14 @@
           "updated_at",
           "remaining_amount",
           "progress_percentage",
+          "currency_minimum_unit",
           "is_flexible",
           "monthly_required",
           "required_this_period",
           "remaining_required_this_period",
-          "period_status"
+          "period_status",
+          "days_remaining_in_period",
+          "daily_required_this_period"
         ],
         "title": "GoalRead"
       },
@@ -4785,6 +4902,30 @@
         ],
         "title": "HealthResponse",
         "description": "Respuesta del endpoint de salud."
+      },
+      "HistoricalCashflow": {
+        "properties": {
+          "income": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Income",
+            "default": "0.00"
+          },
+          "expenses": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Expenses",
+            "default": "0.00"
+          },
+          "net_cashflow": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Cashflow",
+            "default": "0.00"
+          }
+        },
+        "type": "object",
+        "title": "HistoricalCashflow"
       },
       "IntelligenceBalanceRead": {
         "properties": {
@@ -5238,6 +5379,16 @@
           "cashflow": {
             "$ref": "#/components/schemas/SnapshotCashflow"
           },
+          "historical": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoricalCashflow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "debt": {
             "$ref": "#/components/schemas/SnapshotDebt"
           },
@@ -5260,6 +5411,13 @@
           },
           "truth": {
             "$ref": "#/components/schemas/SnapshotTruth"
+          },
+          "totals_by_currency": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CurrencyMetrics"
+            },
+            "type": "object",
+            "title": "Totals By Currency"
           }
         },
         "type": "object",
@@ -5642,6 +5800,21 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Metadata"
+          },
+          "already_paid_this_period": {
+            "type": "boolean",
+            "title": "Already Paid This Period",
+            "default": false
+          },
+          "start_next_period": {
+            "type": "boolean",
+            "title": "Start Next Period",
+            "default": false
+          },
+          "pending_this_period": {
+            "type": "boolean",
+            "title": "Pending This Period",
+            "default": false
           }
         },
         "type": "object",
@@ -6034,17 +6207,68 @@
           "income": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Income"
+            "title": "Income",
+            "description": "[DEPRECATED] Use income_current_period or historical instead."
           },
           "expenses": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Expenses"
+            "title": "Expenses",
+            "description": "[DEPRECATED] Use cash_expenses_current_period or historical instead."
           },
           "net_cashflow": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Net Cashflow"
+            "title": "Net Cashflow",
+            "description": "[DEPRECATED] Use net_cashflow_current_period or historical instead."
+          },
+          "income_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Income Current Period",
+            "default": "0.00"
+          },
+          "cash_expenses_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cash Expenses Current Period",
+            "default": "0.00"
+          },
+          "credit_card_consumption_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Card Consumption Current Period",
+            "default": "0.00"
+          },
+          "debt_payments_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Debt Payments Current Period",
+            "default": "0.00"
+          },
+          "goal_contributions_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Goal Contributions Current Period",
+            "default": "0.00"
+          },
+          "obligation_payments_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Obligation Payments Current Period",
+            "default": "0.00"
+          },
+          "committed_outflows_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Committed Outflows Current Period",
+            "default": "0.00"
+          },
+          "net_cashflow_current_period": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Cashflow Current Period",
+            "default": "0.00"
           }
         },
         "type": "object",
