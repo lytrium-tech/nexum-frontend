@@ -201,8 +201,8 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     const dict: Record<string, string> = {
       'pending': 'Pendiente',
       'partial': 'Parcial',
-      'paid': 'Cubierta',
-      'covered': 'Cubierta',
+      'paid': 'Pagada',
+      'covered': 'Cubierta este periodo',
       'overdue': 'Atrasada',
       'inactive': 'Inactiva'
     };
@@ -297,10 +297,21 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                         {formatVal(obligation.amount, obligation.currency)}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-sage-green bg-sage-green/10 px-2 py-1 rounded-full">
-                        <CheckCircle className="w-3.5 h-3.5" /> {getPeriodStatusLabel(obligation.period_status)}
+                    <div className="text-right flex flex-col items-end">
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                        obligation.period_status === 'overdue' ? 'text-red-600 bg-red-50' :
+                        obligation.period_status === 'pending' ? 'text-amber-600 bg-amber-50' :
+                        obligation.period_status === 'partial' ? 'text-blue-600 bg-blue-50' :
+                        obligation.period_status === 'covered' ? 'text-graphite-blue/70 bg-graphite-blue/5' :
+                        'text-sage-green bg-sage-green/10'
+                      }`}>
+                        {obligation.period_status === 'overdue' ? <AlertCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />} {getPeriodStatusLabel(obligation.period_status)}
                       </span>
+                      {obligation.period_status === 'covered' && (
+                        <span className="text-[10px] text-graphite-blue/40 mt-1 max-w-[120px] leading-tight text-right">
+                          Marcada como pagada fuera de Nexum.
+                        </span>
+                      )}
                     </div>
                   </div>
                   
@@ -320,6 +331,12 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   {(() => {
                     const remaining = parseFloat(String(obligation.remaining_amount || "0"));
                     const canPay = obligation.is_pending || remaining > 0;
+                    
+                    let buttonText = 'Registrar pago';
+                    if (!canPay) {
+                      buttonText = obligation.period_status === 'covered' ? 'Cubierta sin pago local' : 'Periodo pagado';
+                    }
+
                     return (
                       <button
                         onClick={() => openPayModal(obligation)}
@@ -327,7 +344,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                         className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2 ${canPay ? 'bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white' : 'bg-graphite-blue/5 text-graphite-blue/40 cursor-not-allowed'}`}
                       >
                         <CreditCard className="w-4 h-4" />
-                        {canPay ? 'Registrar pago' : 'Periodo cubierto'}
+                        {buttonText}
                       </button>
                     );
                   })()}
