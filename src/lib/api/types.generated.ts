@@ -745,10 +745,7 @@ export interface components {
             /** Name */
             name: string;
             type: components["schemas"]["AccountType"];
-            /**
-             * Currency
-             * @default COP
-             */
+            /** Currency */
             currency: string;
             /**
              * Initial Balance
@@ -791,14 +788,14 @@ export interface components {
         };
         /** AccountSummary */
         AccountSummary: {
-            /** Total Balance */
-            total_balance: string;
+            /** Totals By Currency */
+            totals_by_currency: {
+                [key: string]: string;
+            };
             /** Accounts Count */
             accounts_count: number;
             /** Active Accounts Count */
             active_accounts_count: number;
-            /** Currency */
-            currency: string;
         };
         /**
          * AccountType
@@ -1024,10 +1021,7 @@ export interface components {
             network?: string | null;
             /** Franchise */
             franchise?: string | null;
-            /**
-             * Currency
-             * @default COP
-             */
+            /** Currency */
             currency: string;
         };
         /** CreditCardInstallmentRead */
@@ -1161,10 +1155,7 @@ export interface components {
             network?: string | null;
             /** Franchise */
             franchise?: string | null;
-            /**
-             * Currency
-             * @default COP
-             */
+            /** Currency */
             currency: string;
             /**
              * Id
@@ -1413,6 +1404,30 @@ export interface components {
              */
             net_cashflow_current_period: string;
         };
+        /** EstimatedTotals */
+        EstimatedTotals: {
+            /** Base Currency */
+            base_currency: string;
+            /** Estimated Total Base Currency */
+            estimated_total_base_currency: string;
+            /**
+             * Is Estimated
+             * @default true
+             */
+            is_estimated: boolean;
+            /** Rate Source */
+            rate_source: string;
+            /** Rate Timestamp */
+            rate_timestamp: string;
+            /** Fx Rates Used */
+            fx_rates_used?: {
+                [key: string]: number;
+            };
+            /** Unsupported Currencies */
+            unsupported_currencies?: string[];
+            /** Warnings */
+            warnings?: string[];
+        };
         /**
          * EventSource
          * @enum {string}
@@ -1479,6 +1494,8 @@ export interface components {
             name: string;
             /** Target Amount */
             target_amount: number | string;
+            /** Currency */
+            currency: string;
             /** Target Date */
             target_date?: string | null;
             /** Source Message Id */
@@ -1501,10 +1518,7 @@ export interface components {
             current_amount: string;
             /** Target Date */
             target_date: string | null;
-            /**
-             * Currency
-             * @default COP
-             */
+            /** Currency */
             currency: string;
             /** Status */
             status: string;
@@ -1738,6 +1752,7 @@ export interface components {
             totals_by_currency?: {
                 [key: string]: components["schemas"]["CurrencyMetrics"];
             };
+            estimated_totals?: components["schemas"]["EstimatedTotals"] | null;
         };
         /** LedgerEventDetail */
         LedgerEventDetail: {
@@ -1862,6 +1877,8 @@ export interface components {
             due_day?: number | null;
             /** Frequency */
             frequency?: string | null;
+            /** Currency */
+            currency: string;
             /** Category Id */
             category_id?: string | null;
             /** Metadata */
@@ -2140,10 +2157,7 @@ export interface components {
             destination_account_id: string;
             /** Amount */
             amount: number | string;
-            /**
-             * Currency
-             * @default COP
-             */
+            /** Currency */
             currency: string;
             /** Description */
             description?: string | null;
@@ -2189,10 +2203,7 @@ export interface components {
              * @default America/Bogota
              */
             timezone: string;
-            /**
-             * Currency
-             * @default COP
-             */
+            /** Currency */
             currency: string;
         };
         /** UserOnboardingResponse */

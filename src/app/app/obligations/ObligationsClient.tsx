@@ -99,6 +99,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       already_paid_this_period: false,
       start_next_period: false,
       pending_this_period: true,
+      currency: "COP", // TODO: V1.4 Alignment
     };
 
     if (isPastDue) {

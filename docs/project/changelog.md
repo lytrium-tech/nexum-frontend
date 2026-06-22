@@ -27,6 +27,12 @@
 ### Changed
 - Auditoría general estática completada exitosamente. Se certifica el frontend como apto para inicio de Alpha Cerrada V1.1.
 
+## [Unreleased] - Fase 1 (Frontend V1.4 OpenAPI Sync + Type Recovery)
+### Changed
+- Sincronizado el contrato OpenAPI con Backend V1.4, requiriendo validación de tipos por obligatoriedad de la moneda (`currency`) en los esquemas de creación (`GoalCreate`, `ObligationCreate`, etc).
+- Agregados los tipos auxiliares temporales `currency: "COP"` a nivel local en `GoalsClient` y `ObligationsClient` para recuperar el build tras regenerar tipos generados, posibilitando el avance hacia las fases de formularios multi-moneda completos.
+- Verificado el nuevo modelo de snapshot incorporando soporte a la capa de agregación `estimated_totals` para futuras vistas de Net Worth.
+
 ## [Unreleased] - Fase 9 (Chat Alignment with Backend V1.1)
 ### Changed
 - Añadido el manejo de `pending_action_id` y su estado persistente a lo largo de una conversación.

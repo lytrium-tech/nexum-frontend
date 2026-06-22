@@ -80,6 +80,9 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 5:** Accounts Cleanup (Completado)
 * **Fase 6:** Obligations Archive Lifecycle (Completado)
 
+**Frontend V1.4**
+* **Fase 1:** OpenAPI Sync + Type Recovery (Completado)
+
 ## Product Notes
 
 **Dashboard/Home Semantics:**

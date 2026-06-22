@@ -78,8 +78,9 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
 
     const payload = {
       name: name.trim(),
-      target_amount,
-      target_date: targetDateStr || undefined
+      target_amount: target_amount,
+      target_date: targetDateStr || undefined,
+      currency: "COP", // TODO: V1.4 Alignment
     };
 
     const res = await createGoalAction(payload);
