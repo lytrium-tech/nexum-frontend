@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased] - Frontend V1.3 Alpha Candidate Status
+### Changed
+- Sincronización del contrato OpenAPI con Backend V1.3 y regeneración de tipos.
+- Recuperación del compilador (build) validando la incorporación limpia de nuevos campos (`covered`, `is_active`, `include_archived`, `currency`).
+
+## [Unreleased] - Frontend V1.2 Alpha Candidate Status
+### Status
+- Frontend V1.2: CLOSED
+- Closed Alpha Candidate: NOT READY
+- Reason: Backend blockers affecting financial trust
+
 ## [Unreleased] - Fase 2
 ### Added
 - Integración de Supabase SSR (`@supabase/ssr`).

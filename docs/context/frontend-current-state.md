@@ -60,6 +60,9 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 0-10:** Alineación V1.1 y Closed Alpha Candidate (Completado)
 
 **Frontend V1.2**
+* Frontend V1.2 implementation: completed
+* Frontend V1.2 QA hardening: completed
+* Frontend Alpha Candidate: blocked by backend
 * **Fase 1:** OpenAPI Sync + Type Recovery (Completado)
 * **Fase 2:** Home Snapshot + Multi-currency (Completado)
 * **Fase 3:** Goals Daily Required (Completado)
@@ -69,6 +72,9 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 7:** Chat Safety & Contract Audit (Completado)
 * **Bugfix Pass 1:** Accounts & Obligations (Completado)
 * **Bugfix Pass 2:** Multi-currency & Accounts Integrity (Completado)
+
+**Frontend V1.3**
+* **Fase 1:** OpenAPI Sync + Type Recovery (Completado)
 
 ## Product Notes
 

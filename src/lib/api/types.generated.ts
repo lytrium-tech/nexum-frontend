@@ -1983,6 +1983,8 @@ export interface components {
             frequency?: string | null;
             /** Category Id */
             category_id?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -2938,7 +2940,9 @@ export interface operations {
     };
     list_obligations_api_v1_obligations_get: {
         parameters: {
-            query?: never;
+            query?: {
+                include_archived?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2952,6 +2956,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ObligationRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
