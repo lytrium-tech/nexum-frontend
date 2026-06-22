@@ -64,6 +64,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 2:** Home Snapshot + Multi-currency (Completado)
 * **Fase 3:** Goals Daily Required (Completado)
 * **Fase 4:** Accounts Archiving (Completado)
+* **Fase 5:** Obligations Initial Period Metadata (Completado)
 
 ## Product Notes
 

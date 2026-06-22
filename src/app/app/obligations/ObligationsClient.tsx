@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { createObligationAction, payObligationAction } from './actions';
 
@@ -33,6 +33,12 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const [dueDay, setDueDay] = useState<string>('');
+  const [initialStatus, setInitialStatus] = useState<'pending' | 'paid' | 'next_period'>('pending');
+
+  const currentDay = useMemo(() => new Date().getDate(), []);
+  const isPastDue = dueDay ? parseInt(dueDay, 10) < currentDay : false;
+
   const activeObligations = obligations.filter(o => o.is_active);
   const activeAccounts = accounts.filter(a => a.is_active);
 
@@ -50,6 +56,8 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(false);
+    setDueDay('');
+    setInitialStatus('pending');
   };
 
   const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -62,7 +70,6 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     const name = formData.get('name') as string;
     const amountStr = formData.get('amount') as string;
     const paymentMode = formData.get('paymentMode') as string || 'fixed_full_payment';
-    const dueDayStr = formData.get('dueDay') as string;
     const frequency = formData.get('frequency') as string;
 
     const amount = parseFloat(amountStr);
@@ -87,8 +94,20 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       pending_this_period: true,
     };
 
-    if (dueDayStr) {
-      const day = parseInt(dueDayStr, 10);
+    if (isPastDue) {
+      if (initialStatus === 'paid') {
+        payload.already_paid_this_period = true;
+        payload.pending_this_period = false;
+        payload.start_next_period = false;
+      } else if (initialStatus === 'next_period') {
+        payload.already_paid_this_period = false;
+        payload.pending_this_period = false;
+        payload.start_next_period = true;
+      }
+    }
+
+    if (dueDay) {
+      const day = parseInt(dueDay, 10);
       if (day >= 1 && day <= 31) {
         payload.due_day = day;
       }
@@ -434,11 +453,68 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                     min="1"
                     max="31"
                     placeholder="Ej: 15"
+                    value={dueDay}
+                    onChange={(e) => setDueDay(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
                     disabled={isSubmitting || !!successMessage}
                   />
                 </div>
               </div>
+
+              {isPastDue && (
+                <div className="bg-graphite-blue/5 rounded-xl p-4 mt-4 animate-in fade-in slide-in-from-top-2">
+                  <label className="block text-sm font-medium text-graphite-blue mb-1.5">
+                    Esta obligación ya venció este mes. ¿Cómo quieres registrarla?
+                  </label>
+                  <p className="text-xs text-graphite-blue/60 mb-3">
+                    Esto evita registrar pagos duplicados si ya la pagaste antes de crearla en Nexum.
+                  </p>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 text-sm text-graphite-blue cursor-pointer group">
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${initialStatus === 'paid' ? 'border-sage-green' : 'border-graphite-blue/30'}`}>
+                        {initialStatus === 'paid' && <div className="w-2 h-2 rounded-full bg-sage-green" />}
+                      </div>
+                      <input 
+                        type="radio" 
+                        name="initialStatus" 
+                        value="paid" 
+                        checked={initialStatus === 'paid'} 
+                        onChange={() => setInitialStatus('paid')} 
+                        className="hidden" 
+                      />
+                      Ya la pagué este periodo
+                    </label>
+                    <label className="flex items-center gap-3 text-sm text-graphite-blue cursor-pointer group">
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${initialStatus === 'pending' ? 'border-sage-green' : 'border-graphite-blue/30'}`}>
+                        {initialStatus === 'pending' && <div className="w-2 h-2 rounded-full bg-sage-green" />}
+                      </div>
+                      <input 
+                        type="radio" 
+                        name="initialStatus" 
+                        value="pending" 
+                        checked={initialStatus === 'pending'} 
+                        onChange={() => setInitialStatus('pending')} 
+                        className="hidden" 
+                      />
+                      Aún está pendiente
+                    </label>
+                    <label className="flex items-center gap-3 text-sm text-graphite-blue cursor-pointer group">
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${initialStatus === 'next_period' ? 'border-sage-green' : 'border-graphite-blue/30'}`}>
+                        {initialStatus === 'next_period' && <div className="w-2 h-2 rounded-full bg-sage-green" />}
+                      </div>
+                      <input 
+                        type="radio" 
+                        name="initialStatus" 
+                        value="next_period" 
+                        checked={initialStatus === 'next_period'} 
+                        onChange={() => setInitialStatus('next_period')} 
+                        className="hidden" 
+                      />
+                      Empezar desde el próximo periodo
+                    </label>
+                  </div>
+                </div>
+              )}
 
               <div className="pt-4 flex gap-3">
                 <button
