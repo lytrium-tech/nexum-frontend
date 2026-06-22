@@ -101,10 +101,12 @@ export default async function AppHome() {
     );
   }
 
-  const isCompletelyEmpty = 
-    parseFloat(snapshot.cash.total_balance) === 0 && 
-    parseFloat(snapshot.cashflow.income) === 0 && 
-    parseFloat(snapshot.cashflow.expenses) === 0;
+  const hasCurrencies = snapshot.totals_by_currency && Object.keys(snapshot.totals_by_currency).length > 0;
+  const hasAccounts = snapshot.cash?.active_accounts_count > 0;
+  const hasGoals = snapshot.goals?.active_goals_count > 0;
+  const hasObligations = snapshot.obligations?.pending_count > 0;
+  
+  const isCompletelyEmpty = !hasCurrencies && !hasAccounts && !hasGoals && !hasObligations;
 
   if (isCompletelyEmpty) {
     return (
@@ -134,14 +136,19 @@ export default async function AppHome() {
         safeMoney={snapshot.truth.safe_money || '—'}
         freeMoney={snapshot.truth.free_money || '—'}
         warnings={snapshot.truth.calculation_warnings}
+        totalsByCurrency={snapshot.totals_by_currency}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CashflowSummary 
-          income={snapshot.cashflow.income || '—'}
-          cashOutflow={snapshot.cashflow.expenses || '—'}
-          committedOutflow={snapshot.truth.committed_outflows || '—'}
-          netCashflow={snapshot.cashflow.net_cashflow || '—'}
+          incomeCurrentPeriod={snapshot.cashflow.income_current_period || '—'}
+          cashExpensesCurrentPeriod={snapshot.cashflow.cash_expenses_current_period || '—'}
+          creditCardConsumptionCurrentPeriod={snapshot.cashflow.credit_card_consumption_current_period || '—'}
+          debtPaymentsCurrentPeriod={snapshot.cashflow.debt_payments_current_period || '—'}
+          goalContributionsCurrentPeriod={snapshot.cashflow.goal_contributions_current_period || '—'}
+          obligationPaymentsCurrentPeriod={snapshot.cashflow.obligation_payments_current_period || '—'}
+          committedOutflowCurrentPeriod={snapshot.cashflow.committed_outflows_current_period || '—'}
+          netCashflowCurrentPeriod={snapshot.cashflow.net_cashflow_current_period || '—'}
         />
         
         <DebtOverview 
