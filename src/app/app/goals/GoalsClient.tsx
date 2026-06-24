@@ -31,7 +31,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<React.ReactNode | null>(null);
 
   // Active only logic
   const activeGoals = goals.filter(g => g.is_active);
@@ -123,9 +123,13 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
       return;
     }
 
+    const sourceAccount = accounts.find(a => a.id === accountId);
+    const currency = sourceAccount?.currency || 'COP';
+
     const payload = {
       account_id: accountId,
-      amount
+      amount,
+      currency
     };
 
     // basic idempotency key just for client deduplication per session submit
@@ -146,10 +150,29 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
         return g;
       });
       setGoals(updatedGoals);
-      setSuccessMessage('Aporte registrado exitosamente.');
+
+      const cr = res.result;
+      let messageContent: React.ReactNode;
+      if (cr.goal_currency && cr.currency && cr.currency !== cr.goal_currency) {
+        messageContent = (
+          <div className="flex flex-col gap-1">
+            <span className="font-semibold">Aportaste {formatMoneyOrDash(cr.amount, cr.currency)}</span>
+            <span>{cr.is_estimated ? '≈ ' : ''}{formatMoneyOrDash(cr.applied_amount, cr.goal_currency)} aplicados a tu meta</span>
+            {cr.fx_rate && (
+              <span className="text-xs opacity-80 mt-1">
+                Tasa usada: 1 {cr.currency} = {formatMoneyOrDash(cr.fx_rate, cr.goal_currency)}
+              </span>
+            )}
+          </div>
+        );
+      } else {
+        messageContent = `Aportaste ${formatMoneyOrDash(cr.amount, cr.currency || 'COP')}`;
+      }
+
+      setSuccessMessage(messageContent);
       setTimeout(() => {
         closeModals();
-      }, 1500);
+      }, 3000);
     } else {
       setError(res.error || 'Ocurrió un error al registrar el aporte');
       setIsSubmitting(false);
@@ -350,9 +373,9 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
             )}
             
             {successMessage && (
-              <div className="mb-6 p-3 rounded-xl bg-green-50 flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <p className="text-sm text-green-700 font-medium">{successMessage}</p>
+              <div className="mb-6 p-4 rounded-xl bg-green-50 flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
+                <div className="text-sm text-green-700 font-medium">{successMessage}</div>
               </div>
             )}
 
@@ -485,9 +508,9 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
             )}
             
             {successMessage && (
-              <div className="mb-6 p-3 rounded-xl bg-green-50 flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <p className="text-sm text-green-700 font-medium">{successMessage}</p>
+              <div className="mb-6 p-4 rounded-xl bg-green-50 flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
+                <div className="text-sm text-green-700 font-medium">{successMessage}</div>
               </div>
             )}
 

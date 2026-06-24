@@ -76,7 +76,14 @@ export async function contributeGoalAction(id: string, data: components['schemas
       }
     } else if (apiError?.status === 400 || apiError?.status === 403) {
        if (apiError.message && typeof apiError.message === 'string' && apiError.message !== '{}') {
-         message = apiError.message; // Could be insufficient funds
+         const backendMsg = apiError.message.toLowerCase();
+         if (apiError.status === 403 || backendMsg.includes('unsupported') || backendMsg.includes('support') || backendMsg.includes('currency')) {
+           message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
+         } else {
+           message = apiError.message; // Could be insufficient funds
+         }
+       } else if (apiError?.status === 403) {
+         message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
        }
     } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
       message = apiError.message;
