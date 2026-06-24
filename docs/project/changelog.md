@@ -3,6 +3,8 @@
 ## [Unreleased] - Frontend V1.5
 ### Changed
 - **Fase 1**: Sincronizado el contrato OpenAPI con Backend V1.5 Sprint 1, regenerados los tipos (`TransferResult`, `GoalContributionResult`) para incluir metadata FX (`target_amount`, `fx_rate`, `is_estimated`, etc). Build recuperado exitosamente sin requerir refactorización profunda.
+- **Fase 2**: Implementada la visualización de transferencias cruzadas en `TransfersClient.tsx`. Se agregó la lógica para enviar `currency` en la creación y mostrar el desglose (monto origen, monto recibido destino y tasa aplicada). Manejo mejorado del error de moneda no soportada.
+- **Fase 3**: Implementada la visualización de contribuciones cruzadas en `GoalsClient.tsx`. El mensaje de éxito muestra el desglose del monto objetivo con la tasa aplicada. Manejo mejorado del error de moneda no soportada.
 
 ## [Unreleased] - Frontend V1.3 Alpha Candidate Status
 ### Changed

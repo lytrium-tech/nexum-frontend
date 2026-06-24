@@ -13,17 +13,28 @@ The backend V1.5 Sprint 1 handoff documentation was reviewed. The strategy dicta
 - Confirmed the presence of FX fields in `TransferResult` (`target_amount`, `target_currency`, `fx_rate`, `rate_source`, `rate_timestamp`, `is_estimated`) and `GoalContributionResult` (`applied_amount`, `goal_currency`, `fx_rate`, `rate_source`, `rate_timestamp`, `is_estimated`).
 
 ## 4. Transfers UX
-**Status: PENDING (Phase 2)**
+**Status: COMPLETED (Phase 2)**
+- Se preserva la experiencia para aportes `same-currency`.
+- Para `cross-currency` se integró el desglose de monto objetivo `target_amount` con la divisa destino `target_currency`, y metadata como `fx_rate` de forma in-line en la tarjeta de transferencias.
+- No se aplica FX local.
 
 ## 5. Goal Contributions UX
-**Status: PENDING (Phase 2)**
+**Status: COMPLETED (Phase 3)**
+- Al aportar a una meta de diferente moneda, se indica el aporte origen y, debajo, el `applied_amount` exacto en divisa objetivo.
+- Se preserva en el modal y feedback un diseño simple para `same-currency`.
+- No se calculan divisas desde el front.
 
 ## 6. Unsupported Currency UX
-**Status: PENDING (Phase 2)**
+**Status: COMPLETED**
+- Implementado control de Forbidden Error (HTTP 403) proveniente del backend V1.5 en `transfers` y `goals`. Se expone el aviso textual "Por ahora Nexum solo soporta conversiones COP/USD." al usuario final.
 
 ## 7. Files Changed
 - `docs/contracts/openapi.json`
 - `src/lib/api/types.generated.ts`
+- `src/app/app/transfers/TransfersClient.tsx`
+- `src/app/app/transfers/actions.ts`
+- `src/app/app/goals/GoalsClient.tsx`
+- `src/app/app/goals/actions.ts`
 - `docs/context/frontend-current-state.md`
 - `docs/project/changelog.md`
 - `docs/agent/reports/frontend-v1-5-fx-cross-currency-alignment-report.md`
@@ -31,15 +42,13 @@ The backend V1.5 Sprint 1 handoff documentation was reviewed. The strategy dicta
 ## 8. Tests / QA
 - `pnpm lint`: Passed successfully without manual interventions.
 - `pnpm build`: Passed successfully without manual interventions.
+- Runtime QA: Queda pendiente simular un flujo completo en runtime si faltan datos/saldos de cuentas cruzadas. La implementación se fía estrictamente del contrato OpenAPI.
 
 ## 9. Known Limitations
-- FX UX aún no implementada.
-- Cross-currency transfers todavía usan la UI previa.
-- Goal contributions todavía no muestran metadata FX.
-- Unsupported currency UX pendiente.
+- Faltan datos locales reales/vivos para probar la UI cross-currency exhaustivamente en modo interactivo si no existe ya una cuenta USD o saldo.
 
 ## 10. Backend Follow-ups
 None required. Contract is fully consumed.
 
 ## 11. Final Status
-Phase 1 Completed. Ready to proceed to Phase 2 (UX Implementation).
+Frontend V1.5 FX alignment completed. Todos los artefactos fueron adaptados a los campos FX del backend sin infringir la regla "Backend calcula, Frontend representa".
