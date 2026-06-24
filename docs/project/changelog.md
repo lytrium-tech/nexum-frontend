@@ -31,6 +31,7 @@
 ### Changed
 - **Fase 1**: Sincronizado el contrato OpenAPI con Backend V1.4, requiriendo validación de tipos por obligatoriedad de la moneda (`currency`) en los esquemas de creación (`GoalCreate`, `ObligationCreate`, etc). Agregados los tipos auxiliares temporales `currency: "COP"` para recuperar el build. Verificado el nuevo modelo de snapshot incorporando soporte a la capa de agregación `estimated_totals`.
 - **Fase 2**: Reemplazados los hotfixes temporales `currency: "COP"` por selectores explícitos de moneda (COP/USD/EUR) en los formularios de creación de Goals, Obligations y Credit Cards (Accounts ya lo tenía). Para nuevos movimientos manuales, la moneda se hereda automáticamente de la cuenta seleccionada (`NewEntryClient`). Tipos estrictos aplicados en `FinancialHero`.
+- **Fase 3**: Implementada la UI para renderizar totales estimados (`estimated_totals`) bajo un esquema seguro que informa origen de la tasa y fecha (`rate_source`, `rate_timestamp`), así como advertencias para monedas no soportadas (`unsupported_currencies`). Confirmada la finalización del Retest de Producción contra Backend V1.4.1/V1.4.2 con Dashboard y Ledger plenamente operativos en modo multi-moneda.
 
 ## [Unreleased] - Fase 9 (Chat Alignment with Backend V1.1)
 ### Changed

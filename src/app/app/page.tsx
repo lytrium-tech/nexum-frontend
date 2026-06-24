@@ -137,6 +137,7 @@ export default async function AppHome() {
         freeMoney={snapshot.truth.free_money || '—'}
         warnings={snapshot.truth.calculation_warnings}
         totalsByCurrency={snapshot.totals_by_currency}
+        estimatedTotals={snapshot.estimated_totals}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

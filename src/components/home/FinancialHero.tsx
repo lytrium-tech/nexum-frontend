@@ -10,6 +10,7 @@ interface FinancialHeroProps {
   currency?: string;
   period?: string;
   totalsByCurrency?: { [key: string]: components['schemas']['CurrencyMetrics'] };
+  estimatedTotals?: components['schemas']['EstimatedTotals'] | null;
 }
 
 export default function FinancialHero({ 
@@ -19,7 +20,8 @@ export default function FinancialHero({
   warnings, 
   currency = 'COP', 
   period = 'Mes actual',
-  totalsByCurrency
+  totalsByCurrency,
+  estimatedTotals
 }: FinancialHeroProps) {
 
   const isTotalsArray = Array.isArray(totalsByCurrency);
@@ -79,10 +81,34 @@ export default function FinancialHero({
                 </div>
               ))}
             </div>
-            {hasWarning && (
+            {hasWarning && !estimatedTotals && (
               <p className="text-[10px] text-white/40 mt-4 italic">
                 Totales separados por moneda
               </p>
+            )}
+
+            {estimatedTotals && (
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <p className="text-xs text-white/60 mb-1 flex items-center justify-between">
+                  <span>Total Estimado en {estimatedTotals.base_currency}</span>
+                  <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-medium">Estimado</span>
+                </p>
+                <p className="text-2xl font-semibold tracking-tight text-champagne-gold">
+                  {formatMoneyOrDash(estimatedTotals.estimated_total_base_currency, estimatedTotals.base_currency)}
+                </p>
+                
+                {estimatedTotals.unsupported_currencies && estimatedTotals.unsupported_currencies.length > 0 && (
+                  <p className="text-[10px] text-orange-300/80 mt-1.5 flex items-start gap-1">
+                    <svg className="w-3 h-3 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>Excluye monedas sin tasa de cambio ({estimatedTotals.unsupported_currencies.join(', ')})</span>
+                  </p>
+                )}
+                <p className="text-[9px] text-white/30 mt-1.5">
+                  Tasas ref. {estimatedTotals.rate_source} ({new Date(estimatedTotals.rate_timestamp).toLocaleDateString()})
+                </p>
+              </div>
             )}
           </div>
         )}
