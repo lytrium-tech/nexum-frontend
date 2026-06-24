@@ -35,7 +35,11 @@ export async function createTransferAction(data: components['schemas']['Transfer
            message = 'La cuenta de origen y destino no pueden ser iguales.';
          } else if (backendMsg.includes('greater than 0') || backendMsg.includes('monto 0')) {
            message = 'El monto debe ser mayor a $0.';
+         } else if (apiError?.status === 403 || backendMsg.includes('unsupported') || backendMsg.includes('support') || backendMsg.includes('currency')) {
+           message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
          }
+       } else if (apiError?.status === 403) {
+         message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
        }
     }
     

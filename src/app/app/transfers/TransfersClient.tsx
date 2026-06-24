@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { createTransferAction } from './actions';
+import { formatMoneyOrDash } from '@/lib/format/money';
 
 type TransferResult = components['schemas']['TransferResult'];
 type AccountRead = components['schemas']['AccountRead'];
@@ -30,15 +31,6 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const formatMoney = (amount: number | string) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(num);
   };
 
   const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -72,11 +64,14 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
       return;
     }
 
+    const sourceAccount = activeAccounts.find(a => a.id === sourceAccountId);
+    const currency = sourceAccount?.currency || 'COP';
+
     const payload: components['schemas']['TransferCreate'] = {
       source_account_id: sourceAccountId,
       destination_account_id: destinationAccountId,
       amount: amount.toString(),
-      currency: 'COP',
+      currency: currency,
       description: description.trim() || null,
       occurred_at: new Date().toISOString(),
       command_id: null,
@@ -148,11 +143,29 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                     <p className="text-xs text-gray-400 mt-0.5">{formatDate(t.created_at)}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-base font-semibold text-graphite-blue">
-                    {formatMoney(t.amount || 0)}
-                  </p>
-                  <p className="text-[10px] text-gray-400 uppercase">{t.currency || 'COP'}</p>
+                <div className="text-right flex flex-col items-end">
+                  {t.target_currency && t.currency !== t.target_currency ? (
+                    <>
+                      <p className="text-xs text-gray-500 font-medium">
+                        Transferiste {formatMoneyOrDash(t.amount, t.currency)}
+                      </p>
+                      <p className="text-base font-semibold text-graphite-blue mt-0.5">
+                        {t.is_estimated ? '≈ ' : ''}{formatMoneyOrDash(t.target_amount, t.target_currency)} <span className="text-[10px] text-gray-400 uppercase font-normal">recibidos</span>
+                      </p>
+                      {t.fx_rate && (
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          Tasa usada: 1 {t.currency} = {formatMoneyOrDash(t.fx_rate, t.target_currency)}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-base font-semibold text-graphite-blue">
+                        {formatMoneyOrDash(t.amount, t.currency)}
+                      </p>
+                      <p className="text-[10px] text-gray-400 uppercase">{t.currency || 'COP'}</p>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -192,7 +205,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                   >
                     <option value="">Selecciona cuenta origen...</option>
                     {activeAccounts.map(a => (
-                      <option key={a.id} value={a.id}>{a.name} ({formatMoney(a.balance || 0)})</option>
+                      <option key={a.id} value={a.id}>{a.name} ({formatMoneyOrDash(a.balance, a.currency)})</option>
                     ))}
                   </select>
                 </div>
@@ -206,7 +219,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                   >
                     <option value="">Selecciona cuenta destino...</option>
                     {activeAccounts.map(a => (
-                      <option key={a.id} value={a.id}>{a.name} ({formatMoney(a.balance || 0)})</option>
+                      <option key={a.id} value={a.id}>{a.name} ({formatMoneyOrDash(a.balance, a.currency)})</option>
                     ))}
                   </select>
                 </div>
