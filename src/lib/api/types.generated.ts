@@ -1466,6 +1466,8 @@ export interface components {
             account_id: string;
             /** Amount */
             amount: number | string;
+            /** Currency */
+            currency?: string | null;
             /** Source Message Id */
             source_message_id?: string | null;
             /** Raw Message */
@@ -1479,6 +1481,23 @@ export interface components {
             event_id: string | null;
             /** Amount */
             amount: string;
+            /** Currency */
+            currency?: string | null;
+            /** Applied Amount */
+            applied_amount?: string | null;
+            /** Goal Currency */
+            goal_currency?: string | null;
+            /** Fx Rate */
+            fx_rate?: string | null;
+            /** Rate Source */
+            rate_source?: string | null;
+            /** Rate Timestamp */
+            rate_timestamp?: string | null;
+            /**
+             * Is Estimated
+             * @default false
+             */
+            is_estimated: boolean;
             /** Balance After */
             balance_after: string;
             /** Goal Current Amount */
@@ -2158,7 +2177,9 @@ export interface components {
             /** Amount */
             amount: number | string;
             /** Currency */
-            currency: string;
+            currency?: string | null;
+            /** Target Currency */
+            target_currency?: string | null;
             /** Description */
             description?: string | null;
             /** Occurred At */
@@ -2183,6 +2204,21 @@ export interface components {
             amount: string;
             /** Currency */
             currency: string;
+            /** Target Amount */
+            target_amount?: string | null;
+            /** Target Currency */
+            target_currency?: string | null;
+            /** Fx Rate */
+            fx_rate?: string | null;
+            /** Rate Source */
+            rate_source?: string | null;
+            /** Rate Timestamp */
+            rate_timestamp?: string | null;
+            /**
+             * Is Estimated
+             * @default false
+             */
+            is_estimated: boolean;
             /** Description */
             description: string | null;
             /** Status */

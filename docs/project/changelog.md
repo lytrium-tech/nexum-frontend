@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased] - Frontend V1.5
+### Changed
+- **Fase 1**: Sincronizado el contrato OpenAPI con Backend V1.5 Sprint 1, regenerados los tipos (`TransferResult`, `GoalContributionResult`) para incluir metadata FX (`target_amount`, `fx_rate`, `is_estimated`, etc). Build recuperado exitosamente sin requerir refactorización profunda.
+
 ## [Unreleased] - Frontend V1.3 Alpha Candidate Status
 ### Changed
 - Sincronización del contrato OpenAPI con Backend V1.3 y regeneración de tipos.

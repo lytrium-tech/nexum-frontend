@@ -85,6 +85,9 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 2:** Currency Propagation In Forms/Actions (Completado)
 * **Fase 3:** Estimated Totals UI & Production Retest (Completado)
 
+**Frontend V1.5**
+* **Fase 1:** OpenAPI Sync + Type Recovery (Completado)
+
 ## Product Notes
 
 **Dashboard/Home Semantics:**
