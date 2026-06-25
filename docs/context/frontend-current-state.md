@@ -92,8 +92,12 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 4:** Credit API Endpoints Expansion (Completado)
 * **Fase 5:** Credit Statements UI (Completado)
 * **Fase 6:** Installments & Early Payment UI (Completado)
+* **Fase 7:** Final QA + closeout (Completado)
 
 ## Product Notes
+
+* Frontend V1.5 está completado localmente.
+* Pending: Deploy productivo de Backend V1.5 para habilitar el QA final del usuario en entorno runtime.
 
 **Dashboard/Home Semantics:**
 El Home principal (Snapshot) debe priorizar sistemáticamente las métricas del periodo actual / mes actual, tanto para el Cashflow Summary como para el neto. Los acumulados históricos quedarán reservados para analítica y revisiones pasadas, no para la pantalla del pulso financiero activo.
