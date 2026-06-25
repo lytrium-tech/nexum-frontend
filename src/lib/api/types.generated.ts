@@ -398,6 +398,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/credit/cards/{card_id}/purchases/{purchase_id}/pay_early": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Early Payment */
+        post: operations["create_early_payment_api_v1_credit_cards__card_id__purchases__purchase_id__pay_early_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/credit/summary": {
         parameters: {
             query?: never;
@@ -441,6 +458,40 @@ export interface paths {
         };
         /** List Card Installments */
         get: operations["list_card_installments_api_v1_credit_cards__card_id__installments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit/cards/{card_id}/statements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Statements */
+        get: operations["list_statements_api_v1_credit_cards__card_id__statements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit/cards/{card_id}/statements/{period}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Statement */
+        get: operations["get_statement_api_v1_credit_cards__card_id__statements__period__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1024,6 +1075,42 @@ export interface components {
             /** Currency */
             currency: string;
         };
+        /** CreditCardEarlyPaymentCreate */
+        CreditCardEarlyPaymentCreate: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount?: number | string | null;
+            /**
+             * Allocation Mode
+             * @default reduce_installment_amount
+             */
+            allocation_mode: string;
+            /** Source Message Id */
+            source_message_id?: string | null;
+            /** Raw Message */
+            raw_message?: string | null;
+        };
+        /** CreditCardEarlyPaymentResult */
+        CreditCardEarlyPaymentResult: {
+            /** Status */
+            status: string;
+            /** Event Id */
+            event_id?: string | null;
+            /** Early Payment Id */
+            early_payment_id?: string | null;
+            /** Amount */
+            amount: string;
+            /** Current Debt */
+            current_debt: string;
+            /** Available Credit */
+            available_credit: string;
+            /** Account Balance */
+            account_balance: string;
+        };
         /** CreditCardInstallmentRead */
         CreditCardInstallmentRead: {
             /**
@@ -1053,6 +1140,25 @@ export interface components {
             status: string;
             /** Paid Amount */
             paid_amount: string;
+            /**
+             * Interest Amount
+             * @default 0.00
+             */
+            interest_amount: string;
+            /**
+             * Total Amount
+             * @default 0.00
+             */
+            total_amount: string;
+            /** Scheduled Due Date */
+            scheduled_due_date?: string | null;
+            /**
+             * Revision Id
+             * @default 1
+             */
+            revision_id: number;
+            /** Remaining Principal */
+            readonly remaining_principal: string;
         };
         /** CreditCardPaymentCreate */
         CreditCardPaymentCreate: {
@@ -1195,6 +1301,11 @@ export interface components {
              */
             payment_required: string;
             /**
+             * Minimum Payment
+             * @default 0.00
+             */
+            minimum_payment: string;
+            /**
              * Next Payment Estimate
              * @default 0.00
              */
@@ -1217,6 +1328,47 @@ export interface components {
             monthly_cc_payment: string;
             /** Estimated Available Credit */
             readonly estimated_available_credit: string;
+        };
+        /** CreditCardStatementRead */
+        CreditCardStatementRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Credit Card Id
+             * Format: uuid
+             */
+            credit_card_id: string;
+            /** Billing Period */
+            billing_period: string;
+            /** Billing Period Start */
+            billing_period_start?: string | null;
+            /** Cutoff Date */
+            cutoff_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Previous Balance */
+            previous_balance: string;
+            /** New Purchases */
+            new_purchases: string;
+            /** Billed Installments */
+            billed_installments: string;
+            /** Fees Total */
+            fees_total: string;
+            /** Interest Total */
+            interest_total: string;
+            /** Payments Received */
+            payments_received: string;
+            /** Statement Balance */
+            statement_balance: string;
+            /** Minimum Payment */
+            minimum_payment: string;
+            /** Status */
+            status: string;
+            /** Frozen At */
+            frozen_at?: string | null;
         };
         /** CreditCardStatusRead */
         CreditCardStatusRead: {
@@ -1271,6 +1423,11 @@ export interface components {
              * @default 0.00
              */
             payment_required: string;
+            /**
+             * Minimum Payment
+             * @default 0.00
+             */
+            minimum_payment: string;
             /**
              * Next Payment Estimate
              * @default 0.00
@@ -2004,6 +2161,8 @@ export interface components {
             readonly period_status: string;
             /** Next Due Date */
             readonly next_due_date: string | null;
+            /** Days Until Due */
+            readonly days_until_due: number | null;
         };
         /** ObligationUpdate */
         ObligationUpdate: {
@@ -3403,6 +3562,44 @@ export interface operations {
             };
         };
     };
+    create_early_payment_api_v1_credit_cards__card_id__purchases__purchase_id__pay_early_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                card_id: string;
+                purchase_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditCardEarlyPaymentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditCardEarlyPaymentResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_credit_summary_api_v1_credit_summary_get: {
         parameters: {
             query?: never;
@@ -3472,6 +3669,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreditCardInstallmentRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_statements_api_v1_credit_cards__card_id__statements_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditCardStatementRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_statement_api_v1_credit_cards__card_id__statements__period__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditCardStatementRead"];
                 };
             };
             /** @description Validation Error */

@@ -179,12 +179,24 @@ export const api = {
         apiClient<components['schemas']['CreditCardStatusRead']>(`/api/v1/credit/cards/${id}/status`, { method: 'GET' }, isServer),
       installments: (id: string, isServer = false) =>
         apiClient<components['schemas']['CreditCardInstallmentRead'][]>(`/api/v1/credit/cards/${id}/installments`, { method: 'GET' }, isServer),
+      statements: (id: string, isServer = false) =>
+        apiClient<components['schemas']['CreditCardStatementRead'][]>(`/api/v1/credit/cards/${id}/statements`, { method: 'GET' }, isServer),
+      statement: (id: string, period: string, isServer = false) =>
+        apiClient<components['schemas']['CreditCardStatementRead']>(`/api/v1/credit/cards/${id}/statements/${period}`, { method: 'GET' }, isServer),
     },
     summary: (isServer = false) =>
       apiClient<components['schemas']['CreditSummaryRead']>('/api/v1/credit/summary', { method: 'GET' }, isServer),
     purchases: {
       create: (cardId: string, data: CreditCardPurchaseCreate, idempotencyKey: string, isServer = false) =>
         apiClient<CreditCardPurchaseResult>(`/api/v1/credit/cards/${cardId}/purchases`, {
+          method: 'POST',
+          headers: {
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(data),
+        }, isServer),
+      payEarly: (cardId: string, purchaseId: string, data: components['schemas']['CreditCardEarlyPaymentCreate'], idempotencyKey: string, isServer = false) =>
+        apiClient<components['schemas']['CreditCardEarlyPaymentResult']>(`/api/v1/credit/cards/${cardId}/purchases/${purchaseId}/pay_early`, {
           method: 'POST',
           headers: {
             'Idempotency-Key': idempotencyKey,

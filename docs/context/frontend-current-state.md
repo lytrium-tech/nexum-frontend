@@ -89,6 +89,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 1:** OpenAPI Sync + Type Recovery (Completado)
 * **Fase 2:** Transfers UX (Completado)
 * **Fase 3:** Goal Contributions UX (Completado)
+* **Fase 4:** Credit API Endpoints Expansion (Completado)
 
 ## Product Notes
 
