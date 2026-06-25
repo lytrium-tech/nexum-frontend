@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createCreditCardAction, purchaseCreditCardAction, payCreditCardAction } from './actions';
+import { createCreditCardAction, purchaseCreditCardAction, payCreditCardAction, getCreditStatementsAction } from './actions';
 
 const CreditCard = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>;
 const Plus = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>;
@@ -12,6 +12,9 @@ const Wallet = ({ className }: { className?: string }) => <svg className={classN
 const CheckCircle2 = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const AlertCircle = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const RefreshCw = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
+const ChevronDown = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
+const ChevronUp = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
+const FileText = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
 
 
 type CreditCardRead = components['schemas']['CreditCardRead'];
@@ -21,6 +24,154 @@ interface CreditClientProps {
   initialCards: CreditCardRead[];
   initialAccounts: AccountRead[];
   initialError: string | null;
+}
+
+type CreditCardStatementRead = components['schemas']['CreditCardStatementRead'];
+
+function StatementsList({ card, formatMoney }: { card: CreditCardRead, formatMoney: (amount: number | string | undefined, currency?: string) => string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [statements, setStatements] = useState<CreditCardStatementRead[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleToggle = async () => {
+    if (!isOpen && !statements && !isLoading) {
+      setIsLoading(true);
+      setError(null);
+      const res = await getCreditStatementsAction(card.id);
+      if (res.success) {
+        setStatements(res.result as CreditCardStatementRead[]);
+      } else {
+        setError('No pudimos cargar los extractos de esta tarjeta.');
+      }
+      setIsLoading(false);
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return '—';
+    return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' }).format(new Date(dateString + 'T00:00:00'));
+  };
+
+  const formatPeriod = (periodString: string) => {
+    const [year, month] = periodString.split('-');
+    const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1);
+    return new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' }).format(date);
+  };
+
+  return (
+    <div className="mt-4 border-t border-graphite-blue/5 pt-4">
+      <button 
+        onClick={handleToggle}
+        className="flex w-full items-center justify-between py-2 text-sm font-medium text-graphite-blue hover:text-graphite-blue/80 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <FileText className="w-4 h-4 text-graphite-blue/60" />
+          Extractos
+        </span>
+        {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      </button>
+
+      {isOpen && (
+        <div className="mt-4 space-y-4">
+          {isLoading && (
+            <div className="flex justify-center py-4">
+              <RefreshCw className="w-5 h-5 animate-spin text-graphite-blue/40" />
+            </div>
+          )}
+          {error && (
+            <div className="bg-red-50/50 border border-red-100 rounded-xl p-3 flex items-start gap-3">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+          {!isLoading && !error && statements && statements.length === 0 && (
+            <p className="text-sm text-graphite-blue/60 text-center py-4">
+              Aún no hay extractos generados para esta tarjeta.
+            </p>
+          )}
+          {!isLoading && !error && statements && statements.length > 0 && (
+            <div className="space-y-3">
+              {statements.map(stmt => (
+                <div key={stmt.id} className="bg-white border border-graphite-blue/10 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="font-medium text-graphite-blue capitalize">
+                        Extracto {formatPeriod(stmt.billing_period)}
+                      </h4>
+                      <div className="flex gap-3 text-xs text-graphite-blue/60 mt-1">
+                        <span>Corte: {formatDate(stmt.cutoff_date)}</span>
+                        <span>Pago: {formatDate(stmt.due_date)}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-graphite-blue/5 text-graphite-blue uppercase tracking-wider">
+                      {stmt.status}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                    <div>
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Total a pagar</p>
+                      <p className="text-sm font-medium text-graphite-blue">
+                        {stmt.statement_balance != null ? formatMoney(stmt.statement_balance, card.currency) : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Pago mínimo</p>
+                      <p className="text-sm font-medium text-graphite-blue">
+                        {stmt.minimum_payment != null ? formatMoney(stmt.minimum_payment, card.currency) : '—'}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Compras nuevas</p>
+                      <p className="text-xs font-medium text-graphite-blue/80">
+                        {stmt.new_purchases != null ? formatMoney(stmt.new_purchases, card.currency) : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Cuotas facturadas</p>
+                      <p className="text-xs font-medium text-graphite-blue/80">
+                        {stmt.billed_installments != null ? formatMoney(stmt.billed_installments, card.currency) : '—'}
+                      </p>
+                    </div>
+
+                    {(parseFloat(stmt.interest_total || '0') > 0 || parseFloat(stmt.fees_total || '0') > 0) && (
+                      <div className="col-span-2">
+                        <p className="text-xs text-graphite-blue/50 mb-0.5">Cargos e intereses</p>
+                        <p className="text-xs font-medium text-graphite-blue/80">
+                          {stmt.fees_total != null ? formatMoney(stmt.fees_total, card.currency) : '—'} fees / {stmt.interest_total != null ? formatMoney(stmt.interest_total, card.currency) : '—'} int
+                        </p>
+                      </div>
+                    )}
+                    
+                    {parseFloat(stmt.payments_received || '0') > 0 && (
+                      <div className="col-span-2">
+                        <p className="text-xs text-graphite-blue/50 mb-0.5">Pagos recibidos</p>
+                        <p className="text-xs font-medium text-sage-green">
+                          {stmt.payments_received != null ? formatMoney(stmt.payments_received, card.currency) : '—'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {stmt.frozen_at && (
+                    <div className="mt-3 pt-3 border-t border-graphite-blue/5 text-xs text-graphite-blue/60 flex gap-2 items-start">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-graphite-blue/40" />
+                      <p>
+                        <strong className="font-medium text-graphite-blue/80">Extracto congelado.</strong> Este periodo ya fue cerrado por el backend y no se modifica con compras posteriores.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function CreditClient({ initialCards, initialAccounts, initialError }: CreditClientProps) {
@@ -327,6 +478,8 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                       Pago
                     </button>
                   </div>
+                  
+                  <StatementsList card={card} formatMoney={formatMoney} />
                 </div>
               </div>
             ))}

@@ -48,9 +48,9 @@ El sprint 1 de Frontend V1.5 cubrió las Fases 1 a 3 (FX y Types). Ahora iniciam
   - Actualizados `src/lib/api/endpoints.ts` y `src/app/app/credit/actions.ts` con `statements`, `installments` y `pay_early`.
   - Contrato recuperado tras fix del backend (commit 63d5578), solventando el CONTRACT GAP.
 
-- **Phase 5: Statements UI**
-  - Extender `CreditClient.tsx` (o crear un componente anidado) para listar y mostrar el detalle de los extractos (Statements) de una tarjeta.
-  
+- **Phase 5: Statements UI (Completado)**
+  - Implementado `StatementsList` de forma anidada en `CreditClient.tsx`.
+  - Muestra la metadata del extracto inmutable calculada por el backend sin sumar ni inferir datos localmente.
 - **Phase 6: Installments & Early Payment UI**
   - Construir una vista detallada de compras a cuotas (Installments) dentro de la tarjeta.
   - Añadir el control "Pagar compra anticipadamente" interactuando con el endpoint `/pay_early`, seleccionando cuenta de origen.

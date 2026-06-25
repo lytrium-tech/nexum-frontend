@@ -5,7 +5,8 @@
 - **Fase 1**: Sincronizado el contrato OpenAPI con Backend V1.5 Sprint 1, regenerados los tipos (`TransferResult`, `GoalContributionResult`) para incluir metadata FX (`target_amount`, `fx_rate`, `is_estimated`, etc). Build recuperado exitosamente sin requerir refactorización profunda.
 - **Fase 2**: Implementada la visualización de transferencias cruzadas en `TransfersClient.tsx`. Se agregó la lógica para enviar `currency` en la creación y mostrar el desglose (monto origen, monto recibido destino y tasa aplicada). Manejo mejorado del error de moneda no soportada.
 - **Fase 3**: Implementada la visualización de contribuciones cruzadas en `GoalsClient.tsx`. El mensaje de éxito muestra el desglose del monto objetivo con la tasa aplicada. Manejo mejorado del error de moneda no soportada.
-- **Fase 4**: Añadidos los métodos y actions tipados para interactuar con los nuevos endpoints del modelo avanzado de tarjetas de crédito (`installments`, `pay_early`). No se expone UI todavía. Manejo estricto de errores de backend para compras no elegibles, saldo insuficiente y extractos congelados.
+- **Fase 4**: Añadidos los métodos y actions tipados para interactuar con los nuevos endpoints del modelo avanzado de tarjetas de crédito (`installments`, `pay_early`). Contrato de statements integrado y verificado exitosamente.
+- **Fase 5**: Implementada la interfaz de lectura interactiva para Extractos de Tarjeta de Crédito (Statements) (`StatementsList` en `CreditClient.tsx`). La interfaz consolida la información financiera inmutable calculada por el backend, incluyendo cortes, pagos, comisiones, intereses y estado de la facturación, sin añadir recálculos locales de deuda o pagos.
 
 ## [Unreleased] - Frontend V1.3 Alpha Candidate Status
 ### Changed
