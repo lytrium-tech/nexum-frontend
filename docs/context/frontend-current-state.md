@@ -91,6 +91,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Fase 3:** Goal Contributions UX (Completado)
 * **Fase 4:** Credit API Endpoints Expansion (Completado)
 * **Fase 5:** Credit Statements UI (Completado)
+* **Fase 6:** Installments & Early Payment UI (Completado)
 
 ## Product Notes
 

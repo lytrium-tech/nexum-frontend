@@ -51,9 +51,9 @@ El sprint 1 de Frontend V1.5 cubrió las Fases 1 a 3 (FX y Types). Ahora iniciam
 - **Phase 5: Statements UI (Completado)**
   - Implementado `StatementsList` de forma anidada en `CreditClient.tsx`.
   - Muestra la metadata del extracto inmutable calculada por el backend sin sumar ni inferir datos localmente.
-- **Phase 6: Installments & Early Payment UI**
-  - Construir una vista detallada de compras a cuotas (Installments) dentro de la tarjeta.
-  - Añadir el control "Pagar compra anticipadamente" interactuando con el endpoint `/pay_early`, seleccionando cuenta de origen.
+- **Phase 6: Installments & Early Payment UI (Completado)**
+  - Construida vista detallada de compras a cuotas (`InstallmentsList`) usando el modelo inmutable del backend.
+  - Añadido modal para confirmación de "Pagar anticipadamente" utilizando `payEarlyPurchaseAction`, delegando el cálculo de `amount` al backend sin updates locales especulativos.
 
 ## 5. Conclusión de Discovery
 La arquitectura actual del frontend está en un punto sólido porque ya delega la verdad del dashboard al backend. El trabajo restante del V1.5 consiste puramente en agregar la interfaz de usuario para exponer las nuevas capacidades del modelo avanzado de crédito (statements y pay early).

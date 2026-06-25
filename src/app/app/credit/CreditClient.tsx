@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createCreditCardAction, purchaseCreditCardAction, payCreditCardAction, getCreditStatementsAction } from './actions';
+import { createCreditCardAction, purchaseCreditCardAction, payCreditCardAction, getCreditStatementsAction, getCreditInstallmentsAction, payEarlyPurchaseAction } from './actions';
 
 const CreditCard = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>;
 const Plus = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>;
@@ -15,6 +15,7 @@ const RefreshCw = ({ className }: { className?: string }) => <svg className={cla
 const ChevronDown = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
 const ChevronUp = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
 const FileText = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+const Calendar = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 
 
 type CreditCardRead = components['schemas']['CreditCardRead'];
@@ -174,6 +175,152 @@ function StatementsList({ card, formatMoney }: { card: CreditCardRead, formatMon
   );
 }
 
+type CreditCardInstallmentRead = components['schemas']['CreditCardInstallmentRead'];
+
+function InstallmentsList({ 
+  card, 
+  formatMoney, 
+  onPayEarly 
+}: { 
+  card: CreditCardRead, 
+  formatMoney: (amount: number | string | undefined, currency?: string) => string,
+  onPayEarly: (installment: CreditCardInstallmentRead) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [installments, setInstallments] = useState<CreditCardInstallmentRead[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleToggle = async () => {
+    if (!isOpen && !installments && !isLoading) {
+      setIsLoading(true);
+      setError(null);
+      const res = await getCreditInstallmentsAction(card.id);
+      if (res.success) {
+        setInstallments(res.result as CreditCardInstallmentRead[]);
+      } else {
+        setError('No pudimos cargar las cuotas de esta tarjeta.');
+      }
+      setIsLoading(false);
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return '—';
+    return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' }).format(new Date(dateString + 'T00:00:00'));
+  };
+
+  const formatPeriod = (periodString?: string | null) => {
+    if (!periodString) return '—';
+    const [year, month] = periodString.split('-');
+    const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1);
+    return new Intl.DateTimeFormat('es-CO', { month: 'short', year: 'numeric' }).format(date);
+  };
+
+  return (
+    <div className="mt-0 border-t border-graphite-blue/5 pt-4">
+      <button 
+        onClick={handleToggle}
+        className="flex w-full items-center justify-between py-2 text-sm font-medium text-graphite-blue hover:text-graphite-blue/80 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-graphite-blue/60" />
+          Cuotas pendientes
+        </span>
+        {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      </button>
+
+      {isOpen && (
+        <div className="mt-4 space-y-4">
+          {isLoading && (
+            <div className="flex justify-center py-4">
+              <RefreshCw className="w-5 h-5 animate-spin text-graphite-blue/40" />
+            </div>
+          )}
+          {error && (
+            <div className="bg-red-50/50 border border-red-100 rounded-xl p-3 flex items-start gap-3">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+          {!isLoading && !error && installments && installments.length === 0 && (
+            <p className="text-sm text-graphite-blue/60 text-center py-4">
+              Aún no hay compras a cuotas para esta tarjeta.
+            </p>
+          )}
+          {!isLoading && !error && installments && installments.length > 0 && (
+            <div className="space-y-3">
+              {installments.map(inst => (
+                <div key={inst.id} className="bg-white border border-graphite-blue/10 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="font-medium text-graphite-blue flex items-center gap-2">
+                        Compra {inst.purchase_transaction_id.slice(0, 8)}
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-graphite-blue/5 text-graphite-blue uppercase tracking-wider">
+                          {inst.status}
+                        </span>
+                      </h4>
+                      <div className="flex gap-3 text-xs text-graphite-blue/60 mt-1">
+                        <span>Cuota {inst.installment_number} de {inst.installments_total}</span>
+                        <span>Periodo: {formatPeriod(inst.scheduled_period)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 mb-4">
+                    <div>
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Fecha programada</p>
+                      <p className="text-sm font-medium text-graphite-blue">
+                        {formatDate(inst.scheduled_due_date)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Total de la cuota</p>
+                      <p className="text-sm font-medium text-graphite-blue">
+                        {inst.total_amount != null ? formatMoney(inst.total_amount, card.currency) : '—'}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Capital</p>
+                      <p className="text-xs font-medium text-graphite-blue/80">
+                        {inst.principal_amount != null ? formatMoney(inst.principal_amount, card.currency) : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Interés</p>
+                      <p className="text-xs font-medium text-graphite-blue/80">
+                        {inst.interest_amount != null ? formatMoney(inst.interest_amount, card.currency) : '—'}
+                      </p>
+                    </div>
+
+                    <div className="col-span-2 pt-2 border-t border-graphite-blue/5">
+                      <p className="text-xs text-graphite-blue/50 mb-0.5">Capital restante (después de cuota)</p>
+                      <p className="text-sm font-medium text-graphite-blue/80">
+                        {inst.remaining_principal != null ? formatMoney(inst.remaining_principal, card.currency) : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {inst.status !== 'paid' && inst.status !== 'frozen' && (
+                    <button
+                      onClick={() => onPayEarly(inst)}
+                      className="w-full py-2 bg-sage-green/10 text-sage-green hover:bg-sage-green/20 text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Pagar anticipadamente
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CreditClient({ initialCards, initialAccounts, initialError }: CreditClientProps) {
   const [cards] = useState<CreditCardRead[]>(initialCards);
   const [accounts] = useState<AccountRead[]>(initialAccounts);
@@ -183,6 +330,7 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [purchaseCard, setPurchaseCard] = useState<CreditCardRead | null>(null);
   const [paymentCard, setPaymentCard] = useState<CreditCardRead | null>(null);
+  const [earlyPaymentData, setEarlyPaymentData] = useState<{ card: CreditCardRead, installment: CreditCardInstallmentRead } | null>(null);
 
   // States
   const [error, setError] = useState<string | null>(initialError);
@@ -298,6 +446,36 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
       }, 1500);
     } else {
       setError(result.error || 'Ocurrió un error al registrar el pago.');
+    }
+    
+    setIsSubmitting(false);
+  };
+
+  const handleEarlyPaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!earlyPaymentData) return;
+    
+    setIsSubmitting(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    const accountId = formData.get('account_id') as string;
+
+    const result = await payEarlyPurchaseAction(
+      earlyPaymentData.card.id, 
+      earlyPaymentData.installment.purchase_transaction_id, 
+      accountId
+    );
+    
+    if (result.success) {
+      setSuccessMessage('Pago anticipado registrado. El backend recalculó las cuotas futuras de esta compra.');
+      setTimeout(() => {
+        setEarlyPaymentData(null);
+        setSuccessMessage(null);
+      }, 2500);
+    } else {
+      setError(result.error || 'No fue posible pagar esta compra anticipadamente.');
     }
     
     setIsSubmitting(false);
@@ -480,6 +658,11 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                   </div>
                   
                   <StatementsList card={card} formatMoney={formatMoney} />
+                  <InstallmentsList 
+                    card={card} 
+                    formatMoney={formatMoney} 
+                    onPayEarly={(installment) => setEarlyPaymentData({ card, installment })}
+                  />
                 </div>
               </div>
             ))}
@@ -488,7 +671,7 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
       </main>
 
       {/* Modals overlay */}
-      {(isCreateModalOpen || purchaseCard || paymentCard) && (
+      {(isCreateModalOpen || purchaseCard || paymentCard || earlyPaymentData) && (
         <div className="fixed inset-0 bg-graphite-blue/20 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 sm:p-6">
           <div 
             className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden relative flex flex-col max-h-[90vh]"
@@ -941,6 +1124,110 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                         </>
                       ) : (
                         'Registrar pago'
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Early Payment Modal */}
+            {earlyPaymentData && (
+              <>
+                <div className="p-6 sm:p-8 border-b border-graphite-blue/5 shrink-0">
+                  <h2 className="text-xl font-medium text-graphite-blue flex items-center gap-2">
+                    <ArrowDownRight className="w-5 h-5 text-sage-green" />
+                    Pagar anticipadamente
+                  </h2>
+                  <p className="text-sm text-graphite-blue/60 mt-1.5 capitalize">
+                    {earlyPaymentData.card.name}
+                  </p>
+                </div>
+
+                <div className="p-6 sm:p-8 overflow-y-auto">
+                  {error && (
+                    <div className="mb-6 p-3 sm:p-4 bg-red-50/50 border border-red-100 rounded-2xl flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                  )}
+
+                  {successMessage ? (
+                    <div className="py-8 flex flex-col items-center text-center">
+                      <div className="w-16 h-16 bg-sage-green/10 rounded-full flex items-center justify-center mb-4">
+                        <CheckCircle2 className="w-8 h-8 text-sage-green" />
+                      </div>
+                      <p className="text-graphite-blue font-medium">{successMessage}</p>
+                    </div>
+                  ) : (
+                    <form id="earlyPaymentForm" onSubmit={handleEarlyPaymentSubmit} className="space-y-5">
+                      <div className="p-4 bg-graphite-blue/5 rounded-xl text-sm text-graphite-blue/80 space-y-2 mb-4 border border-graphite-blue/10">
+                        <p>
+                          Vas a solicitar un pago anticipado para la compra <span className="font-medium">{earlyPaymentData.installment.purchase_transaction_id.slice(0, 8)}</span>.
+                        </p>
+                        <p>
+                          Nexum usará el backend para calcular el monto exacto y recalcular las cuotas futuras. Selecciona la cuenta desde donde quieres pagar.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="account_id">
+                          Cuenta origen *
+                        </label>
+                        {activeAccounts.length === 0 ? (
+                          <div className="bg-red-50/50 border border-red-100 rounded-xl p-3 flex items-start gap-3">
+                            <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                            <p className="text-sm text-red-800">No hay cuentas disponibles para realizar este pago.</p>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                              <Wallet className="h-5 w-5 text-graphite-blue/40" />
+                            </div>
+                            <select
+                              id="account_id"
+                              name="account_id"
+                              required
+                              className="w-full pl-11 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors appearance-none outline-none text-graphite-blue"
+                              disabled={isSubmitting}
+                            >
+                              <option value="">Selecciona una cuenta</option>
+                              {activeAccounts.map(account => (
+                                <option key={account.id} value={account.id}>
+                                  {account.name} (Saldo: {formatMoney(account.balance, account.currency)})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    </form>
+                  )}
+                </div>
+
+                {!successMessage && (
+                  <div className="p-6 sm:p-8 border-t border-graphite-blue/5 bg-graphite-blue/5 shrink-0 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEarlyPaymentData(null)}
+                      className="px-5 py-2.5 text-graphite-blue text-sm font-medium rounded-xl hover:bg-graphite-blue/10 transition-colors"
+                      disabled={isSubmitting}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      form="earlyPaymentForm"
+                      disabled={isSubmitting || activeAccounts.length === 0}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-sage-green text-white text-sm font-medium rounded-xl hover:bg-[#688c74] transition-colors disabled:opacity-70"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Procesando...
+                        </>
+                      ) : (
+                        'Confirmar pago anticipado'
                       )}
                     </button>
                   </div>

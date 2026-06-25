@@ -7,6 +7,7 @@
 - **Fase 3**: Implementada la visualización de contribuciones cruzadas en `GoalsClient.tsx`. El mensaje de éxito muestra el desglose del monto objetivo con la tasa aplicada. Manejo mejorado del error de moneda no soportada.
 - **Fase 4**: Añadidos los métodos y actions tipados para interactuar con los nuevos endpoints del modelo avanzado de tarjetas de crédito (`installments`, `pay_early`). Contrato de statements integrado y verificado exitosamente.
 - **Fase 5**: Implementada la interfaz de lectura interactiva para Extractos de Tarjeta de Crédito (Statements) (`StatementsList` en `CreditClient.tsx`). La interfaz consolida la información financiera inmutable calculada por el backend, incluyendo cortes, pagos, comisiones, intereses y estado de la facturación, sin añadir recálculos locales de deuda o pagos.
+- **Fase 6**: Implementada la interfaz de lectura para Cuotas (Installments) (`InstallmentsList` en `CreditClient.tsx`) y modal para Pagos Anticipados explícitos usando el endpoint de `pay_early`. El cálculo exacto del monto del pago anticipado está delegado 100% al backend para mantener coherencia financiera. No se efectúan cálculos ni optimistic updates de la deuda localmente.
 
 ## [Unreleased] - Frontend V1.3 Alpha Candidate Status
 ### Changed
