@@ -66,11 +66,27 @@ export async function apiClient<T>(
     else if (status === 429) message = 'Demasiadas peticiones';
     else if (status >= 500) message = 'Error interno del servidor';
 
-    if (errorData && errorData.detail) {
-      message = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+    let errorCode: string | undefined;
+
+    if (errorData) {
+      if (typeof errorData.error_code === 'string' && errorData.error_code) {
+        errorCode = errorData.error_code;
+      }
+
+      if (typeof errorData.message === 'string' && errorData.message.trim() !== '') {
+        message = errorData.message;
+      } else if (errorData.detail && typeof errorData.detail.message === 'string' && errorData.detail.message.trim() !== '') {
+        message = errorData.detail.message;
+      } else if (typeof errorData.detail === 'string' && errorData.detail.trim() !== '') {
+        message = errorData.detail;
+      } else if (typeof errorData.error === 'string' && errorData.error.trim() !== '') {
+        message = errorData.error;
+      } else if (errorData.detail && typeof errorData.detail === 'object' && Object.keys(errorData.detail).length > 0) {
+        message = JSON.stringify(errorData.detail);
+      }
     }
 
-    throw new ApiError(message, status, errorData);
+    throw new ApiError(message, status, errorData, errorCode);
   }
 
   if (response.status === 204) {

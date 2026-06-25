@@ -68,23 +68,14 @@ export async function contributeGoalAction(id: string, data: components['schemas
     console.error('Contribute goal error:', err);
     let message = 'Ocurrió un error al registrar el aporte. Intenta nuevamente.';
     
-    const apiError = err as { status?: number; message?: string; data?: unknown };
+    const apiError = err as { status?: number; message?: string; errorCode?: string; data?: unknown };
     if (apiError?.status === 422) {
       message = 'Los datos ingresados no son válidos.';
       if (apiError.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
         message = apiError.message;
       }
-    } else if (apiError?.status === 400 || apiError?.status === 403) {
-       if (apiError.message && typeof apiError.message === 'string' && apiError.message !== '{}') {
-         const backendMsg = apiError.message.toLowerCase();
-         if (apiError.status === 403 || backendMsg.includes('unsupported') || backendMsg.includes('support') || backendMsg.includes('currency')) {
-           message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
-         } else {
-           message = apiError.message; // Could be insufficient funds
-         }
-       } else if (apiError?.status === 403) {
-         message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
-       }
+    } else if (apiError?.errorCode === 'unsupported_currency') {
+      message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
     } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado' && apiError.message !== '{}') {
       message = apiError.message;
     }
