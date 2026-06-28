@@ -151,22 +151,25 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     const accountId = formData.get('accountId') as string;
     const amountStr = formData.get('amount') as string;
 
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) {
-      setError('El monto debe ser mayor a 0');
-      setIsSubmitting(false);
-      return;
-    }
-
     if (!accountId) {
       setError('Debes seleccionar una cuenta origen');
       setIsSubmitting(false);
       return;
     }
 
+    let amount: number | undefined = undefined;
+    if (selectedObligation.payment_mode !== 'fixed_full_payment') {
+      amount = parseFloat(amountStr);
+      if (isNaN(amount) || amount <= 0) {
+        setError('El monto debe ser mayor a 0');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const payload: components['schemas']['ObligationPaymentCreate'] = {
       account_id: accountId,
-      amount
+      amount: amount as any
     };
 
     const idemKey = crypto.randomUUID();
@@ -727,32 +730,42 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="amount">
-                  Monto a pagar
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-graphite-blue/40 font-medium">
-                    $
-                  </span>
-                  <input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    defaultValue={parseFloat(String(selectedObligation.remaining_amount || selectedObligation.amount || "0"))}
-                    readOnly={selectedObligation.payment_mode === 'fixed_full_payment'}
-                    className={`w-full pl-8 pr-4 py-3 rounded-xl border-transparent focus:ring-0 transition-colors text-graphite-blue font-medium outline-none ${selectedObligation.payment_mode === 'fixed_full_payment' ? 'bg-graphite-blue/10 cursor-not-allowed opacity-80' : 'bg-graphite-blue/5 focus:bg-white focus:border-graphite-blue'}`}
-                    disabled={isSubmitting || !!successMessage}
-                  />
+              {selectedObligation.payment_mode === 'fixed_full_payment' ? (
+                <div className="bg-graphite-blue/5 rounded-2xl p-4">
+                  <p className="text-sm text-graphite-blue/60">Monto fijo requerido</p>
+                  <p className="text-2xl font-bold text-graphite-blue mt-1">
+                    {formatVal(selectedObligation.remaining_amount || selectedObligation.amount, selectedObligation.currency)}
+                  </p>
+                  <p className="text-xs text-graphite-blue/40 mt-2">
+                    Nexum calculará automáticamente el equivalente en la cuenta origen si difiere de la moneda de la obligación.
+                  </p>
                 </div>
-                <p className="text-xs text-graphite-blue/40 mt-1.5">
-                  {selectedObligation.payment_mode === 'fixed_full_payment' && "Esta obligación se paga por el monto completo del periodo."}
-                  {selectedObligation.payment_mode === 'partial_allowed' && "Puedes hacer abonos hasta cubrir el periodo."}
-                  {selectedObligation.payment_mode === 'variable_amount' && "Esta obligación permite pagos variables."}
-                </p>
-              </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="amount">
+                    Monto a pagar
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-graphite-blue/40 font-medium">
+                      $
+                    </span>
+                    <input
+                      id="amount"
+                      name="amount"
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      defaultValue={parseFloat(String(selectedObligation.remaining_amount || selectedObligation.amount || "0"))}
+                      className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue font-medium outline-none"
+                      disabled={isSubmitting || !!successMessage}
+                    />
+                  </div>
+                  <p className="text-xs text-graphite-blue/40 mt-1.5">
+                    {selectedObligation.payment_mode === 'partial_allowed' && "Puedes hacer abonos hasta cubrir el periodo."}
+                    {selectedObligation.payment_mode === 'variable_amount' && "Esta obligación permite pagos variables."}
+                  </p>
+                </div>
+              )}
 
               <div className="pt-4 flex gap-3">
                 <button

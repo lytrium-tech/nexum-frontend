@@ -1159,6 +1159,8 @@ export interface components {
             revision_id: number;
             /** Remaining Principal */
             readonly remaining_principal: string;
+            /** Is Pay Early Eligible */
+            readonly is_pay_early_eligible: boolean;
         };
         /** CreditCardPaymentCreate */
         CreditCardPaymentCreate: {
@@ -2085,7 +2087,7 @@ export interface components {
              */
             account_id: string;
             /** Amount */
-            amount: number | string;
+            amount?: number | string | null;
             /** Source Message Id */
             source_message_id?: string | null;
             /** Raw Message */

@@ -303,7 +303,7 @@ function InstallmentsList({
                     </div>
                   </div>
 
-                  {inst.status !== 'paid' && inst.status !== 'frozen' && (
+                  {inst.status !== 'paid' && inst.status !== 'frozen' && inst.is_pay_early_eligible !== false && (
                     <button
                       onClick={() => onPayEarly(inst)}
                       className="w-full py-2 bg-sage-green/10 text-sage-green hover:bg-sage-green/20 text-sm font-medium rounded-lg transition-colors"
