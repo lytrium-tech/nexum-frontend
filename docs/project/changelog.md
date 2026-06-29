@@ -9,6 +9,7 @@
 - **Fase 5**: Implementada la interfaz de lectura interactiva para Extractos de Tarjeta de Crédito (Statements) (`StatementsList` en `CreditClient.tsx`). La interfaz consolida la información financiera inmutable calculada por el backend, incluyendo cortes, pagos, comisiones, intereses y estado de la facturación, sin añadir recálculos locales de deuda o pagos.
 - **Fase 6**: Implementada la interfaz de lectura para Cuotas (Installments) (`InstallmentsList` en `CreditClient.tsx`) y modal para Pagos Anticipados explícitos usando el endpoint de `pay_early`. El cálculo exacto del monto del pago anticipado está delegado 100% al backend para mantener coherencia financiera. No se efectúan cálculos ni optimistic updates de la deuda localmente.
 - **UX Improvements Phase 1**: Synchronized OpenAPI with the latest Backend V1.5 contracts, regenerated types, and fixed lint/type recovery. No UX features implemented yet. Preview contracts are now available for future phases.
+- **UX Improvements Phase 2**: Cleaned financial error handling. Unsupported currency message is now only shown for explicit unsupported currency/FX errors. Generic 403 no longer maps to COP/USD.
 
 ## [Unreleased] - Frontend V1.3 Alpha Candidate Status
 ### Changed

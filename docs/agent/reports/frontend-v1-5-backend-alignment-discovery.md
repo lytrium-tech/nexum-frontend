@@ -39,14 +39,14 @@ El frontend completó las fases fundamentales de V1.5 (Credit Statements, Instal
 - **Estado**: READY_TO_IMPLEMENT (para Obligations y Early Payment). CONTRACT GAP (para Transfers y Goals).
 
 ## 10. Financial Error Handling Audit
-Se requiere una revisión profunda (`Phase 2`). Actualmente, existe el riesgo de enmascarar errores con mensajes genéricos. Se deben mapear errores humanos precisos sin perder la traza real (e.g. diferenciar 403 real de "Unsupported Currency").
+La auditoría fue completada (`Phase 2`). Se creó un helper central `handleFinancialError` para evitar enmascarar errores. Los códigos 403 genéricos ya no se mapean a moneda no soportada, y se implementó un mapeo humano para errores comunes (insuficiencia de fondos, cuentas inválidas, estados cerrados).
 
 ## 11. Contract Gaps
 1. **Transfers / Goals FX Previews**: Faltan endpoints de previsualización para estos módulos.
 2. **Item-Level Currency Conversion**: No hay campos que entreguen el progreso o saldo de un ítem individual (metas/obligaciones) convertido a `base_currency`.
 
 ## 12. Frontend Bugs
-No hay bugs críticos bloqueantes detectados (el error de lint en `ObligationsClient.tsx` fue solucionado en Phase 1). El enmascaramiento de errores (error masking) necesita limpieza inmediata.
+No hay bugs críticos bloqueantes detectados (el error de lint en `ObligationsClient.tsx` fue solucionado en Phase 1). El enmascaramiento de errores (error masking) fue solucionado en Phase 2.
 
 ## 13. Backend Follow-ups
 1. Evaluar si se crearán endpoints de FX preview para Transfers y Goal Contributions.
@@ -57,8 +57,8 @@ No hay bugs críticos bloqueantes detectados (el error de lint en `ObligationsCl
 2. ¿Ocultar las cuotas/tarjetas/obligaciones pagadas por defecto, o simplemente atenuarlas visualmente?
 
 ## 15. Recommended Implementation Phases
-- **Phase 1** — OpenAPI sync y recuperación de tipos (obligatorio).
-- **Phase 2** — Financial error handling cleanup (auditoría y corrección de mensajes de error).
+- **Phase 1** — OpenAPI sync y recuperación de tipos (completado).
+- **Phase 2** — Financial error handling cleanup (completado).
 - **Phase 3** — Obligations visual alerts (implementación pasiva de semántica de tiempo).
 - **Phase 4** — Transfer history UX decision & implementation.
 - **Phase 5** — Multidivisa dashboard (usando `estimated_totals` globales ya proveídos).

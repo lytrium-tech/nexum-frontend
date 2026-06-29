@@ -3,6 +3,7 @@
 import { api } from '@/lib/api/endpoints';
 import { revalidatePath } from 'next/cache';
 import { components } from '@/lib/api/types.generated';
+import { handleFinancialError } from '@/lib/api/errors';
 
 export async function createCreditCardAction(data: components['schemas']['CreditCardCreate']) {
   try {
@@ -12,16 +13,7 @@ export async function createCreditCardAction(data: components['schemas']['Credit
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Create credit card error:', err);
-    let message = 'Ocurrió un error al crear la tarjeta. Intenta nuevamente.';
-    
-    const apiError = err as { status?: number; message?: string; errorCode?: string };
-    if (apiError?.errorCode === 'unsupported_currency') {
-      message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
-    } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== '{}') {
-      message = apiError.message;
-    }
-    
-    return { success: false, error: message };
+    return { success: false, error: handleFinancialError(err, 'Ocurrió un error al crear la tarjeta. Intenta nuevamente.') };
   }
 }
 
@@ -34,16 +26,7 @@ export async function purchaseCreditCardAction(cardId: string, data: components[
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Purchase credit card error:', err);
-    let message = 'Ocurrió un error al registrar la compra. Intenta nuevamente.';
-    
-    const apiError = err as { status?: number; message?: string; errorCode?: string };
-    if (apiError?.errorCode === 'unsupported_currency') {
-      message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
-    } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== '{}') {
-      message = apiError.message;
-    }
-    
-    return { success: false, error: message };
+    return { success: false, error: handleFinancialError(err, 'Ocurrió un error al registrar la compra. Intenta nuevamente.') };
   }
 }
 
@@ -57,16 +40,7 @@ export async function payCreditCardAction(cardId: string, data: components['sche
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Pay credit card error:', err);
-    let message = 'Ocurrió un error al registrar el pago. Intenta nuevamente.';
-    
-    const apiError = err as { status?: number; message?: string; errorCode?: string };
-    if (apiError?.errorCode === 'unsupported_currency') {
-      message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
-    } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== '{}') {
-      message = apiError.message;
-    }
-    
-    return { success: false, error: message };
+    return { success: false, error: handleFinancialError(err, 'Ocurrió un error al registrar el pago. Intenta nuevamente.') };
   }
 }
 
@@ -76,7 +50,7 @@ export async function getCreditInstallmentsAction(cardId: string) {
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Get credit installments error:', err);
-    return { success: false, error: 'Ocurrió un error al cargar el cronograma de cuotas.' };
+    return { success: false, error: handleFinancialError(err, 'Ocurrió un error al cargar el cronograma de cuotas.') };
   }
 }
 
@@ -103,16 +77,7 @@ export async function payEarlyPurchaseAction(
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Pay early purchase error:', err);
-    let message = 'No fue posible pagar esta compra anticipadamente.';
-    
-    const apiError = err as { status?: number; message?: string; errorCode?: string };
-    if (apiError?.errorCode === 'unsupported_currency') {
-      message = 'Por ahora Nexum solo soporta conversiones COP/USD.';
-    } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== '{}') {
-      message = apiError.message;
-    }
-    
-    return { success: false, error: message };
+    return { success: false, error: handleFinancialError(err, 'No fue posible pagar esta compra anticipadamente.') };
   }
 }
 
@@ -122,7 +87,7 @@ export async function getCreditStatementsAction(cardId: string) {
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Get credit statements error:', err);
-    return { success: false, error: 'Ocurrió un error al cargar los extractos.' };
+    return { success: false, error: handleFinancialError(err, 'Ocurrió un error al cargar los extractos.') };
   }
 }
 
@@ -132,6 +97,6 @@ export async function getCreditStatementDetailAction(cardId: string, period: str
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Get credit statement detail error:', err);
-    return { success: false, error: 'Ocurrió un error al cargar el detalle del extracto.' };
+    return { success: false, error: handleFinancialError(err, 'Ocurrió un error al cargar el detalle del extracto.') };
   }
 }

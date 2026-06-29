@@ -3,6 +3,7 @@
 import { api } from '@/lib/api/endpoints';
 import { revalidatePath } from 'next/cache';
 import crypto from 'crypto';
+import { handleFinancialError } from '@/lib/api/errors';
 
 export async function createEntryAction(data: {
   type: 'income' | 'expense';
@@ -37,15 +38,6 @@ export async function createEntryAction(data: {
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Create entry action error:', err);
-    let message = 'Ocurrió un error al registrar el movimiento. Intenta nuevamente.';
-    
-    const apiError = err as { status?: number; message?: string };
-    if (apiError?.status === 422) {
-      message = 'Los datos ingresados no son válidos.';
-    } else if (apiError?.message && typeof apiError.message === 'string' && apiError.message !== 'Ocurrió un error inesperado') {
-      message = apiError.message;
-    }
-    
-    return { success: false, error: message };
+    return { success: false, error: handleFinancialError(err, 'Ocurrió un error al registrar el movimiento. Intenta nuevamente.') };
   }
 }
