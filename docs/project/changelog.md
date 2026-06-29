@@ -14,6 +14,7 @@
 - **UX Improvements Phase 4**: Improved transfer history UX while keeping transfers visible in general History/Ledger. Transfers remain traceable and are not treated as income/expense. No FX preview implemented because backend does not expose transfer preview endpoints.
 - **UX Improvements Phase 5**: Improved Dashboard multi-currency presentation using backend-provided `estimated_totals`. Currencies are sorted conceptually (COP, USD, EUR) for visual presentation. Added explicit trust copy for estimations. Item-level base currency conversion deferred to V2.
 - **UX Improvements Phase 6**: Implemented backend-powered FX previews for Obligation payments and Credit Card early payments. Frontend now requests `PaymentPreviewResult` and displays precise backend-calculated amounts before user confirms. No local FX calculations were added. Transfers and Goals previews remain deferred to V2 due to missing backend contracts.
+- **UX Improvements Phase 7**: Final QA and document closeout completed for V1.5 UX enhancements. All frontend code is aligned with production Backend V1.5 constraints.
 
 ## [Unreleased] - Frontend V1.3 Alpha Candidate Status
 ### Changed
