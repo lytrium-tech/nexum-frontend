@@ -149,6 +149,11 @@ export const api = {
           },
           body: JSON.stringify(data),
         }, isServer),
+      payPreview: (id: string, data: components['schemas']['ObligationPaymentPreviewCreate'], isServer = false) =>
+        apiClient<components['schemas']['PaymentPreviewResult']>(`/api/v1/obligations/${id}/payments/preview`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }, isServer),
     },
     transfers: {
       list: (isServer = false) =>
@@ -201,6 +206,11 @@ export const api = {
           headers: {
             'Idempotency-Key': idempotencyKey,
           },
+          body: JSON.stringify(data),
+        }, isServer),
+      payEarlyPreview: (cardId: string, purchaseId: string, data: components['schemas']['CreditCardEarlyPaymentPreviewCreate'], isServer = false) =>
+        apiClient<components['schemas']['PaymentPreviewResult']>(`/api/v1/credit/cards/${cardId}/purchases/${purchaseId}/pay_early/preview`, {
+          method: 'POST',
           body: JSON.stringify(data),
         }, isServer),
     },

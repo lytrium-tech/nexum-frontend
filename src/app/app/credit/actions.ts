@@ -100,3 +100,16 @@ export async function getCreditStatementDetailAction(cardId: string, period: str
     return { success: false, error: handleFinancialError(err, 'Ocurrió un error al cargar el detalle del extracto.') };
   }
 }
+export async function previewCreditEarlyPaymentAction(
+  cardId: string, 
+  purchaseId: string, 
+  data: components['schemas']['CreditCardEarlyPaymentPreviewCreate']
+) {
+  try {
+    const result = await api.credit.purchases.payEarlyPreview(cardId, purchaseId, data, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Preview credit early payment error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos calcular la vista previa.') };
+  }
+}

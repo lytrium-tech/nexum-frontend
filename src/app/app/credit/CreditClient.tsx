@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createCreditCardAction, purchaseCreditCardAction, payCreditCardAction, getCreditStatementsAction, getCreditInstallmentsAction, payEarlyPurchaseAction } from './actions';
+import { createCreditCardAction, purchaseCreditCardAction, payCreditCardAction, getCreditStatementsAction, getCreditInstallmentsAction, payEarlyPurchaseAction, previewCreditEarlyPaymentAction } from './actions';
 
 const CreditCard = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>;
 const Plus = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>;
@@ -331,6 +331,9 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
   const [purchaseCard, setPurchaseCard] = useState<CreditCardRead | null>(null);
   const [paymentCard, setPaymentCard] = useState<CreditCardRead | null>(null);
   const [earlyPaymentData, setEarlyPaymentData] = useState<{ card: CreditCardRead, installment: CreditCardInstallmentRead } | null>(null);
+  const [earlyPaymentAccountId, setEarlyPaymentAccountId] = useState<string>('');
+  const [earlyPreviewResult, setEarlyPreviewResult] = useState<components['schemas']['PaymentPreviewResult'] | null>(null);
+  const [isEarlyPreviewing, setIsEarlyPreviewing] = useState(false);
 
   // States
   const [error, setError] = useState<string | null>(initialError);
@@ -451,21 +454,43 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
     setIsSubmitting(false);
   };
 
+  const handleEarlyPreviewSubmit = async () => {
+    if (!earlyPaymentData || !earlyPaymentAccountId) return;
+    
+    setIsEarlyPreviewing(true);
+    setError(null);
+
+    const payload: components['schemas']['CreditCardEarlyPaymentPreviewCreate'] = {
+      account_id: earlyPaymentAccountId
+    };
+
+    const result = await previewCreditEarlyPaymentAction(
+      earlyPaymentData.card.id, 
+      earlyPaymentData.installment.purchase_transaction_id, 
+      payload
+    );
+    
+    if (result.success && result.result) {
+      setEarlyPreviewResult(result.result);
+    } else {
+      setError(result.error || 'No pudimos calcular la vista previa.');
+    }
+    
+    setIsEarlyPreviewing(false);
+  };
+
   const handleEarlyPaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!earlyPaymentData) return;
+    if (!earlyPaymentData || !earlyPaymentAccountId || !earlyPreviewResult) return;
     
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
 
-    const formData = new FormData(e.currentTarget);
-    const accountId = formData.get('account_id') as string;
-
     const result = await payEarlyPurchaseAction(
       earlyPaymentData.card.id, 
       earlyPaymentData.installment.purchase_transaction_id, 
-      accountId
+      earlyPaymentAccountId
     );
     
     if (result.success) {
@@ -476,9 +501,8 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
       }, 2500);
     } else {
       setError(result.error || 'No fue posible pagar esta compra anticipadamente.');
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
 
   const activeAccounts = accounts.filter(a => a.is_active);
@@ -661,7 +685,13 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                   <InstallmentsList 
                     card={card} 
                     formatMoney={formatMoney} 
-                    onPayEarly={(installment) => setEarlyPaymentData({ card, installment })}
+                    onPayEarly={(installment) => {
+                      setEarlyPaymentData({ card, installment });
+                      setEarlyPaymentAccountId('');
+                      setEarlyPreviewResult(null);
+                      setError(null);
+                      setSuccessMessage(null);
+                    }}
                   />
                 </div>
               </div>
@@ -1160,7 +1190,7 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                       <p className="text-graphite-blue font-medium">{successMessage}</p>
                     </div>
                   ) : (
-                    <form id="earlyPaymentForm" onSubmit={handleEarlyPaymentSubmit} className="space-y-5">
+                    <form id="earlyPaymentForm" onSubmit={earlyPreviewResult ? handleEarlyPaymentSubmit : (e) => { e.preventDefault(); handleEarlyPreviewSubmit(); }} className="space-y-5">
                       <div className="p-4 bg-graphite-blue/5 rounded-xl text-sm text-graphite-blue/80 space-y-2 mb-4 border border-graphite-blue/10">
                         <p>
                           Vas a solicitar un pago anticipado para la compra <span className="font-medium">{earlyPaymentData.installment.purchase_transaction_id.slice(0, 8)}</span>.
@@ -1188,8 +1218,10 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                               id="account_id"
                               name="account_id"
                               required
+                              value={earlyPaymentAccountId}
+                              onChange={(e) => { setEarlyPaymentAccountId(e.target.value); setEarlyPreviewResult(null); }}
                               className="w-full pl-11 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors appearance-none outline-none text-graphite-blue"
-                              disabled={isSubmitting}
+                              disabled={isSubmitting || isEarlyPreviewing || !!successMessage}
                             >
                               <option value="">Selecciona una cuenta</option>
                               {activeAccounts.map(account => (
@@ -1201,6 +1233,27 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                           </div>
                         )}
                       </div>
+
+                      {earlyPreviewResult && (
+                        <div className="bg-sage-green/10 rounded-2xl p-4 mt-4 animate-in fade-in slide-in-from-top-2">
+                          <p className="text-sm text-graphite-blue/80 mb-2 font-medium">Vista previa de pago</p>
+                          {earlyPreviewResult.source_currency !== earlyPreviewResult.target_currency ? (
+                            <p className="text-sm text-graphite-blue">
+                              Nexum descontará {earlyPreviewResult.is_estimated ? 'aprox. ' : ''}<strong>{formatMoney(earlyPreviewResult.source_amount, earlyPreviewResult.source_currency)}</strong> de tu cuenta seleccionada para pagar {formatMoney(earlyPreviewResult.target_amount, earlyPreviewResult.target_currency)}.
+                            </p>
+                          ) : (
+                            <p className="text-sm text-graphite-blue">
+                              Se descontará <strong>{formatMoney(earlyPreviewResult.source_amount, earlyPreviewResult.source_currency)}</strong> de tu cuenta seleccionada.
+                            </p>
+                          )}
+                          <p className="text-sm text-graphite-blue mt-2">Nexum calculará el pago anticipado completo desde backend.</p>
+                          {earlyPreviewResult.is_estimated && (
+                            <p className="text-[10px] text-graphite-blue/50 mt-2">
+                              Tasas ref. {earlyPreviewResult.rate_source}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </form>
                   )}
                 </div>
@@ -1218,16 +1271,18 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                     <button
                       type="submit"
                       form="earlyPaymentForm"
-                      disabled={isSubmitting || activeAccounts.length === 0}
+                      disabled={isSubmitting || isEarlyPreviewing || activeAccounts.length === 0}
                       className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-sage-green text-white text-sm font-medium rounded-xl hover:bg-[#688c74] transition-colors disabled:opacity-70"
                     >
-                      {isSubmitting ? (
+                      {isSubmitting || isEarlyPreviewing ? (
                         <>
                           <RefreshCw className="w-4 h-4 animate-spin" />
                           Procesando...
                         </>
-                      ) : (
+                      ) : earlyPreviewResult ? (
                         'Confirmar pago anticipado'
+                      ) : (
+                        'Continuar'
                       )}
                     </button>
                   </div>

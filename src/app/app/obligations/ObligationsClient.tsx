@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createObligationAction, payObligationAction, updateObligationAction } from './actions';
+import { createObligationAction, payObligationAction, updateObligationAction, previewObligationPaymentAction } from './actions';
 
 const formatCurrency = (val: number | string, currency = 'COP') => new Intl.NumberFormat('es-CO', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(val));
 
@@ -29,6 +29,11 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedObligation, setSelectedObligation] = useState<ObligationRead | null>(null);
 
+  const [payAccountId, setPayAccountId] = useState<string>('');
+  const [payAmount, setPayAmount] = useState<string>('');
+  const [previewResult, setPreviewResult] = useState<components['schemas']['PaymentPreviewResult'] | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -51,6 +56,9 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
 
   const openPayModal = (obligation: ObligationRead) => {
     setSelectedObligation(obligation);
+    setPayAccountId('');
+    setPayAmount(String(obligation.remaining_amount || obligation.amount || ''));
+    setPreviewResult(null);
     setIsPayModalOpen(true);
     setError(null);
     setSuccessMessage(null);
@@ -60,9 +68,13 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     setIsCreateModalOpen(false);
     setIsPayModalOpen(false);
     setSelectedObligation(null);
+    setPayAccountId('');
+    setPayAmount('');
+    setPreviewResult(null);
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(false);
+    setIsPreviewing(false);
     setDueDay('');
     setInitialStatus('pending');
   };
@@ -139,27 +151,48 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     }
   };
 
+  const handlePreviewSubmit = async () => {
+    if (!selectedObligation || !payAccountId) return;
+    
+    setIsPreviewing(true);
+    setError(null);
+
+    let amount: number | undefined = undefined;
+    if (selectedObligation.payment_mode !== 'fixed_full_payment') {
+      amount = parseFloat(payAmount);
+      if (isNaN(amount) || amount <= 0) {
+        setError('El monto debe ser mayor a 0');
+        setIsPreviewing(false);
+        return;
+      }
+    }
+
+    const payload: components['schemas']['ObligationPaymentPreviewCreate'] = {
+      account_id: payAccountId,
+      amount: amount
+    };
+
+    const res = await previewObligationPaymentAction(selectedObligation.id, payload);
+    
+    if (res.success && res.result) {
+      setPreviewResult(res.result);
+    } else {
+      setError(res.error || 'No pudimos calcular la vista previa.');
+    }
+    setIsPreviewing(false);
+  };
+
   const handlePaySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedObligation) return;
+    if (!selectedObligation || !payAccountId || !previewResult) return;
     
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
 
-    const formData = new FormData(e.currentTarget);
-    const accountId = formData.get('accountId') as string;
-    const amountStr = formData.get('amount') as string;
-
-    if (!accountId) {
-      setError('Debes seleccionar una cuenta origen');
-      setIsSubmitting(false);
-      return;
-    }
-
     let amount: number | undefined = undefined;
     if (selectedObligation.payment_mode !== 'fixed_full_payment') {
-      amount = parseFloat(amountStr);
+      amount = parseFloat(payAmount);
       if (isNaN(amount) || amount <= 0) {
         setError('El monto debe ser mayor a 0');
         setIsSubmitting(false);
@@ -168,7 +201,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     }
 
     const payload: components['schemas']['ObligationPaymentCreate'] = {
-      account_id: accountId,
+      account_id: payAccountId,
       amount: amount
     };
 
@@ -748,7 +781,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
               </div>
             )}
 
-            <form onSubmit={handlePaySubmit} className="space-y-4">
+            <form onSubmit={previewResult ? handlePaySubmit : (e) => { e.preventDefault(); handlePreviewSubmit(); }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="accountId">
                   Cuenta origen *
@@ -757,8 +790,10 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   id="accountId"
                   name="accountId"
                   required
+                  value={payAccountId}
+                  onChange={(e) => { setPayAccountId(e.target.value); setPreviewResult(null); }}
                   className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
-                  disabled={isSubmitting || !!successMessage}
+                  disabled={isSubmitting || !!successMessage || isPreviewing}
                 >
                   <option value="">Selecciona con qué pagaste</option>
                   {activeAccounts.map(acc => (
@@ -794,15 +829,36 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                       type="number"
                       min="1"
                       step="0.01"
-                      defaultValue={parseFloat(String(selectedObligation.remaining_amount || selectedObligation.amount || "0"))}
+                      value={payAmount}
+                      onChange={(e) => { setPayAmount(e.target.value); setPreviewResult(null); }}
                       className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue font-medium outline-none"
-                      disabled={isSubmitting || !!successMessage}
+                      disabled={isSubmitting || !!successMessage || isPreviewing}
                     />
                   </div>
                   <p className="text-xs text-graphite-blue/40 mt-1.5">
                     {selectedObligation.payment_mode === 'partial_allowed' && "Puedes hacer abonos hasta cubrir el periodo."}
                     {selectedObligation.payment_mode === 'variable_amount' && "Esta obligación permite pagos variables."}
                   </p>
+                </div>
+              )}
+
+              {previewResult && (
+                <div className="bg-sage-green/10 rounded-2xl p-4 mt-4 animate-in fade-in slide-in-from-top-2">
+                  <p className="text-sm text-graphite-blue/80 mb-2 font-medium">Vista previa de pago</p>
+                  {previewResult.source_currency !== previewResult.target_currency ? (
+                    <p className="text-sm text-graphite-blue">
+                      Nexum descontará {previewResult.is_estimated ? 'aprox. ' : ''}<strong>{formatVal(previewResult.source_amount, previewResult.source_currency)}</strong> para pagar {formatVal(previewResult.target_amount, previewResult.target_currency)}.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-graphite-blue">
+                      Nexum descontará <strong>{formatVal(previewResult.source_amount, previewResult.source_currency)}</strong> de esta cuenta.
+                    </p>
+                  )}
+                  {previewResult.is_estimated && (
+                    <p className="text-[10px] text-graphite-blue/50 mt-2">
+                      Tasas ref. {previewResult.rate_source}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -817,12 +873,12 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || !!successMessage}
+                  disabled={isSubmitting || isPreviewing || !!successMessage}
                   className="flex-1 py-3 px-4 rounded-xl font-medium bg-graphite-blue text-white hover:bg-graphite-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                 >
-                  {isSubmitting ? (
+                  {isSubmitting || isPreviewing ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : 'Confirmar pago'}
+                  ) : previewResult ? 'Confirmar pago' : 'Continuar'}
                 </button>
               </div>
             </form>

@@ -62,7 +62,7 @@ No hay bugs críticos bloqueantes detectados (el error de lint en `ObligationsCl
 - **Phase 3** — Obligations visual alerts (completado).
 - **Phase 4** — Transfer history UX decision & implementation (completado).
 - **Phase 5** — Multidivisa dashboard (completado).
-- **Phase 6** — FX previews para Obligations y Early Payments (consumiendo los contratos existentes).
+- **Phase 6** — FX previews para Obligations y Early Payments (completado).
 - **Phase 7** — Final QA y closeout de V1.5 UX improvements.
 
 ## 16. Defer to Nexum V2
