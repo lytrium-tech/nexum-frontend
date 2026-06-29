@@ -113,8 +113,8 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           </div>
-          <h2 className="text-xl font-medium text-graphite-blue mb-2">No hay transferencias</h2>
-          <p className="text-gray-500 mb-6">Aún no has realizado transferencias entre tus cuentas.</p>
+          <h2 className="text-xl font-medium text-graphite-blue mb-2">Aún no hay transferencias registradas.</h2>
+          <p className="text-gray-500 mb-6">Cuando muevas dinero entre tus cuentas, el historial aparecerá aquí.</p>
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="bg-graphite-blue text-white py-2 px-6 rounded-xl hover:bg-graphite-blue/90 transition-colors font-medium"
@@ -150,7 +150,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                         Transferiste {formatMoneyOrDash(t.amount, t.currency)}
                       </p>
                       <p className="text-base font-semibold text-graphite-blue mt-0.5">
-                        {t.is_estimated ? '≈ ' : ''}{formatMoneyOrDash(t.target_amount, t.target_currency)} <span className="text-[10px] text-gray-400 uppercase font-normal">recibidos</span>
+                        {t.is_estimated ? '≈ ' : ''}{formatMoneyOrDash(t.target_amount, t.target_currency)} <span className="text-xs text-gray-500 uppercase font-medium">recibidos</span>
                       </p>
                       {t.fx_rate && (
                         <p className="text-[10px] text-gray-400 mt-1">

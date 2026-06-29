@@ -96,6 +96,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **UX Improvements Phase 1:** OpenAPI Sync + Type Recovery (Completado)
 * **UX Improvements Phase 2:** Financial error handling cleanup (Completado)
 * **UX Improvements Phase 3:** Obligations visual alerts (Completado)
+* **UX Improvements Phase 4:** Transfer history UX polish (Completado)
 
 ## Product Notes
 
