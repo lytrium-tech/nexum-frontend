@@ -97,6 +97,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **UX Improvements Phase 2:** Financial error handling cleanup (Completado)
 * **UX Improvements Phase 3:** Obligations visual alerts (Completado)
 * **UX Improvements Phase 4:** Transfer history UX polish (Completado)
+* **UX Improvements Phase 5:** Multi-currency Dashboard Estimated Totals (Completado)
 
 ## Product Notes
 

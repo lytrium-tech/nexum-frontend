@@ -12,6 +12,7 @@
 - **UX Improvements Phase 2**: Cleaned financial error handling. Unsupported currency message is now only shown for explicit unsupported currency/FX errors. Generic 403 no longer maps to COP/USD.
 - **UX Improvements Phase 3**: Added passive visual alerts for obligations using backend-provided period_status, days_until_due, next_due_date and remaining_amount. No local due-date or remaining amount calculations.
 - **UX Improvements Phase 4**: Improved transfer history UX while keeping transfers visible in general History/Ledger. Transfers remain traceable and are not treated as income/expense. No FX preview implemented because backend does not expose transfer preview endpoints.
+- **UX Improvements Phase 5**: Improved Dashboard multi-currency presentation using backend-provided `estimated_totals`. Currencies are sorted conceptually (COP, USD, EUR) for visual presentation. Added explicit trust copy for estimations. Item-level base currency conversion deferred to V2.
 
 ## [Unreleased] - Frontend V1.3 Alpha Candidate Status
 ### Changed

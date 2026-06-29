@@ -26,8 +26,16 @@ export default function FinancialHero({
 
   const isTotalsArray = Array.isArray(totalsByCurrency);
   const totalsList = isTotalsArray 
-    ? totalsByCurrency 
+    ? [...totalsByCurrency] 
     : (totalsByCurrency ? Object.entries(totalsByCurrency).map(([curr, metrics]) => ({ currency: curr, ...(metrics as object) })) : []);
+
+  const currencyOrder: Record<string, number> = { 'COP': 1, 'USD': 2, 'EUR': 3 };
+  totalsList.sort((a: { currency: string }, b: { currency: string }) => {
+    const orderA = currencyOrder[a.currency] || 99;
+    const orderB = currencyOrder[b.currency] || 99;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.currency.localeCompare(b.currency);
+  });
 
   const hasWarning = warnings?.includes('cross_currency_global_totals_disabled') || false;
   const hasMultipleCurrencies = hasWarning || totalsList.length > 1;
@@ -94,7 +102,10 @@ export default function FinancialHero({
                   <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-medium">Estimado</span>
                 </p>
                 <p className="text-2xl font-semibold tracking-tight text-champagne-gold">
-                  {formatMoneyOrDash(estimatedTotals.estimated_total_base_currency, estimatedTotals.base_currency)}
+                  {estimatedTotals.is_estimated ? '≈ ' : ''}{formatMoneyOrDash(estimatedTotals.estimated_total_base_currency, estimatedTotals.base_currency)}
+                </p>
+                <p className="text-[10px] text-white/50 mt-1.5 leading-tight">
+                  Este total es una referencia visual. Tus saldos reales se mantienen separados por moneda.
                 </p>
                 
                 {estimatedTotals.unsupported_currencies && estimatedTotals.unsupported_currencies.length > 0 && (
