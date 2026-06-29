@@ -10,6 +10,7 @@
 - **Fase 6**: Implementada la interfaz de lectura para Cuotas (Installments) (`InstallmentsList` en `CreditClient.tsx`) y modal para Pagos Anticipados explícitos usando el endpoint de `pay_early`. El cálculo exacto del monto del pago anticipado está delegado 100% al backend para mantener coherencia financiera. No se efectúan cálculos ni optimistic updates de la deuda localmente.
 - **UX Improvements Phase 1**: Synchronized OpenAPI with the latest Backend V1.5 contracts, regenerated types, and fixed lint/type recovery. No UX features implemented yet. Preview contracts are now available for future phases.
 - **UX Improvements Phase 2**: Cleaned financial error handling. Unsupported currency message is now only shown for explicit unsupported currency/FX errors. Generic 403 no longer maps to COP/USD.
+- **UX Improvements Phase 3**: Added passive visual alerts for obligations using backend-provided period_status, days_until_due, next_due_date and remaining_amount. No local due-date or remaining amount calculations.
 
 ## [Unreleased] - Frontend V1.3 Alpha Candidate Status
 ### Changed

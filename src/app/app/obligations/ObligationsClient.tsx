@@ -214,11 +214,44 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       'pending': 'Pendiente',
       'partial': 'Parcial',
       'paid': 'Pagada',
-      'covered': 'Cubierta este periodo',
-      'overdue': 'Atrasada',
+      'covered': 'Cubierta',
+      'overdue': 'Vencida',
       'inactive': 'Inactiva'
     };
     return dict[status.toLowerCase()] || status;
+  };
+
+  const getPeriodStatusDescription = (status: string | null | undefined) => {
+    if (!status) return null;
+    const dict: Record<string, string> = {
+      'pending': 'Pendiente de pago este periodo.',
+      'partial': 'Pago parcial registrado.',
+      'paid': 'Pagada en Nexum este periodo.',
+      'covered': 'Cubierta fuera de Nexum este periodo.',
+      'overdue': 'Esta obligación ya venció.',
+      'inactive': 'Obligación archivada o inactiva.'
+    };
+    return dict[status.toLowerCase()] || null;
+  };
+
+  const getStatusColor = (status: string | null | undefined) => {
+    switch (status) {
+      case 'overdue': return 'text-red-600 bg-red-50 border border-red-100';
+      case 'pending': return 'text-amber-600 bg-amber-50 border border-amber-100';
+      case 'partial': return 'text-blue-600 bg-blue-50 border border-blue-100';
+      case 'paid': return 'text-sage-green bg-sage-green/10 border border-sage-green/20';
+      case 'covered': return 'text-graphite-blue/70 bg-graphite-blue/5 border border-graphite-blue/10';
+      case 'inactive': return 'text-gray-500 bg-gray-100 border border-gray-200';
+      default: return 'text-gray-500 bg-gray-100';
+    }
+  };
+
+  const formatDaysUntilDue = (days: number | null | undefined, status: string | null | undefined) => {
+    if (days == null || status === 'paid' || status === 'covered' || status === 'inactive') return null;
+    if (days < 0) return null; // Frontend doesn't calculate overdue, delegates to period_status
+    if (days === 0) return 'Vence hoy';
+    if (days === 1) return 'Vence mañana';
+    return `Vence en ${days} días`;
   };
 
   const formatVal = (val: string | number | null | undefined, curr = 'COP') => {
@@ -321,10 +354,14 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           {displayedObligations.map(obligation => {
+            const isPaidOrCovered = obligation.period_status === 'paid' || obligation.period_status === 'covered';
+            const statusDesc = getPeriodStatusDescription(obligation.period_status);
+            const daysLabel = formatDaysUntilDue(obligation.days_until_due, obligation.period_status);
+            
             return (
               <div 
                 key={obligation.id} 
-                className="bg-white rounded-3xl p-6 border border-graphite-blue/10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col justify-between"
+                className={`bg-white rounded-3xl p-6 border border-graphite-blue/10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-all duration-300 relative overflow-hidden group flex flex-col justify-between ${isPaidOrCovered ? 'opacity-60 hover:opacity-100 grayscale-[0.2]' : ''}`}
               >
                 {/* Decoration */}
                 <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -349,8 +386,13 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                           {obligation.next_due_date && (
                             <div className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
-                              <span>Vence: {new Date(obligation.next_due_date).toLocaleDateString()}</span>
+                              <span>{new Date(obligation.next_due_date).toLocaleDateString()}</span>
                             </div>
+                          )}
+                          {daysLabel && (
+                            <span className={`font-medium ${obligation.days_until_due === 0 ? 'text-amber-600' : 'text-graphite-blue/60'}`}>
+                              {daysLabel}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -370,18 +412,15 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                       </p>
                     </div>
                     <div className="text-right flex flex-col items-end">
-                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
-                        obligation.period_status === 'overdue' ? 'text-red-600 bg-red-50' :
-                        obligation.period_status === 'pending' ? 'text-amber-600 bg-amber-50' :
-                        obligation.period_status === 'partial' ? 'text-blue-600 bg-blue-50' :
-                        obligation.period_status === 'covered' ? 'text-graphite-blue/70 bg-graphite-blue/5' :
-                        'text-sage-green bg-sage-green/10'
-                      }`}>
-                        {obligation.period_status === 'overdue' ? <AlertCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />} {getPeriodStatusLabel(obligation.period_status)}
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(obligation.period_status)}`}>
+                        {obligation.period_status === 'overdue' ? <AlertCircle className="w-3.5 h-3.5" /> : 
+                         (obligation.period_status === 'pending' || obligation.period_status === 'partial') ? <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70" /> :
+                         <CheckCircle className="w-3.5 h-3.5" />} 
+                        {getPeriodStatusLabel(obligation.period_status)}
                       </span>
-                      {obligation.period_status === 'covered' && (
-                        <span className="text-[10px] text-graphite-blue/40 mt-1 max-w-[120px] leading-tight text-right">
-                          Marcada como pagada fuera de Nexum.
+                      {statusDesc && (
+                        <span className="text-[10.5px] text-graphite-blue/50 mt-1.5 max-w-[140px] leading-tight text-right font-medium">
+                          {statusDesc}
                         </span>
                       )}
                     </div>
@@ -393,7 +432,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                       <span className="font-medium text-graphite-blue">{formatVal(obligation.paid_this_period, obligation.currency)}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-graphite-blue/50 block">Restante:</span>
+                      <span className="text-graphite-blue/50 block">Pendiente este periodo:</span>
                       <span className="font-medium text-graphite-blue">{formatVal(obligation.remaining_amount, obligation.currency)}</span>
                     </div>
                   </div>

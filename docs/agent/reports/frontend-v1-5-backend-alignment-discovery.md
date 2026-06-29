@@ -59,7 +59,7 @@ No hay bugs críticos bloqueantes detectados (el error de lint en `ObligationsCl
 ## 15. Recommended Implementation Phases
 - **Phase 1** — OpenAPI sync y recuperación de tipos (completado).
 - **Phase 2** — Financial error handling cleanup (completado).
-- **Phase 3** — Obligations visual alerts (implementación pasiva de semántica de tiempo).
+- **Phase 3** — Obligations visual alerts (completado).
 - **Phase 4** — Transfer history UX decision & implementation.
 - **Phase 5** — Multidivisa dashboard (usando `estimated_totals` globales ya proveídos).
 - **Phase 6** — FX previews para Obligations y Early Payments (consumiendo los contratos existentes).
