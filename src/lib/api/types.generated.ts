@@ -310,6 +310,23 @@ export interface paths {
         patch: operations["update_obligation_api_v1_obligations__obligation_id__patch"];
         trace?: never;
     };
+    "/api/v1/obligations/{obligation_id}/payments/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Obligation Payment */
+        post: operations["preview_obligation_payment_api_v1_obligations__obligation_id__payments_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/obligations/{obligation_id}/payments": {
         parameters: {
             query?: never;
@@ -409,6 +426,23 @@ export interface paths {
         put?: never;
         /** Create Early Payment */
         post: operations["create_early_payment_api_v1_credit_cards__card_id__purchases__purchase_id__pay_early_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit/cards/{card_id}/purchases/{purchase_id}/pay_early/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Early Payment */
+        post: operations["preview_early_payment_api_v1_credit_cards__card_id__purchases__purchase_id__pay_early_preview_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1093,6 +1127,16 @@ export interface components {
             source_message_id?: string | null;
             /** Raw Message */
             raw_message?: string | null;
+        };
+        /** CreditCardEarlyPaymentPreviewCreate */
+        CreditCardEarlyPaymentPreviewCreate: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount?: number | string | null;
         };
         /** CreditCardEarlyPaymentResult */
         CreditCardEarlyPaymentResult: {
@@ -2093,6 +2137,16 @@ export interface components {
             /** Raw Message */
             raw_message?: string | null;
         };
+        /** ObligationPaymentPreviewCreate */
+        ObligationPaymentPreviewCreate: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount?: number | string | null;
+        };
         /** ObligationPaymentResult */
         ObligationPaymentResult: {
             /** Payment Id */
@@ -2186,6 +2240,23 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** PaymentPreviewResult */
+        PaymentPreviewResult: {
+            /** Source Amount */
+            source_amount: string;
+            /** Source Currency */
+            source_currency: string;
+            /** Target Amount */
+            target_amount: string;
+            /** Target Currency */
+            target_currency: string;
+            /** Fx Rate */
+            fx_rate: string;
+            /** Rate Source */
+            rate_source: string;
+            /** Is Estimated */
+            is_estimated: boolean;
         };
         /** SnapshotCash */
         SnapshotCash: {
@@ -3305,6 +3376,41 @@ export interface operations {
             };
         };
     };
+    preview_obligation_payment_api_v1_obligations__obligation_id__payments_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                obligation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObligationPaymentPreviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentPreviewResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_payment_api_v1_obligations__obligation_id__payments_post: {
         parameters: {
             query?: never;
@@ -3589,6 +3695,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreditCardEarlyPaymentResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_early_payment_api_v1_credit_cards__card_id__purchases__purchase_id__pay_early_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+                purchase_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditCardEarlyPaymentPreviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentPreviewResult"];
                 };
             };
             /** @description Validation Error */

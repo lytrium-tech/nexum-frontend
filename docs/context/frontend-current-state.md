@@ -52,7 +52,7 @@ This document describes the current frontend state only. Backend truth lives in 
 
 ## Current Frontend Risks
 
-- `docs/contracts/openapi.json` may lag backend V1.1.
+- None currently. `docs/contracts/openapi.json` is fully synced with Backend V1.5.
 
 ## Status
 

@@ -169,7 +169,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
 
     const payload: components['schemas']['ObligationPaymentCreate'] = {
       account_id: accountId,
-      amount: amount as any
+      amount: amount
     };
 
     const idemKey = crypto.randomUUID();
