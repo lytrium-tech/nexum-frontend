@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { createObligationAction, payObligationAction, updateObligationAction, previewObligationPaymentAction } from './actions';
 
@@ -151,36 +151,57 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     }
   };
 
-  const handlePreviewSubmit = async () => {
-    if (!selectedObligation || !payAccountId) return;
-    
-    setIsPreviewing(true);
-    setError(null);
-
-    let amount: number | undefined = undefined;
-    if (selectedObligation.payment_mode !== 'fixed_full_payment') {
-      amount = parseFloat(payAmount);
-      if (isNaN(amount) || amount <= 0) {
-        setError('El monto debe ser mayor a 0');
-        setIsPreviewing(false);
-        return;
-      }
+  useEffect(() => {
+    if (!isPayModalOpen || !selectedObligation || !payAccountId) {
+      return;
     }
+    
+    let ignore = false;
+    
+    const fetchPreview = async () => {
+      setIsPreviewing(true);
+      setError(null);
+      
+      let amount: number | undefined = undefined;
+      if (selectedObligation.payment_mode !== 'fixed_full_payment') {
+        amount = parseFloat(payAmount);
+        if (isNaN(amount) || amount <= 0) {
+          if (!ignore) {
+            setError('El monto debe ser mayor a 0');
+            setIsPreviewing(false);
+            setPreviewResult(null);
+          }
+          return;
+        }
+      }
 
-    const payload: components['schemas']['ObligationPaymentPreviewCreate'] = {
-      account_id: payAccountId,
-      amount: amount
+      const payload: components['schemas']['ObligationPaymentPreviewCreate'] = {
+        account_id: payAccountId,
+        amount: amount
+      };
+
+      const res = await previewObligationPaymentAction(selectedObligation.id, payload);
+      
+      if (!ignore) {
+        if (res.success && res.result) {
+          setPreviewResult(res.result);
+        } else {
+          setError(res.error || 'No pudimos calcular la vista previa.');
+          setPreviewResult(null);
+        }
+        setIsPreviewing(false);
+      }
     };
 
-    const res = await previewObligationPaymentAction(selectedObligation.id, payload);
-    
-    if (res.success && res.result) {
-      setPreviewResult(res.result);
-    } else {
-      setError(res.error || 'No pudimos calcular la vista previa.');
-    }
-    setIsPreviewing(false);
-  };
+    const timer = setTimeout(() => {
+      fetchPreview();
+    }, 500);
+
+    return () => {
+      ignore = true;
+      clearTimeout(timer);
+    };
+  }, [payAccountId, payAmount, isPayModalOpen, selectedObligation]);
 
   const handlePaySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -781,7 +802,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
               </div>
             )}
 
-            <form onSubmit={previewResult ? handlePaySubmit : (e) => { e.preventDefault(); handlePreviewSubmit(); }} className="space-y-4">
+            <form onSubmit={handlePaySubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="accountId">
                   Cuenta origen *
@@ -793,7 +814,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   value={payAccountId}
                   onChange={(e) => { setPayAccountId(e.target.value); setPreviewResult(null); }}
                   className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
-                  disabled={isSubmitting || !!successMessage || isPreviewing}
+                  disabled={isSubmitting || !!successMessage}
                 >
                   <option value="">Selecciona con qué pagaste</option>
                   {activeAccounts.map(acc => (
@@ -832,7 +853,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                       value={payAmount}
                       onChange={(e) => { setPayAmount(e.target.value); setPreviewResult(null); }}
                       className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue font-medium outline-none"
-                      disabled={isSubmitting || !!successMessage || isPreviewing}
+                      disabled={isSubmitting || !!successMessage}
                     />
                   </div>
                   <p className="text-xs text-graphite-blue/40 mt-1.5">
@@ -842,7 +863,12 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 </div>
               )}
 
-              {previewResult && (
+              {isPreviewing ? (
+                <div className="bg-graphite-blue/5 rounded-2xl p-4 mt-4 animate-in fade-in flex items-center gap-3">
+                  <div className="w-4 h-4 border-2 border-graphite-blue/30 border-t-graphite-blue rounded-full animate-spin shrink-0" />
+                  <p className="text-sm text-graphite-blue/80">Calculando vista previa...</p>
+                </div>
+              ) : previewResult ? (
                 <div className="bg-sage-green/10 rounded-2xl p-4 mt-4 animate-in fade-in slide-in-from-top-2">
                   <p className="text-sm text-graphite-blue/80 mb-2 font-medium">Vista previa de pago</p>
                   {previewResult.source_currency !== previewResult.target_currency ? (
@@ -860,7 +886,11 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                     </p>
                   )}
                 </div>
-              )}
+              ) : !payAccountId ? (
+                <div className="bg-graphite-blue/5 rounded-2xl p-4 mt-4">
+                  <p className="text-sm text-graphite-blue/60">Selecciona una cuenta para ver la vista previa.</p>
+                </div>
+              ) : null}
 
               <div className="pt-4 flex gap-3">
                 <button
@@ -873,12 +903,12 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || isPreviewing || !!successMessage}
+                  disabled={isSubmitting || isPreviewing || !previewResult || !!successMessage}
                   className="flex-1 py-3 px-4 rounded-xl font-medium bg-graphite-blue text-white hover:bg-graphite-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                 >
-                  {isSubmitting || isPreviewing ? (
+                  {isSubmitting ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : previewResult ? 'Confirmar pago' : 'Continuar'}
+                  ) : 'Confirmar pago'}
                 </button>
               </div>
             </form>

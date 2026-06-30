@@ -98,7 +98,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **UX Improvements Phase 3:** Obligations visual alerts (Completado)
 * **UX Improvements Phase 4:** Transfer history UX polish (Completado)
 * **UX Improvements Phase 5:** Multi-currency Dashboard Estimated Totals (Completado)
-* **UX Improvements Phase 6:** FX Previews for Obligations & Early Payments (Completado)
+* **UX Improvements Phase 6:** Realtime FX Previews for Obligations & Early Payments (Completado)
 
 ## Product Notes
 

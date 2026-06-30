@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { createCreditCardAction, purchaseCreditCardAction, payCreditCardAction, getCreditStatementsAction, getCreditInstallmentsAction, payEarlyPurchaseAction, previewCreditEarlyPaymentAction } from './actions';
 
@@ -454,30 +454,47 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
     setIsSubmitting(false);
   };
 
-  const handleEarlyPreviewSubmit = async () => {
-    if (!earlyPaymentData || !earlyPaymentAccountId) return;
-    
-    setIsEarlyPreviewing(true);
-    setError(null);
-
-    const payload: components['schemas']['CreditCardEarlyPaymentPreviewCreate'] = {
-      account_id: earlyPaymentAccountId
-    };
-
-    const result = await previewCreditEarlyPaymentAction(
-      earlyPaymentData.card.id, 
-      earlyPaymentData.installment.purchase_transaction_id, 
-      payload
-    );
-    
-    if (result.success && result.result) {
-      setEarlyPreviewResult(result.result);
-    } else {
-      setError(result.error || 'No pudimos calcular la vista previa.');
+  useEffect(() => {
+    if (!earlyPaymentData || !earlyPaymentAccountId) {
+      return;
     }
     
-    setIsEarlyPreviewing(false);
-  };
+    let ignore = false;
+    
+    const fetchPreview = async () => {
+      setIsEarlyPreviewing(true);
+      setError(null);
+
+      const payload: components['schemas']['CreditCardEarlyPaymentPreviewCreate'] = {
+        account_id: earlyPaymentAccountId
+      };
+
+      const result = await previewCreditEarlyPaymentAction(
+        earlyPaymentData.card.id, 
+        earlyPaymentData.installment.purchase_transaction_id, 
+        payload
+      );
+      
+      if (!ignore) {
+        if (result.success && result.result) {
+          setEarlyPreviewResult(result.result);
+        } else {
+          setError(result.error || 'No pudimos calcular la vista previa.');
+          setEarlyPreviewResult(null);
+        }
+        setIsEarlyPreviewing(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchPreview();
+    }, 500);
+
+    return () => {
+      ignore = true;
+      clearTimeout(timer);
+    };
+  }, [earlyPaymentAccountId, earlyPaymentData]);
 
   const handleEarlyPaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -1190,7 +1207,7 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                       <p className="text-graphite-blue font-medium">{successMessage}</p>
                     </div>
                   ) : (
-                    <form id="earlyPaymentForm" onSubmit={earlyPreviewResult ? handleEarlyPaymentSubmit : (e) => { e.preventDefault(); handleEarlyPreviewSubmit(); }} className="space-y-5">
+                    <form id="earlyPaymentForm" onSubmit={handleEarlyPaymentSubmit} className="space-y-5">
                       <div className="p-4 bg-graphite-blue/5 rounded-xl text-sm text-graphite-blue/80 space-y-2 mb-4 border border-graphite-blue/10">
                         <p>
                           Vas a solicitar un pago anticipado para la compra <span className="font-medium">{earlyPaymentData.installment.purchase_transaction_id.slice(0, 8)}</span>.
@@ -1234,7 +1251,12 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                         )}
                       </div>
 
-                      {earlyPreviewResult && (
+                      {isEarlyPreviewing ? (
+                        <div className="bg-graphite-blue/5 rounded-2xl p-4 mt-4 animate-in fade-in flex items-center gap-3">
+                          <div className="w-4 h-4 border-2 border-graphite-blue/30 border-t-graphite-blue rounded-full animate-spin shrink-0" />
+                          <p className="text-sm text-graphite-blue/80">Calculando vista previa...</p>
+                        </div>
+                      ) : earlyPreviewResult ? (
                         <div className="bg-sage-green/10 rounded-2xl p-4 mt-4 animate-in fade-in slide-in-from-top-2">
                           <p className="text-sm text-graphite-blue/80 mb-2 font-medium">Vista previa de pago</p>
                           {earlyPreviewResult.source_currency !== earlyPreviewResult.target_currency ? (
@@ -1253,7 +1275,11 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                             </p>
                           )}
                         </div>
-                      )}
+                      ) : !earlyPaymentAccountId ? (
+                        <div className="bg-graphite-blue/5 rounded-2xl p-4 mt-4">
+                          <p className="text-sm text-graphite-blue/60">Selecciona una cuenta para ver la vista previa.</p>
+                        </div>
+                      ) : null}
                     </form>
                   )}
                 </div>
@@ -1271,18 +1297,16 @@ export default function CreditClient({ initialCards, initialAccounts, initialErr
                     <button
                       type="submit"
                       form="earlyPaymentForm"
-                      disabled={isSubmitting || isEarlyPreviewing || activeAccounts.length === 0}
+                      disabled={isSubmitting || isEarlyPreviewing || !earlyPreviewResult || activeAccounts.length === 0}
                       className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-sage-green text-white text-sm font-medium rounded-xl hover:bg-[#688c74] transition-colors disabled:opacity-70"
                     >
-                      {isSubmitting || isEarlyPreviewing ? (
+                      {isSubmitting ? (
                         <>
                           <RefreshCw className="w-4 h-4 animate-spin" />
                           Procesando...
                         </>
-                      ) : earlyPreviewResult ? (
-                        'Confirmar pago anticipado'
                       ) : (
-                        'Continuar'
+                        'Confirmar pago anticipado'
                       )}
                     </button>
                   </div>
