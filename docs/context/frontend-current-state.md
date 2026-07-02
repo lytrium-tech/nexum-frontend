@@ -52,7 +52,7 @@ This document describes the current frontend state only. Backend truth lives in 
 
 ## Current Frontend Risks
 
-- None currently. `docs/contracts/openapi.json` is fully synced with Backend V1.5.
+- Obligations UI is temporarily safely dormant (fallback state) due to V1.6 breaking changes requiring Period model. UI will be refactored in upcoming phases.
 
 ## Status
 
@@ -99,6 +99,10 @@ This document describes the current frontend state only. Backend truth lives in 
 * **UX Improvements Phase 4:** Transfer history UX polish (Completado)
 * **UX Improvements Phase 5:** Multi-currency Dashboard Estimated Totals (Completado)
 * **UX Improvements Phase 6:** Realtime FX Previews for Obligations & Early Payments (Completado)
+* **UX Improvements Phase 7:** Final QA + closeout (Completado)
+
+**Frontend V1.6**
+* **Phase 1:** OpenAPI Sync + Type Recovery (Completado)
 
 ## Product Notes
 

@@ -3,6 +3,7 @@ import { api } from '@/lib/api/endpoints';
 import { getSessionToken } from '@/lib/api/client';
 import { redirect } from 'next/navigation';
 import ObligationsClient from './ObligationsClient';
+import { components } from '@/lib/api/types.generated';
 
 export const metadata: Metadata = {
   title: 'Obligaciones | Nexum',
@@ -16,8 +17,8 @@ export default async function ObligationsPage() {
     redirect('/login');
   }
 
-  let obligations = [];
-  let accounts = [];
+  let obligations: components['schemas']['ObligationRead'][] = [];
+  let accounts: components['schemas']['AccountRead'][] = [];
   try {
     const obligationsPromise = api.obligations.list(true, { include_archived: true });
     const accountsPromise = api.accounts.list(true, { include_archived: true });

@@ -17,17 +17,17 @@ export async function createObligationAction(data: components['schemas']['Obliga
   }
 }
 
-export async function updateObligationAction(id: string, data: components['schemas']['ObligationUpdate']) {
-  try {
-    const result = await api.obligations.update(id, data, true);
-    revalidatePath('/app/obligations');
-    revalidatePath('/app');
-    return { success: true, result };
-  } catch (err: unknown) {
-    console.error('Update obligation error:', err);
-    return { success: false, error: handleFinancialError(err, 'Ocurrió un error al actualizar la obligación. Intenta nuevamente.') };
-  }
-}
+// export async function updateObligationAction(id: string, data: any) {
+//   try {
+//     const result = await api.obligations.update(id, data, true);
+//     revalidatePath('/app/obligations');
+//     revalidatePath('/app');
+//     return { success: true, result };
+//   } catch (err: unknown) {
+//     console.error('Update obligation error:', err);
+//     return { success: false, error: handleFinancialError(err, 'Ocurrió un error al actualizar la obligación. Intenta nuevamente.') };
+//   }
+// }
 
 export async function payObligationAction(id: string, data: components['schemas']['ObligationPaymentCreate'], idempotencyKey: string) {
   try {
@@ -42,12 +42,12 @@ export async function payObligationAction(id: string, data: components['schemas'
     return { success: false, error: handleFinancialError(err, 'Ocurrió un error al registrar el pago. Intenta nuevamente.') };
   }
 }
-export async function previewObligationPaymentAction(id: string, data: components['schemas']['ObligationPaymentPreviewCreate']) {
-  try {
-    const result = await api.obligations.payPreview(id, data, true);
-    return { success: true, result };
-  } catch (err: unknown) {
-    console.error('Preview obligation payment error:', err);
-    return { success: false, error: handleFinancialError(err, 'No pudimos calcular la vista previa.') };
-  }
-}
+// export async function previewObligationPaymentAction(id: string, data: any) {
+//   try {
+//     const result = await api.obligations.payPreview(id, data, true);
+//     return { success: true, result };
+//   } catch (err: unknown) {
+//     console.error('Preview obligation payment error:', err);
+//     return { success: false, error: handleFinancialError(err, 'No pudimos calcular la vista previa.') };
+//   }
+// }

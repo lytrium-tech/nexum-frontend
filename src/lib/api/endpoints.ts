@@ -19,9 +19,9 @@ type GoalContributionCreate = components['schemas']['GoalContributionCreate'];
 type GoalContributionResult = components['schemas']['GoalContributionResult'];
 type ObligationRead = components['schemas']['ObligationRead'];
 type ObligationCreate = components['schemas']['ObligationCreate'];
-type ObligationUpdate = components['schemas']['ObligationUpdate'];
+// type ObligationUpdate = components['schemas']['ObligationUpdate'];
 type ObligationPaymentCreate = components['schemas']['ObligationPaymentCreate'];
-type ObligationPaymentResult = components['schemas']['ObligationPaymentResult'];
+type ObligationPaymentResult = components['schemas']['ObligationPaymentRead'];
 type CreditCardRead = components['schemas']['CreditCardRead'];
 type CreditCardCreate = components['schemas']['CreditCardCreate'];
 type CreditCardPurchaseCreate = components['schemas']['CreditCardPurchaseCreate'];
@@ -136,24 +136,24 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }, isServer),
-    update: (id: string, data: ObligationUpdate, isServer = false) =>
-      apiClient<ObligationRead>(`/api/v1/obligations/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      }, isServer),
+    // update: (id: string, data: ObligationUpdate, isServer = false) =>
+    //   apiClient<ObligationRead>(`/api/v1/obligations/${id}`, {
+    //     method: 'PATCH',
+    //     body: JSON.stringify(data),
+    //   }, isServer),
       pay: (id: string, data: ObligationPaymentCreate, idempotencyKey: string, isServer = false) =>
-        apiClient<ObligationPaymentResult>(`/api/v1/obligations/${id}/payments`, {
+        apiClient<ObligationPaymentResult>(`/api/v1/obligations/${id}/pay`, {
           method: 'POST',
           headers: {
             'Idempotency-Key': idempotencyKey,
           },
           body: JSON.stringify(data),
         }, isServer),
-      payPreview: (id: string, data: components['schemas']['ObligationPaymentPreviewCreate'], isServer = false) =>
-        apiClient<components['schemas']['PaymentPreviewResult']>(`/api/v1/obligations/${id}/payments/preview`, {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }, isServer),
+      // payPreview: (id: string, data: components['schemas']['ObligationPaymentPreviewCreate'], isServer = false) =>
+      //   apiClient<components['schemas']['PaymentPreviewResult']>(`/api/v1/obligations/${id}/payments/preview`, {
+      //     method: 'POST',
+      //     body: JSON.stringify(data),
+      //   }, isServer),
     },
     transfers: {
       list: (isServer = false) =>
