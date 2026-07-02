@@ -3,11 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { formatMoneyOrDash } from '@/lib/format/money';
-import { getObligationPeriodsAction, syncObligationPeriodsAction } from './actions';
+import { getObligationPeriodsAction, syncObligationPeriodsAction, updateObligationPeriodAmountAction, skipObligationPeriodAction } from './actions';
 
 type ObligationRead = components['schemas']['ObligationRead'];
 type AccountRead = components['schemas']['AccountRead'];
 type ObligationPeriodRead = components['schemas']['ObligationPeriodRead'];
+
+interface ExtendedPeriod extends ObligationPeriodRead {
+  remaining_amount?: string;
+}
 
 interface ObligationsClientProps {
   initialObligations: ObligationRead[];
@@ -73,6 +77,12 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
   const [error, setError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
 
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [defineAmountModal, setDefineAmountModal] = useState({ open: false, periodId: '', obligationId: '' });
+  const [amountInput, setAmountInput] = useState('');
+  const [skipModal, setSkipModal] = useState({ open: false, periodId: '', obligationId: '' });
+
   useEffect(() => {
     let mounted = true;
     async function fetchPeriods() {
@@ -99,6 +109,35 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
 
     return () => { mounted = false; };
   }, [initialObligations]);
+
+  const handleDefineAmount = async () => {
+    if (!amountInput || isNaN(Number(amountInput))) return;
+    setActionLoading(true);
+    setActionError(null);
+
+    const res = await updateObligationPeriodAmountAction(defineAmountModal.periodId, amountInput);
+    if (res.success) {
+      await handleSync(defineAmountModal.obligationId);
+      setDefineAmountModal({ open: false, periodId: '', obligationId: '' });
+      setAmountInput('');
+    } else {
+      setActionError(res.error || 'No pudimos definir el monto de este periodo.');
+    }
+    setActionLoading(false);
+  };
+
+  const handleSkip = async () => {
+    setActionLoading(true);
+    setActionError(null);
+    const res = await skipObligationPeriodAction(skipModal.periodId);
+    if (res.success) {
+      await handleSync(skipModal.obligationId);
+      setSkipModal({ open: false, periodId: '', obligationId: '' });
+    } else {
+      setActionError(res.error || 'No pudimos saltar este periodo.');
+    }
+    setActionLoading(false);
+  };
 
   const handleSync = async (obligationId: string) => {
     setSyncing(prev => ({ ...prev, [obligationId]: true }));
@@ -202,7 +241,7 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
                       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                         <p className="text-xs text-gray-400 mb-1">Restante</p>
                         <p className="text-lg font-semibold text-graphite-blue">
-                          {formatMoneyOrDash((period as any).remaining_amount, period.currency)}
+                          {formatMoneyOrDash((period as ExtendedPeriod).remaining_amount, period.currency)}
                         </p>
                       </div>
                     </div>
@@ -215,17 +254,29 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
                       </div>
                     )}
 
-                    <div className="mt-5 pt-5 border-t border-gray-100 flex justify-end">
+                    <div className="mt-5 pt-5 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3">
+                      {['pending_amount_definition', 'pending_payment', 'partially_paid', 'overdue'].includes(period.status) && (
+                        <button
+                          onClick={() => setSkipModal({ open: true, periodId: period.id, obligationId: ob.id })}
+                          className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-600 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
+                        >
+                          Saltar periodo
+                        </button>
+                      )}
+
                       {period.status === 'pending_amount_definition' ? (
-                        <button disabled className="bg-gray-100/80 text-gray-400 px-5 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed w-full sm:w-auto">
-                          Definir monto próximamente
+                        <button
+                          onClick={() => setDefineAmountModal({ open: true, periodId: period.id, obligationId: ob.id })}
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
+                        >
+                          Definir monto
                         </button>
                       ) : (period.status === 'pending_payment' || period.status === 'partially_paid' || period.status === 'overdue') ? (
                         <button disabled className="bg-gray-100/80 text-gray-400 px-5 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed w-full sm:w-auto">
                           Pago disponible próximamente
                         </button>
                       ) : (period.status === 'paid' || period.status === 'skipped' || period.status === 'cancelled') ? (
-                        <div className="text-sm text-gray-400 italic">Sin acciones pendientes</div>
+                        <div className="text-sm text-gray-400 italic mt-2">Sin acciones pendientes</div>
                       ) : null}
                     </div>
                   </div>
@@ -233,6 +284,91 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
               </div>
             );
           })}
+        </div>
+      )}
+
+      {defineAmountModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-gray-100">
+            <h3 className="text-xl font-semibold text-graphite-blue mb-2">Definir monto</h3>
+            <p className="text-sm text-gray-500 mb-6">Ingresa el monto de este periodo para poder realizar pagos.</p>
+
+            {actionError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+                {actionError}
+              </div>
+            )}
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Monto
+              </label>
+              <input
+                type="number"
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all text-graphite-blue"
+                placeholder="Ej. 150000"
+                disabled={actionLoading}
+              />
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+              <button
+                onClick={() => {
+                  setDefineAmountModal({ open: false, periodId: '', obligationId: '' });
+                  setAmountInput('');
+                  setActionError(null);
+                }}
+                disabled={actionLoading}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDefineAmount}
+                disabled={actionLoading || !amountInput}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              >
+                {actionLoading ? 'Guardando...' : 'Guardar monto'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {skipModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-gray-100">
+            <h3 className="text-xl font-semibold text-graphite-blue mb-2">Saltar periodo</h3>
+            <p className="text-sm text-gray-500 mb-6">¿Seguro que quieres saltar este periodo? Esta acción marcará este periodo como saltado si el backend lo permite.</p>
+
+            {actionError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+                {actionError}
+              </div>
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+              <button
+                onClick={() => {
+                  setSkipModal({ open: false, periodId: '', obligationId: '' });
+                  setActionError(null);
+                }}
+                disabled={actionLoading}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSkip}
+                disabled={actionLoading}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {actionLoading ? 'Saltando...' : 'Saltar periodo'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
