@@ -104,6 +104,7 @@ This document describes the current frontend state only. Backend truth lives in 
 **Frontend V1.6**
 * **Phase 1:** OpenAPI Sync + Type Recovery (Completado)
 * **Phase 2:** Period API Actions (Completado)
+* **Phase 3:** Obligations Period UI (Completado)
 
 ## Product Notes
 

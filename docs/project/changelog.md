@@ -4,6 +4,7 @@
 ### Changed
 - **Phase 1**: Synchronized OpenAPI with Backend V1.6 Obligations Core. Regenerated types and confirmed the presence of `ObligationPeriod` contracts. Temporarily placed the Obligations UI in a safe fallback state while waiting for the full UI refactor in subsequent phases. Type recovery completed successfully and build is clean without any local financial logic introduced.
 - **Phase 2**: Added typed API wrappers and server actions for `ObligationPeriod` operations. Mapped endpoints to get periods, sync periods, skip, pay, and update variable amounts. No full UI implemented yet. No local calculation of FIFO distribution, period balances, or due states.
+- **Phase 3**: Replaced the temporary fallback with a functional, read-only Obligations UI based on the `ObligationPeriod` model. The `Obligation` is now correctly treated as a template, with all financial data, statuses, and due dates sourced directly from the backend periods. Mutable actions remain disabled.
 
 ## [Unreleased] - Frontend V1.5
 ### Changed
