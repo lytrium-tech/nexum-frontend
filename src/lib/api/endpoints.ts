@@ -22,6 +22,8 @@ type ObligationCreate = components['schemas']['ObligationCreate'];
 // type ObligationUpdate = components['schemas']['ObligationUpdate'];
 type ObligationPaymentCreate = components['schemas']['ObligationPaymentCreate'];
 type ObligationPaymentResult = components['schemas']['ObligationPaymentRead'];
+type ObligationPeriodRead = components['schemas']['ObligationPeriodRead'];
+type ObligationPeriodAmountUpdate = components['schemas']['ObligationPeriodAmountUpdate'];
 type CreditCardRead = components['schemas']['CreditCardRead'];
 type CreditCardCreate = components['schemas']['CreditCardCreate'];
 type CreditCardPurchaseCreate = components['schemas']['CreditCardPurchaseCreate'];
@@ -149,6 +151,25 @@ export const api = {
           },
           body: JSON.stringify(data),
         }, isServer),
+      periods: (id: string, isServer = false) =>
+        apiClient<ObligationPeriodRead[]>(`/api/v1/obligations/${id}/periods`, { method: 'GET' }, isServer),
+      syncPeriods: (id: string, isServer = false) =>
+        apiClient<ObligationPeriodRead[]>(`/api/v1/obligations/${id}/sync-periods`, { method: 'POST' }, isServer),
+      updatePeriodAmount: (periodId: string, data: ObligationPeriodAmountUpdate, isServer = false) =>
+        apiClient<ObligationPeriodRead>(`/api/v1/obligations/periods/${periodId}/amount`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }, isServer),
+      payPeriod: (periodId: string, data: ObligationPaymentCreate, idempotencyKey: string, isServer = false) =>
+        apiClient<ObligationPaymentResult>(`/api/v1/obligations/periods/${periodId}/pay`, {
+          method: 'POST',
+          headers: {
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(data),
+        }, isServer),
+      skipPeriod: (periodId: string, isServer = false) =>
+        apiClient<ObligationPeriodRead>(`/api/v1/obligations/periods/${periodId}/skip`, { method: 'POST' }, isServer),
       // payPreview: (id: string, data: components['schemas']['ObligationPaymentPreviewCreate'], isServer = false) =>
       //   apiClient<components['schemas']['PaymentPreviewResult']>(`/api/v1/obligations/${id}/payments/preview`, {
       //     method: 'POST',
