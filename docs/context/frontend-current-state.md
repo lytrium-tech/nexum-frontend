@@ -106,7 +106,6 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Phase 2:** Period API Actions (Completado)
 * **Phase 3:** Obligations Period UI (Completado)
 * **Phase 4A:** Period Mutations - Define Amount & Skip (Completado)
-* **Phase 4B:** Payment Flows - Specific Period & FIFO (Completado)
 
 ## Product Notes
 
