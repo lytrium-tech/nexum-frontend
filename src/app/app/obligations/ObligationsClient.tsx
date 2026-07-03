@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { formatMoneyOrDash } from '@/lib/format/money';
-import { getObligationPeriodsAction, syncObligationPeriodsAction, updateObligationPeriodAmountAction, skipObligationPeriodAction } from './actions';
+import { getObligationPeriodsAction, syncObligationPeriodsAction, updateObligationPeriodAmountAction, skipObligationPeriodAction, payObligationPeriodAction, payObligationFifoAction } from './actions';
 
 type ObligationRead = components['schemas']['ObligationRead'];
 type AccountRead = components['schemas']['AccountRead'];
@@ -71,7 +71,7 @@ function getStatusColor(status: string) {
   }
 }
 
-export default function ObligationsClient({ initialObligations }: ObligationsClientProps) {
+export default function ObligationsClient({ initialObligations, accounts }: ObligationsClientProps) {
   const [periodsByObligation, setPeriodsByObligation] = useState<Record<string, ObligationPeriodRead[]>>({});
   const [loading, setLoading] = useState(initialObligations.length > 0);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +82,9 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
   const [defineAmountModal, setDefineAmountModal] = useState({ open: false, periodId: '', obligationId: '' });
   const [amountInput, setAmountInput] = useState('');
   const [skipModal, setSkipModal] = useState({ open: false, periodId: '', obligationId: '' });
+  const [payModal, setPayModal] = useState({ open: false, obligationId: '', periodId: '', periodAmountRemaining: '', currency: '', isFifo: false });
+  const [payAccountId, setPayAccountId] = useState('');
+  const [payAmountInput, setPayAmountInput] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -135,6 +138,35 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
       setSkipModal({ open: false, periodId: '', obligationId: '' });
     } else {
       setActionError(res.error || 'No pudimos saltar este periodo.');
+    }
+    setActionLoading(false);
+  };
+
+  const handlePay = async () => {
+    if (!payAccountId || !payAmountInput || isNaN(Number(payAmountInput))) return;
+    setActionLoading(true);
+    setActionError(null);
+
+    const payload = {
+      account_id: payAccountId,
+      amount: Number(payAmountInput),
+    };
+    const idempotencyKey = crypto.randomUUID();
+
+    let res;
+    if (payModal.isFifo) {
+      res = await payObligationFifoAction(payModal.obligationId, payload, idempotencyKey);
+    } else {
+      res = await payObligationPeriodAction(payModal.periodId, payload, idempotencyKey);
+    }
+
+    if (res.success) {
+      await handleSync(payModal.obligationId);
+      setPayModal({ open: false, obligationId: '', periodId: '', periodAmountRemaining: '', currency: '', isFifo: false });
+      setPayAccountId('');
+      setPayAmountInput('');
+    } else {
+      setActionError(res.error || 'No pudimos registrar este pago.');
     }
     setActionLoading(false);
   };
@@ -204,14 +236,22 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
                       {ob.frequency.replace('_', ' ')} • {ob.payment_mode.replace('_', ' ')} • {ob.currency}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleSync(ob.id)}
-                    disabled={syncing[ob.id]}
-                    className="text-xs bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full font-medium transition-colors disabled:opacity-50 whitespace-nowrap"
-                  >
-                    {syncing[ob.id] ? 'Sincronizando...' : 'Sincronizar periodos'}
-                  </button>
-                </div>
+                    <button
+                      onClick={() => handleSync(ob.id)}
+                      disabled={syncing[ob.id]}
+                      className="text-xs bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full font-medium transition-colors disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {syncing[ob.id] ? 'Sincronizando...' : 'Sincronizar periodos'}
+                    </button>
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setPayModal({ open: true, obligationId: ob.id, periodId: '', periodAmountRemaining: '', currency: ob.currency || '', isFifo: true })}
+                      className="text-xs bg-graphite-blue hover:bg-graphite-blue/90 text-white px-4 py-2 rounded-full font-medium transition-colors"
+                    >
+                      Pagar obligación
+                    </button>
+                  </div>
 
                 {!period ? (
                   <div className="bg-gray-50 rounded-2xl p-4 text-center text-sm text-gray-500">
@@ -272,8 +312,11 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
                           Definir monto
                         </button>
                       ) : (period.status === 'pending_payment' || period.status === 'partially_paid' || period.status === 'overdue') ? (
-                        <button disabled className="bg-gray-100/80 text-gray-400 px-5 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed w-full sm:w-auto">
-                          Pago disponible próximamente
+                        <button
+                          onClick={() => setPayModal({ open: true, obligationId: ob.id, periodId: period.id, periodAmountRemaining: (period as ExtendedPeriod).remaining_amount || period.amount || '', currency: period.currency || '', isFifo: false })}
+                          className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
+                        >
+                          Pagar periodo
                         </button>
                       ) : (period.status === 'paid' || period.status === 'skipped' || period.status === 'cancelled') ? (
                         <div className="text-sm text-gray-400 italic mt-2">Sin acciones pendientes</div>
@@ -366,6 +409,96 @@ export default function ObligationsClient({ initialObligations }: ObligationsCli
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? 'Saltando...' : 'Saltar periodo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {payModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-gray-100">
+            <h3 className="text-xl font-semibold text-graphite-blue mb-2">
+              {payModal.isFifo ? 'Pagar obligación' : 'Pagar periodo'}
+            </h3>
+
+            {payModal.isFifo ? (
+              <p className="text-sm text-gray-500 mb-6">
+                Nexum aplicará este pago automáticamente a los periodos pendientes según prioridad.
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500 mb-6">
+                Ingresa el monto que deseas abonar a este periodo. Pendiente:{' '}
+                <span className="font-semibold">{formatMoneyOrDash(payModal.periodAmountRemaining, payModal.currency)}</span>
+              </p>
+            )}
+
+            {actionError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+                {actionError}
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cuenta fuente
+              </label>
+              <select
+                value={payAccountId}
+                onChange={(e) => setPayAccountId(e.target.value)}
+                disabled={actionLoading}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue bg-white"
+              >
+                <option value="">Selecciona una cuenta</option>
+                {accounts.map(acc => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name} ({formatMoneyOrDash(acc.balance, acc.currency)})
+                  </option>
+                ))}
+              </select>
+              {accounts.length === 0 && (
+                <p className="mt-1 text-xs text-red-500">No tienes cuentas disponibles para pagar esta obligación.</p>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Monto a pagar
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={payAmountInput}
+                  onChange={(e) => setPayAmountInput(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                  placeholder="Ej. 50000"
+                  disabled={actionLoading}
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-400">
+                  {payModal.currency}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+              <button
+                onClick={() => {
+                  setPayModal({ open: false, obligationId: '', periodId: '', periodAmountRemaining: '', currency: '', isFifo: false });
+                  setPayAccountId('');
+                  setPayAmountInput('');
+                  setActionError(null);
+                }}
+                disabled={actionLoading}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handlePay}
+                disabled={actionLoading || !payAmountInput || !payAccountId}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
+              >
+                {actionLoading ? 'Registrando pago...' : 'Confirmar'}
               </button>
             </div>
           </div>
