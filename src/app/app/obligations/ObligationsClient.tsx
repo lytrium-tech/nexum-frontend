@@ -86,6 +86,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
   const [payAmountInput, setPayAmountInput] = useState('');
   const [previewData, setPreviewData] = useState<components['schemas']['ObligationPaymentPreviewRead'] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [cachedFxRate, setCachedFxRate] = useState<number | null>(null);
 
   const [createData, setCreateData] = useState<Partial<components['schemas']['ObligationCreate']>>({
     name: '',
@@ -180,6 +181,9 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       });
       if (res.success && res.result) {
         setPreviewData(res.result);
+        if (res.result.fx_rate) {
+          setCachedFxRate(Number(res.result.fx_rate));
+        }
         setActionError(null);
       } else {
         setPreviewData(null);
@@ -746,6 +750,16 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
               {previewLoading && (
                  <p className="text-xs text-gray-400 mt-2 italic">Calculando vista previa...</p>
               )}
+              {previewLoading && cachedFxRate && payAmountInput && payModal.currency !== accounts.find(a => a.id === payAccountId)?.currency && (
+                <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 text-sm opacity-70">
+                  <p className="text-graphite-blue">
+                    Nexum descontará aprox. <span className="font-semibold">{formatMoneyOrDash(Number(payAmountInput) / cachedFxRate, accounts.find(a => a.id === payAccountId)?.currency || '')}</span> para pagar <span className="font-semibold">{formatMoneyOrDash(Number(payAmountInput), payModal.currency)}</span>.
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Estimación visual rápida (Tasa: 1 USD = {cachedFxRate} COP). Nexum validará la conversión final al confirmar.
+                  </p>
+                </div>
+              )}
               {!previewLoading && previewData && (
                 <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 text-sm">
                   {previewData.source_amount && previewData.applied_amount && previewData.fx_rate ? (
@@ -774,6 +788,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   setPayAccountId('');
                   setPayAmountInput('');
                   setPreviewData(null);
+                  setCachedFxRate(null);
                   setActionError(null);
                 }}
                 disabled={actionLoading}
