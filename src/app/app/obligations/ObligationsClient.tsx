@@ -92,7 +92,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     currency: 'COP',
     type: 'debt',
     frequency: 'monthly',
-    payment_mode: 'partial_allowed',
+    payment_mode: 'fixed',
     base_amount: '',
     start_date: new Date().toISOString().split('T')[0],
     first_due_date: new Date().toISOString().split('T')[0],
@@ -124,7 +124,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
         currency: 'COP',
         type: 'debt',
         frequency: 'monthly',
-        payment_mode: 'partial_allowed',
+        payment_mode: 'fixed',
         base_amount: '',
         start_date: new Date().toISOString().split('T')[0],
         first_due_date: new Date().toISOString().split('T')[0],
@@ -348,7 +348,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   <div>
                     <h2 className="text-xl font-semibold text-graphite-blue">{ob.name}</h2>
                     <p className="text-sm text-graphite-blue/60 mt-1 capitalize">
-                      {ob.frequency.replace('_', ' ')} • {ob.payment_mode.replace('_', ' ')} • {ob.currency}
+                      {ob.frequency.replace('_', ' ')} • {ob.payment_mode === 'fixed' || ob.payment_mode === 'partial_allowed' || ob.payment_mode === 'fixed_full_payment' ? 'Fija' : 'Variable'} • {ob.currency}
                     </p>
                   </div>
                 </div>
@@ -517,18 +517,18 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue bg-white"
                     disabled={actionLoading}
                   >
-                    <option value="partial_allowed">Fija</option>
-                    <option value="variable_amount">Variable</option>
+                    <option value="fixed">Fija</option>
+                    <option value="variable">Variable</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    {createData.payment_mode === 'partial_allowed' ? 'Fija: el monto suele ser el mismo en cada periodo.' : 'Variable: defines el monto cuando llegue cada periodo.'}
+                    {createData.payment_mode === 'fixed' ? 'Fija: el monto suele ser el mismo en cada periodo.' : 'Variable: defines el monto cuando llegue cada periodo.'}
                   </p>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {createData.payment_mode === 'variable_amount' ? 'Monto referencial (Opcional)' : 'Monto base'}
+                  {createData.payment_mode === 'variable' ? 'Monto referencial (Opcional)' : 'Monto base'}
                 </label>
                 <input
                   type="number"
@@ -577,7 +577,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
               </button>
               <button
                 onClick={handleCreate}
-                disabled={actionLoading || !createData.name || (createData.payment_mode !== 'variable_amount' && !createData.base_amount)}
+                disabled={actionLoading || !createData.name || (createData.payment_mode !== 'variable' && !createData.base_amount)}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? 'Creando...' : 'Crear obligación'}
