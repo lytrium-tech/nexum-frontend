@@ -84,6 +84,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
   const [payModal, setPayModal] = useState({ open: false, obligationId: '', periodId: '', defaultAmount: '', currency: '', isFifo: false, remainingAmount: null as string | null });
   const [payAccountId, setPayAccountId] = useState('');
   const [payAmountInput, setPayAmountInput] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'remaining' | 'custom'>('remaining');
   const [previewData, setPreviewData] = useState<components['schemas']['ObligationPaymentPreviewRead'] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [cachedFxRate, setCachedFxRate] = useState<number | null>(null);
@@ -247,6 +248,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       remainingAmount: period.remaining_amount ?? null
     });
     setPayAmountInput(period.remaining_amount ?? defaultAmount);
+    setPaymentMode(period.remaining_amount ? 'remaining' : 'custom');
   };
 
   const handlePay = async () => {
@@ -719,18 +721,30 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
             </div>
 
             <div className="mb-6">
-              <div className="flex justify-between mb-2">
+              <div className="flex justify-between items-center mb-4">
                 <label className="block text-sm font-medium text-gray-700">
                   Monto a pagar
                 </label>
                 {payModal.remainingAmount && (
-                  <button 
-                    onClick={() => setPayAmountInput(payModal.remainingAmount || '')}
-                    className="text-xs text-graphite-blue hover:underline font-medium"
-                    type="button"
-                  >
-                    Pagar restante
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => {
+                        setPaymentMode('remaining');
+                        setPayAmountInput(payModal.remainingAmount || '');
+                      }}
+                      className={`px-3 py-1 text-xs rounded-lg font-medium transition-colors ${paymentMode === 'remaining' ? 'bg-graphite-blue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      type="button"
+                    >
+                      Pagar restante
+                    </button>
+                    <button 
+                      onClick={() => setPaymentMode('custom')}
+                      className={`px-3 py-1 text-xs rounded-lg font-medium transition-colors ${paymentMode === 'custom' ? 'bg-graphite-blue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      type="button"
+                    >
+                      Otro monto
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="relative">
@@ -738,47 +752,73 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   type="number"
                   value={payAmountInput}
                   onChange={(e) => setPayAmountInput(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all text-graphite-blue ${paymentMode === 'remaining' ? 'bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed' : 'border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20'}`}
                   placeholder="Ej. 50000"
-                  disabled={actionLoading}
+                  disabled={actionLoading || paymentMode === 'remaining'}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-400">
                   {payModal.currency}
                 </div>
               </div>
               
-              {previewLoading && (
-                 <p className="text-xs text-gray-400 mt-2 italic">Calculando vista previa...</p>
-              )}
-              {previewLoading && cachedFxRate && payAmountInput && payModal.currency !== accounts.find(a => a.id === payAccountId)?.currency && (
-                <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 text-sm opacity-70">
-                  <p className="text-graphite-blue">
-                    Nexum descontará aprox. <span className="font-semibold">{formatMoneyOrDash(Number(payAmountInput) / cachedFxRate, accounts.find(a => a.id === payAccountId)?.currency || '')}</span> para pagar <span className="font-semibold">{formatMoneyOrDash(Number(payAmountInput), payModal.currency)}</span>.
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Estimación visual rápida (Tasa: 1 USD = {cachedFxRate} COP). Nexum validará la conversión final al confirmar.
-                  </p>
-                </div>
-              )}
-              {!previewLoading && previewData && (
-                <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 text-sm">
-                  {previewData.source_amount && previewData.applied_amount && previewData.fx_rate ? (
-                    <>
+              {(() => {
+                const sourceCurrency = accounts.find(a => a.id === payAccountId)?.currency;
+                const isCrossCurrency = sourceCurrency && sourceCurrency !== payModal.currency;
+                
+                if (!payAmountInput || !payAccountId) return null;
+
+                // Si es misma moneda, preview simple
+                if (!isCrossCurrency) {
+                  return (
+                    <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 text-sm">
                       <p className="text-graphite-blue">
-                        Nexum descontará aprox. <span className="font-semibold">{formatMoneyOrDash(previewData.source_amount, accounts.find(a => a.id === payAccountId)?.currency || '')}</span> para pagar <span className="font-semibold">{formatMoneyOrDash(previewData.applied_amount, payModal.currency)}</span>.
+                        Se descontará <span className="font-semibold">{formatMoneyOrDash(Number(payAmountInput), payModal.currency)}</span> de esta cuenta.
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Tasa estimada: 1 USD = {previewData.fx_rate} {payModal.currency === 'USD' ? 'COP' : 'COP'}
-                      </p>
-                      <p className="text-xs text-blue-600/80 mt-1">La conversión final puede ajustarse al confirmar el pago.</p>
-                    </>
-                  ) : previewData.source_amount ? (
+                    </div>
+                  );
+                }
+
+                // Cross-currency
+                // Mostrar visual estimate INMEDIATAMENTE si hay cachedFxRate, incluso si está cargando el preview.
+                // Reemplazar con datos reales cuando previewData esté listo y no esté cargando.
+                
+                let sourceAmountVal: number | null = null;
+                let fxRateVal: number | null = null;
+                let isEstimate = true;
+
+                if (!previewLoading && previewData && previewData.source_amount) {
+                  sourceAmountVal = Number(previewData.source_amount);
+                  fxRateVal = Number(previewData.fx_rate);
+                  isEstimate = false;
+                } else if (cachedFxRate) {
+                  sourceAmountVal = Number(payAmountInput) / cachedFxRate;
+                  fxRateVal = cachedFxRate;
+                }
+
+                if (!sourceAmountVal) {
+                   if (previewLoading) {
+                     return <p className="text-xs text-gray-400 mt-2 italic">Calculando conversión...</p>;
+                   }
+                   return null;
+                }
+
+                return (
+                  <div className={`mt-3 p-3 rounded-xl border text-sm transition-opacity ${isEstimate ? 'bg-gray-50/80 border-gray-100 opacity-80' : 'bg-blue-50/50 border-blue-100'}`}>
                     <p className="text-graphite-blue">
-                      Nexum descontará <span className="font-semibold">{formatMoneyOrDash(previewData.source_amount, payModal.currency)}</span> de esta cuenta.
+                      Nexum descontará aprox. <span className="font-semibold">{formatMoneyOrDash(sourceAmountVal, sourceCurrency)}</span> para cubrir <span className="font-semibold">{formatMoneyOrDash(Number(payAmountInput), payModal.currency)}</span>.
                     </p>
-                  ) : null}
-                </div>
-              )}
+                    {isEstimate ? (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Estimación visual (1 USD = {fxRateVal} COP). {previewLoading ? 'Calculando conversión real...' : 'Nexum validará al confirmar.'}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Cotización: 1 USD = {fxRateVal} COP.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">

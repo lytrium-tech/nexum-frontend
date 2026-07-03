@@ -41,6 +41,7 @@ export async function apiClient<T>(
   let response: Response;
   try {
     response = await fetch(url, {
+      cache: 'no-store', // Disable Next.js aggressive caching for backend API
       ...options,
       headers,
     });

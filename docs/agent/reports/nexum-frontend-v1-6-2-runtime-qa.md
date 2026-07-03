@@ -1,17 +1,31 @@
-# Frontend V1.6.2 Runtime QA
+# Nexum Frontend V1.6.2 Runtime QA & Cache Debug
 
-## Objective
-Implement instant visual FX estimation for obligation payments and confirm cross-currency payment semantics.
+## Overview
+This report details the final runtime QA execution and cache debugging for Frontend V1.6.2, which was reopened due to a critical regression where UI states became stale after payment mutations.
 
-## Actions Taken
-1. **Instant FX Preview**: Added a `cachedFxRate` state in `ObligationsClient.tsx` that captures the `fx_rate` from the last successful preview API response. While the user is typing an amount and waiting for the 500ms debounced preview, the frontend now displays an instant visual estimation ("Nexum descontará aprox...") using this cached rate. This improves perceived performance.
-2. **Estimation Guardrails**: The visual estimation is clearly marked as "Estimación visual rápida" and indicates that Nexum will validate the final conversion upon confirmation. It does not replace the backend as the final source of truth.
-3. **Cross-currency Semantics Alignment**: Verified that the frontend successfully sends `amount` as the `applied_amount` in the obligation's currency, matching the newly fixed backend semantics.
+## Root Cause Diagnostics
+- **Bug**: Obligation periods were not updating immediately after a successful `POST /pay` mutation. Sequential payments were reflecting the previous payment's state instead of the current one.
+- **Root Cause**: `NEXT_CACHE_REVALIDATION_BUG` / `FRONTEND_SERVER_ACTION_CACHE_BUG`. 
+  - The Next.js fetch cache was overly aggressive on `GET /api/v1/obligations/{id}/periods`.
+  - When `revalidatePath` was called post-payment, it triggered a Server Component re-render which passed new props down.
+  - This triggered the client-side `useEffect`, which called `getObligationPeriodsAction`.
+  - Because Next.js cached the GET request by default, the server action returned stale data, overwriting the fresh data previously fetched by the POST-based `syncObligationPeriodsAction`.
 
-## Results
-- The payment modal now provides instantaneous feedback when entering amounts for cross-currency payments.
-- Overpayments and exact remaining amount payments (`Pagar restante`) work seamlessly.
-- Sync logic operates normally and the UI reflects payments correctly because backend processing issues are resolved.
+## Corrective Actions
+1. **Cache Busting**: Added `cache: 'no-store'` as the default fetch option within `src/lib/api/client.ts`. This bypasses Next.js caching for all backend API interactions, ensuring that financial data requested by the frontend is always fresh and reflects the actual committed truth in the backend database.
+2. **Payment UX Refactor**: Re-wrote the modal UI in `src/app/app/obligations/ObligationsClient.tsx`:
+   - Introduced a `paymentMode` state (`'remaining'` vs `'custom'`) to make the UX of paying the exact remaining amount visually distinct and safe.
+   - When paying the remaining amount, the text input is fully locked/disabled to prevent accidental edits.
+3. **Instant Preview Refactor**: 
+   - Previously, the visual estimation was hidden behind a `previewLoading` state, causing it to disappear during debounced keystrokes.
+   - Updated the UI logic to instantly render the visual estimation block using `cachedFxRate` regardless of the `previewLoading` boolean.
+   - This achieves the "instant feel" requirement without ever calculating financial truth locally, explicitly tagging the instantaneous render as a "Visual estimate" while the backend validates.
+   - Cross-currency previews correctly hide the FX block if the source and target currencies match.
 
-## Verdict
-Runtime QA passed. The frontend is stable and ready for V1.6.2 deployment.
+## Validation and QA Constraints Checked
+- **No Local Math**: Confirmed no instances of `amount - paid_amount` or `remaining_amount =` were introduced.
+- **Backend Confirmation**: Backend preview is still invoked, and the definitive payment request continues to pass exactly the user's `applied_amount`.
+- **DólarAPI**: Not imported or invoked by the frontend.
+
+## Final Conclusion
+Frontend V1.6.2 is stabilized. Sequential payments function safely and reflect changes immediately. The cross-currency UX is instantaneous and financially accurate without breaking the architectural rule of backend finality.
