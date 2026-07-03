@@ -37,17 +37,31 @@ export function handleFinancialError(err: unknown, defaultMessage: string = 'Ocu
       return 'Por ahora Nexum solo soporta conversiones COP/USD.';
     }
 
-    // Explicit mappings
-    if (backendMsg.includes('insufficient funds') || backendMsg.includes('fondos') || backendMsg.includes('balance')) return 'Saldo insuficiente en la cuenta seleccionada.';
-    if (backendMsg.includes('account not found') || backendMsg.includes('invalid account')) return 'Selecciona una cuenta válida.';
-    if (backendMsg.includes('goal not found')) return 'No encontramos esta meta.';
-    if (backendMsg.includes('obligation not found')) return 'No encontramos esta obligación.';
-    if (backendMsg.includes('credit card not found') || backendMsg.includes('card not found')) return 'No encontramos esta tarjeta.';
-    if (backendMsg.includes('purchase not found')) return 'No encontramos esta compra.';
-    if (backendMsg.includes('not eligible')) return 'Esta acción no está disponible para este elemento.';
-    if (backendMsg.includes('statement frozen') || backendMsg.includes('frozen') || backendMsg.includes('cerrado')) return 'Este periodo ya está cerrado y no puede modificarse.';
-    if (backendMsg.includes('overpayment') || backendMsg.includes('supera el saldo')) return 'El pago supera el saldo pendiente permitido.';
-    
+    // Explicit mappings from V1.6.2 constraints
+    if (errorCode === 'insufficient_funds' || backendMsg.includes('insufficient funds')) {
+      return 'No tienes saldo suficiente en la cuenta seleccionada.';
+    }
+    if (errorCode === 'unsupported_currency_pair' || backendMsg.includes('unsupported currency')) {
+      return 'Nexum todavía no puede convertir entre estas monedas.';
+    }
+    if (errorCode === 'obligation_period_not_payable' || backendMsg.includes('not payable')) {
+      return 'Este periodo no permite pagos.';
+    }
+    if (errorCode === 'account_not_found' || backendMsg.includes('account not found')) {
+      return 'No encontramos esta cuenta.';
+    }
+    if (errorCode === 'obligation_period_not_found' || backendMsg.includes('period not found')) {
+      return 'No encontramos este periodo.';
+    }
+    if (errorCode === 'obligation_payment_exceeds_remaining_balance' || backendMsg.includes('overpayment') || backendMsg.includes('supera el saldo')) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dataObj = err.data as any;
+      if (dataObj && dataObj.remaining_amount !== undefined && dataObj.currency) {
+        return `El monto supera el saldo pendiente de este periodo. Puedes pagar hasta ${dataObj.remaining_amount} ${dataObj.currency}.`;
+      }
+      return 'El monto supera el saldo pendiente de este periodo.';
+    }
+
     // Additional helpful mappings from current behavior
     if (backendMsg.includes('match') && backendMsg.includes('quota')) return 'El pago debe coincidir exactamente con el valor de la obligación.';
     if (backendMsg.includes('already paid') || backendMsg.includes('paid for this period')) return 'Esta obligación ya fue pagada para este periodo.';

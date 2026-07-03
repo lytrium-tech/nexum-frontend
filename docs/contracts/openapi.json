@@ -1481,6 +1481,65 @@
         }
       }
     },
+    "/api/v1/obligations/periods/{period_id}/pay/preview": {
+      "post": {
+        "tags": [
+          "obligations"
+        ],
+        "summary": "Preview obligation period payment",
+        "description": "Preview the FX rate and amounts for a payment against a specific obligation period.",
+        "operationId": "preview_pay_period_api_v1_obligations_periods__period_id__pay_preview_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Period Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObligationPaymentPreviewCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObligationPaymentPreviewRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/obligations/periods/{period_id}/amount": {
       "patch": {
         "tags": [
@@ -6876,6 +6935,151 @@
         ],
         "title": "ObligationPaymentCreate"
       },
+      "ObligationPaymentPreviewCreate": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id"
+        ],
+        "title": "ObligationPaymentPreviewCreate"
+      },
+      "ObligationPaymentPreviewRead": {
+        "properties": {
+          "period_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Period Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "obligation_currency": {
+            "type": "string",
+            "title": "Obligation Currency"
+          },
+          "source_currency": {
+            "type": "string",
+            "title": "Source Currency"
+          },
+          "requested_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Requested Amount"
+          },
+          "applied_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Applied Amount"
+          },
+          "source_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Source Amount"
+          },
+          "fx_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fx Rate"
+          },
+          "is_estimated": {
+            "type": "boolean",
+            "title": "Is Estimated"
+          },
+          "rate_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Source"
+          },
+          "rate_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Timestamp"
+          },
+          "quote_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote Expires At"
+          },
+          "remaining_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Remaining Amount"
+          },
+          "can_pay": {
+            "type": "boolean",
+            "title": "Can Pay"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_id",
+          "account_id",
+          "obligation_currency",
+          "source_currency",
+          "requested_amount",
+          "applied_amount",
+          "source_amount",
+          "fx_rate",
+          "is_estimated",
+          "rate_source",
+          "rate_timestamp",
+          "quote_expires_at",
+          "remaining_amount",
+          "can_pay"
+        ],
+        "title": "ObligationPaymentPreviewRead"
+      },
       "ObligationPaymentRead": {
         "properties": {
           "id": {
@@ -7103,6 +7307,18 @@
             "type": "string",
             "format": "date-time",
             "title": "Updated At"
+          },
+          "remaining_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Amount"
           }
         },
         "type": "object",

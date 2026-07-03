@@ -170,11 +170,11 @@ export const api = {
         }, isServer),
       skipPeriod: (periodId: string, isServer = false) =>
         apiClient<ObligationPeriodRead>(`/api/v1/obligations/periods/${periodId}/skip`, { method: 'POST' }, isServer),
-      // payPreview: (id: string, data: components['schemas']['ObligationPaymentPreviewCreate'], isServer = false) =>
-      //   apiClient<components['schemas']['PaymentPreviewResult']>(`/api/v1/obligations/${id}/payments/preview`, {
-      //     method: 'POST',
-      //     body: JSON.stringify(data),
-      //   }, isServer),
+      payPeriodPreview: (periodId: string, data: components['schemas']['ObligationPaymentPreviewCreate'], isServer = false) =>
+        apiClient<components['schemas']['ObligationPaymentPreviewRead']>(`/api/v1/obligations/periods/${periodId}/pay/preview`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }, isServer),
     },
     transfers: {
       list: (isServer = false) =>

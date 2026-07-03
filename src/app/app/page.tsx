@@ -38,13 +38,36 @@ export default async function AppHome() {
 
   try {
     const [snap, evts] = await Promise.all([
-      api.intelligence.snapshot(true),
+      api.intelligence.snapshot(true).catch(async (e) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const status = (e as any)?.status;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const msg = (e as any)?.message;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const detail = (e as any)?.detail;
+        console.warn(`[DEBUG_AGENT] Snapshot failed. Status: ${status}, Message: ${msg}, Detail: ${JSON.stringify(detail)}`);
+        
+        return {
+          truth: {},
+          cashflow: {} as components['schemas']['SnapshotCashflow'],
+          debt: {} as components['schemas']['SnapshotDebt'],
+          goals: {} as components['schemas']['SnapshotGoals'],
+          obligations: {} as components['schemas']['SnapshotObligations'],
+          cash: {} as components['schemas']['SnapshotCash'],
+          totals_by_currency: {},
+          estimated_totals: null,
+          _isDegraded: true
+        } as components['schemas']['IntelligenceSnapshotRead'] & { _isDegraded?: boolean };
+      }),
       api.ledger.events({ limit: 5 }, true).catch(() => null)
     ]);
     snapshot = snap;
     recentEvents = evts;
   } catch (error: unknown) {
-    console.error('Failed to load dashboard data:', error);
+    console.error("Dashboard load failed at:", {
+      section: "events",
+      error,
+    });
     const err = error as { status?: number };
     if (err?.status === 401 || err?.status === 403) {
       isForbidden = true;
@@ -106,7 +129,9 @@ export default async function AppHome() {
   const hasGoals = snapshot.goals?.active_goals_count > 0;
   const hasObligations = snapshot.obligations?.pending_count > 0;
   
-  const isCompletelyEmpty = !hasCurrencies && !hasAccounts && !hasGoals && !hasObligations;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isFallback = (snapshot as any)._isDegraded === true;
+  const isCompletelyEmpty = !isFallback && !hasCurrencies && !hasAccounts && !hasGoals && !hasObligations;
 
   if (isCompletelyEmpty) {
     return (
@@ -126,48 +151,70 @@ export default async function AppHome() {
       </div>
     );
   }
-
+  
   const events = recentEvents?.items || [];
 
   return (
     <div className="flex flex-col gap-6">
-      <FinancialHero 
-        availableReal={snapshot.truth.available_real || '—'}
-        safeMoney={snapshot.truth.safe_money || '—'}
-        freeMoney={snapshot.truth.free_money || '—'}
-        warnings={snapshot.truth.calculation_warnings}
-        totalsByCurrency={snapshot.totals_by_currency}
-        estimatedTotals={snapshot.estimated_totals}
-      />
+      {isFallback ? (
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-soft-gray text-center flex flex-col items-center">
+          <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-medium text-graphite-blue mb-2">Resumen temporalmente no disponible</h2>
+          <p className="text-gray-500 mb-8 max-w-md">
+            No pudimos cargar tu resumen financiero principal. Tus módulos siguen disponibles mientras resolvemos la sincronización del resumen.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link href="/app/accounts" className="bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded-xl text-sm font-medium transition-colors border border-gray-200">Billeteras</Link>
+            <Link href="/app/obligations" className="bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded-xl text-sm font-medium transition-colors border border-gray-200">Obligaciones</Link>
+            <Link href="/app/goals" className="bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded-xl text-sm font-medium transition-colors border border-gray-200">Metas</Link>
+            <Link href="/app/credit" className="bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded-xl text-sm font-medium transition-colors border border-gray-200">Crédito</Link>
+          </div>
+        </div>
+      ) : (
+        <>
+          <FinancialHero 
+            availableReal={snapshot.truth.available_real}
+            safeMoney={snapshot.truth.safe_money}
+            freeMoney={snapshot.truth.free_money}
+            warnings={snapshot.truth.calculation_warnings}
+            totalsByCurrency={snapshot.totals_by_currency}
+            estimatedTotals={snapshot.estimated_totals}
+          />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CashflowSummary 
-          incomeCurrentPeriod={snapshot.cashflow.income_current_period || '—'}
-          cashExpensesCurrentPeriod={snapshot.cashflow.cash_expenses_current_period || '—'}
-          creditCardConsumptionCurrentPeriod={snapshot.cashflow.credit_card_consumption_current_period || '—'}
-          debtPaymentsCurrentPeriod={snapshot.cashflow.debt_payments_current_period || '—'}
-          goalContributionsCurrentPeriod={snapshot.cashflow.goal_contributions_current_period || '—'}
-          obligationPaymentsCurrentPeriod={snapshot.cashflow.obligation_payments_current_period || '—'}
-          committedOutflowCurrentPeriod={snapshot.cashflow.committed_outflows_current_period || '—'}
-          netCashflowCurrentPeriod={snapshot.cashflow.net_cashflow_current_period || '—'}
-        />
-        
-        <DebtOverview 
-          creditCardDebt={snapshot.debt.credit_card_total_debt || '—'}
-          creditCardRequiredPayment={snapshot.truth.payment_required || '—'}
-          nextPaymentEstimate={snapshot.debt.next_payment_estimate || '—'}
-        />
-        
-        <GoalsPreview 
-          wealthAllocation={snapshot.goals.total_saved || '—'}
-          goalsTotal={snapshot.goals.total_target || '—'}
-          goalsRequired={snapshot.truth.goals_required_this_period || '—'}
-        />
-        
-        <ObligationsPreview 
-          pendingObligationsTotal={snapshot.obligations.pending_amount || '—'}
-        />
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CashflowSummary 
+              incomeCurrentPeriod={snapshot.cashflow.income_current_period}
+              cashExpensesCurrentPeriod={snapshot.cashflow.cash_expenses_current_period}
+              creditCardConsumptionCurrentPeriod={snapshot.cashflow.credit_card_consumption_current_period}
+              debtPaymentsCurrentPeriod={snapshot.cashflow.debt_payments_current_period}
+              goalContributionsCurrentPeriod={snapshot.cashflow.goal_contributions_current_period}
+              obligationPaymentsCurrentPeriod={snapshot.cashflow.obligation_payments_current_period}
+              committedOutflowCurrentPeriod={snapshot.cashflow.committed_outflows_current_period}
+              netCashflowCurrentPeriod={snapshot.cashflow.net_cashflow_current_period}
+            />
+            
+            <DebtOverview 
+              creditCardDebt={snapshot.debt.credit_card_total_debt}
+              creditCardRequiredPayment={snapshot.truth.payment_required}
+              nextPaymentEstimate={snapshot.debt.next_payment_estimate}
+            />
+            
+            <GoalsPreview 
+              wealthAllocation={snapshot.goals.total_saved}
+              goalsTotal={snapshot.goals.total_target}
+              goalsRequired={snapshot.truth.goals_required_this_period}
+            />
+            
+            <ObligationsPreview 
+              pendingObligationsTotal={snapshot.obligations.pending_amount}
+            />
+          </div>
+        </>
+      )}
 
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray mt-2">
         <div className="flex justify-between items-center mb-5">

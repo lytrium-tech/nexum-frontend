@@ -48,16 +48,17 @@ export default function AccountsClient({
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
   const [isProcessingId, setIsProcessingId] = useState<string | null>(null);
 
-  const activeAccounts = initialAccounts.filter(a => a.is_active !== false);
-  const archivedAccounts = initialAccounts.filter(a => a.is_active === false);
+  const activeAccounts = initialAccounts.filter(a => a.is_active !== false && String(a.is_active) !== 'false');
+  const archivedAccounts = initialAccounts.filter(a => a.is_active === false || String(a.is_active) === 'false');
   const displayedAccounts = activeTab === 'active' ? activeAccounts : archivedAccounts;
   
-  const totalBalance = activeAccounts.reduce((acc, account) => acc + (parseFloat(account.balance || '0') || 0), 0).toString();
+  const totalBalance = '—'; // Calculo delegado al backend
   const baseCurrency = activeAccounts[0]?.currency || 'COP';
 
-  const formatBalance = (val: string | number, currency: string = 'COP') => {
+  const formatBalance = (val: string | number | null | undefined, currency: string = 'COP') => {
+    if (val === null || val === undefined || val === '—') return '—';
     const num = typeof val === 'string' ? parseFloat(val) : val;
-    if (isNaN(num)) return '$0';
+    if (isNaN(num)) return '—';
     
     if (currency === 'COP') {
       return new Intl.NumberFormat('es-CO', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
@@ -311,7 +312,7 @@ export default function AccountsClient({
                     <p className="text-xs text-gray-500">{getAccountTypeName(account.type)}</p>
                   </div>
                 </div>
-                {!account.is_active && (
+                {(account.is_active === false || String(account.is_active) === 'false') && (
                   <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-md uppercase font-semibold">
                     Archivada
                   </span>
@@ -332,7 +333,7 @@ export default function AccountsClient({
               )}
 
               <div className="pt-4 border-t border-gray-100 flex gap-2">
-                {account.is_active !== false ? (
+                {(account.is_active !== false && String(account.is_active) !== 'false') ? (
                   <>
                     <button
                       onClick={() => handleToggleStatus(account.id, false)}

@@ -42,15 +42,15 @@ export async function payObligationFifoAction(id: string, data: components['sche
     return { success: false, error: handleFinancialError(err, 'Ocurrió un error al registrar el pago. Intenta nuevamente.') };
   }
 }
-// export async function previewObligationPaymentAction(id: string, data: any) {
-//   try {
-//     const result = await api.obligations.payPreview(id, data, true);
-//     return { success: true, result };
-//   } catch (err: unknown) {
-//     console.error('Preview obligation payment error:', err);
-//     return { success: false, error: handleFinancialError(err, 'No pudimos calcular la vista previa.') };
-//   }
-// }
+export async function previewObligationPeriodPaymentAction(periodId: string, data: components['schemas']['ObligationPaymentPreviewCreate']) {
+  try {
+    const result = await api.obligations.payPeriodPreview(periodId, data, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Preview obligation period payment error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos calcular la vista previa.') };
+  }
+}
 
 export async function getObligationPeriodsAction(id: string) {
   try {

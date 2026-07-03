@@ -38,7 +38,7 @@ export default function NewEntryClient({
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const activeAccounts = initialAccounts.filter(a => a.is_active !== false);
+  const activeAccounts = initialAccounts.filter(a => a.is_active !== false && String(a.is_active) !== 'false');
   const filteredCategories = initialCategories.filter(c => c.is_active !== false && (c.type === type || c.type === 'transfer'));
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -3,15 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { formatMoneyOrDash } from '@/lib/format/money';
-import { getObligationPeriodsAction, syncObligationPeriodsAction, updateObligationPeriodAmountAction, skipObligationPeriodAction, payObligationPeriodAction, payObligationFifoAction } from './actions';
+import { createObligationAction, getObligationPeriodsAction, syncObligationPeriodsAction, updateObligationPeriodAmountAction, skipObligationPeriodAction, payObligationPeriodAction, payObligationFifoAction, previewObligationPeriodPaymentAction } from './actions';
 
 type ObligationRead = components['schemas']['ObligationRead'];
 type AccountRead = components['schemas']['AccountRead'];
 type ObligationPeriodRead = components['schemas']['ObligationPeriodRead'];
 
-interface ExtendedPeriod extends ObligationPeriodRead {
-  remaining_amount?: string;
-}
+
 
 interface ObligationsClientProps {
   initialObligations: ObligationRead[];
@@ -79,12 +77,66 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
 
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [defineAmountModal, setDefineAmountModal] = useState({ open: false, periodId: '', obligationId: '' });
   const [amountInput, setAmountInput] = useState('');
   const [skipModal, setSkipModal] = useState({ open: false, periodId: '', obligationId: '' });
-  const [payModal, setPayModal] = useState({ open: false, obligationId: '', periodId: '', periodAmountRemaining: '', currency: '', isFifo: false });
+  const [payModal, setPayModal] = useState({ open: false, obligationId: '', periodId: '', defaultAmount: '', currency: '', isFifo: false, remainingAmount: null as string | null });
   const [payAccountId, setPayAccountId] = useState('');
   const [payAmountInput, setPayAmountInput] = useState('');
+  const [previewData, setPreviewData] = useState<components['schemas']['ObligationPaymentPreviewRead'] | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const [createData, setCreateData] = useState<Partial<components['schemas']['ObligationCreate']>>({
+    name: '',
+    currency: 'COP',
+    type: 'debt',
+    frequency: 'monthly',
+    payment_mode: 'partial_allowed',
+    base_amount: '',
+    start_date: new Date().toISOString().split('T')[0],
+    first_due_date: new Date().toISOString().split('T')[0],
+    interval_count: 1,
+  });
+
+  const handleCreate = async () => {
+    setActionLoading(true);
+    setActionError(null);
+
+    const payload = { ...createData } as components['schemas']['ObligationCreate'];
+    
+    // Convert base_amount to number if it's provided, or delete if empty and variable
+    if (payload.base_amount === '') {
+      delete payload.base_amount;
+    } else if (payload.base_amount) {
+      payload.base_amount = Number(payload.base_amount);
+    }
+
+    const res = await createObligationAction(payload);
+    
+    if (res.success && res.result) {
+      // Sync periods immediately after creation so the UI gets populated
+      await syncObligationPeriodsAction(res.result.id);
+      
+      setCreateModalOpen(false);
+      setCreateData({
+        name: '',
+        currency: 'COP',
+        type: 'debt',
+        frequency: 'monthly',
+        payment_mode: 'partial_allowed',
+        base_amount: '',
+        start_date: new Date().toISOString().split('T')[0],
+        first_due_date: new Date().toISOString().split('T')[0],
+        interval_count: 1,
+      });
+      // The page will revalidate and we'll receive new initialObligations via props.
+    } else {
+      setActionError(res.error || 'No pudimos crear la obligación.');
+    }
+    
+    setActionLoading(false);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -112,6 +164,32 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
 
     return () => { mounted = false; };
   }, [initialObligations]);
+
+  useEffect(() => {
+    if (!payModal.open || !payAccountId || !payAmountInput || isNaN(Number(payAmountInput)) || payModal.isFifo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPreviewData(null);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setPreviewLoading(true);
+      const res = await previewObligationPeriodPaymentAction(payModal.periodId, {
+        account_id: payAccountId,
+        amount: Number(payAmountInput),
+      });
+      if (res.success && res.result) {
+        setPreviewData(res.result);
+        setActionError(null);
+      } else {
+        setPreviewData(null);
+        setActionError(res.error || 'Error calculando vista previa.');
+      }
+      setPreviewLoading(false);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [payAccountId, payAmountInput, payModal.open, payModal.periodId, payModal.isFifo]);
 
   const handleDefineAmount = async () => {
     if (!amountInput || isNaN(Number(amountInput))) return;
@@ -142,6 +220,31 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     setActionLoading(false);
   };
 
+  const handleOpenPayModal = (
+    obligationId: string,
+    period: ObligationPeriodRead | null,
+    isFifo: boolean,
+    defaultAmount: string,
+    currency: string
+  ) => {
+    if (!period) return;
+    const PAYABLE_PERIOD_STATUSES = ['pending_payment', 'partially_paid', 'overdue'];
+    if (!PAYABLE_PERIOD_STATUSES.includes(period.status)) {
+      alert('Este periodo no tiene acciones de pago pendientes.');
+      return;
+    }
+    setPayModal({
+      open: true,
+      obligationId,
+      periodId: isFifo ? '' : period.id,
+      defaultAmount,
+      currency,
+      isFifo,
+      remainingAmount: period.remaining_amount ?? null
+    });
+    setPayAmountInput(period.remaining_amount ?? defaultAmount);
+  };
+
   const handlePay = async () => {
     if (!payAccountId || !payAmountInput || isNaN(Number(payAmountInput))) return;
     setActionLoading(true);
@@ -162,9 +265,10 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
 
     if (res.success) {
       await handleSync(payModal.obligationId);
-      setPayModal({ open: false, obligationId: '', periodId: '', periodAmountRemaining: '', currency: '', isFifo: false });
+      setPayModal({ open: false, obligationId: '', periodId: '', defaultAmount: '', currency: '', isFifo: false, remainingAmount: null });
       setPayAccountId('');
       setPayAmountInput('');
+      setPreviewData(null);
     } else {
       setActionError(res.error || 'No pudimos registrar este pago.');
     }
@@ -208,13 +312,21 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
 
   return (
     <div className="mx-auto max-w-4xl p-6 sm:p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-graphite-blue sm:text-3xl">
-          Obligaciones
-        </h1>
-        <p className="mt-2 text-sm text-graphite-blue/60 sm:text-base">
-          Controla tus compromisos y pagos pendientes.
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-graphite-blue sm:text-3xl">
+            Obligaciones
+          </h1>
+          <p className="mt-2 text-sm text-graphite-blue/60 sm:text-base">
+            Controla tus compromisos y pagos pendientes.
+          </p>
+        </div>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl font-medium transition-colors whitespace-nowrap"
+        >
+          Nueva obligación
+        </button>
       </div>
 
       {initialObligations.length === 0 ? (
@@ -226,6 +338,9 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
           {initialObligations.map(ob => {
             const periods = periodsByObligation[ob.id] || [];
             const period = getRelevantPeriod(periods);
+            const PAYABLE_PERIOD_STATUSES = ['pending_payment', 'partially_paid', 'overdue'];
+            const canPayCurrentPeriod = period ? PAYABLE_PERIOD_STATUSES.includes(period.status) : false;
+            const showSpecificPeriodPayment = canPayCurrentPeriod;
 
             return (
               <div key={ob.id} className="bg-white rounded-3xl border border-graphite-blue/10 shadow-sm p-6 overflow-hidden">
@@ -236,21 +351,17 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                       {ob.frequency.replace('_', ' ')} • {ob.payment_mode.replace('_', ' ')} • {ob.currency}
                     </p>
                   </div>
-                    <button
-                      onClick={() => handleSync(ob.id)}
-                      disabled={syncing[ob.id]}
-                      className="text-xs bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full font-medium transition-colors disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {syncing[ob.id] ? 'Sincronizando...' : 'Sincronizar periodos'}
-                    </button>
-                  </div>
-                  <div className="mt-3">
-                    <button
-                      onClick={() => setPayModal({ open: true, obligationId: ob.id, periodId: '', periodAmountRemaining: '', currency: ob.currency || '', isFifo: true })}
-                      className="text-xs bg-graphite-blue hover:bg-graphite-blue/90 text-white px-4 py-2 rounded-full font-medium transition-colors"
-                    >
-                      Pagar obligación
-                    </button>
+                </div>
+                <div className="mt-3 flex items-center justify-end gap-3">
+                    {periods.length === 0 && (
+                      <button
+                        onClick={() => handleSync(ob.id)}
+                        disabled={syncing[ob.id]}
+                        className="text-xs text-gray-400 hover:text-gray-600 underline disabled:opacity-50 transition-colors"
+                      >
+                        {syncing[ob.id] ? 'Actualizando...' : 'Actualizar periodos'}
+                      </button>
+                    )}
                   </div>
 
                 {!period ? (
@@ -271,17 +382,11 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                         <p className="text-xs text-gray-400 mb-1">Monto del Periodo</p>
                         <p className="text-lg font-semibold text-graphite-blue">
                           {formatMoneyOrDash(period.amount, period.currency)}
-                        </p>
-                      </div>
-                      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                        <p className="text-xs text-gray-400 mb-1">Restante</p>
-                        <p className="text-lg font-semibold text-graphite-blue">
-                          {formatMoneyOrDash((period as ExtendedPeriod).remaining_amount, period.currency)}
                         </p>
                       </div>
                     </div>
@@ -311,9 +416,9 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                         >
                           Definir monto
                         </button>
-                      ) : (period.status === 'pending_payment' || period.status === 'partially_paid' || period.status === 'overdue') ? (
+                      ) : showSpecificPeriodPayment ? (
                         <button
-                          onClick={() => setPayModal({ open: true, obligationId: ob.id, periodId: period.id, periodAmountRemaining: (period as ExtendedPeriod).remaining_amount || period.amount || '', currency: period.currency || '', isFifo: false })}
+                          onClick={() => handleOpenPayModal(ob.id, period, false, period.amount || '', period.currency || '')}
                           className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                         >
                           Pagar periodo
@@ -327,6 +432,158 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
               </div>
             );
           })}
+        </div>
+      )}
+
+      {createModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-xl border border-gray-100 my-8">
+            <h3 className="text-xl font-semibold text-graphite-blue mb-4">Nueva obligación</h3>
+            
+            {actionError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+                {actionError}
+              </div>
+            )}
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={createData.name}
+                  onChange={(e) => setCreateData({ ...createData, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                  placeholder="Ej. Crédito Vehículo"
+                  disabled={actionLoading}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
+                  <select
+                    value={createData.currency}
+                    onChange={(e) => setCreateData({ ...createData, currency: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue bg-white"
+                    disabled={actionLoading}
+                  >
+                    <option value="COP">COP</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                  <select
+                    value={createData.type}
+                    onChange={(e) => setCreateData({ ...createData, type: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue bg-white"
+                    disabled={actionLoading}
+                  >
+                    <option value="debt">Deuda</option>
+                    <option value="service">Servicio</option>
+                    <option value="subscription">Suscripción</option>
+                    <option value="insurance">Seguro</option>
+                    <option value="tax">Impuesto</option>
+                    <option value="other">Otro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia</label>
+                  <select
+                    value={createData.frequency}
+                    onChange={(e) => setCreateData({ ...createData, frequency: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue bg-white"
+                    disabled={actionLoading}
+                  >
+                    <option value="weekly">Semanal</option>
+                    <option value="biweekly">Quincenal</option>
+                    <option value="monthly">Mensual</option>
+                    <option value="bimonthly">Bimestral</option>
+                    <option value="quarterly">Trimestral</option>
+                    <option value="semiannual">Semestral</option>
+                    <option value="annual">Anual</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Modo de pago</label>
+                  <select
+                    value={createData.payment_mode}
+                    onChange={(e) => setCreateData({ ...createData, payment_mode: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue bg-white"
+                    disabled={actionLoading}
+                  >
+                    <option value="partial_allowed">Fija</option>
+                    <option value="variable_amount">Variable</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {createData.payment_mode === 'partial_allowed' ? 'Fija: el monto suele ser el mismo en cada periodo.' : 'Variable: defines el monto cuando llegue cada periodo.'}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {createData.payment_mode === 'variable_amount' ? 'Monto referencial (Opcional)' : 'Monto base'}
+                </label>
+                <input
+                  type="number"
+                  value={createData.base_amount || ''}
+                  onChange={(e) => setCreateData({ ...createData, base_amount: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                  placeholder="Ej. 150000"
+                  disabled={actionLoading}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de inicio</label>
+                  <input
+                    type="date"
+                    value={createData.start_date}
+                    onChange={(e) => setCreateData({ ...createData, start_date: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                    disabled={actionLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Primer vencimiento</label>
+                  <input
+                    type="date"
+                    value={createData.first_due_date}
+                    onChange={(e) => setCreateData({ ...createData, first_due_date: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                    disabled={actionLoading}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+              <button
+                onClick={() => {
+                  setCreateModalOpen(false);
+                  setActionError(null);
+                }}
+                disabled={actionLoading}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={actionLoading || !createData.name || (createData.payment_mode !== 'variable_amount' && !createData.base_amount)}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
+              >
+                {actionLoading ? 'Creando...' : 'Crear obligación'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -419,19 +676,15 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-gray-100">
             <h3 className="text-xl font-semibold text-graphite-blue mb-2">
-              {payModal.isFifo ? 'Pagar obligación' : 'Pagar periodo'}
+              Pagar periodo
             </h3>
 
-            {payModal.isFifo ? (
-              <p className="text-sm text-gray-500 mb-6">
-                Nexum aplicará este pago automáticamente a los periodos pendientes según prioridad.
-              </p>
-            ) : (
-              <p className="text-sm text-gray-500 mb-6">
-                Ingresa el monto que deseas abonar a este periodo. Pendiente:{' '}
-                <span className="font-semibold">{formatMoneyOrDash(payModal.periodAmountRemaining, payModal.currency)}</span>
-              </p>
-            )}
+            <p className="text-sm text-gray-500 mb-6">
+              Monto original: <span className="font-semibold">{formatMoneyOrDash(payModal.defaultAmount, payModal.currency)}</span>
+              {payModal.remainingAmount && (
+                <span className="block mt-1">Saldo pendiente: <span className="font-semibold">{formatMoneyOrDash(payModal.remainingAmount, payModal.currency)}</span></span>
+              )}
+            </p>
 
             {actionError && (
               <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl">
@@ -450,21 +703,32 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue bg-white"
               >
                 <option value="">Selecciona una cuenta</option>
-                {accounts.map(acc => (
+                {accounts.filter(a => a.is_active !== false && String(a.is_active) !== 'false').map(acc => (
                   <option key={acc.id} value={acc.id}>
-                    {acc.name} ({formatMoneyOrDash(acc.balance, acc.currency)})
+                    {acc.name} ({acc.currency}) - Disponible: {formatMoneyOrDash(acc.balance, acc.currency)}
                   </option>
                 ))}
               </select>
-              {accounts.length === 0 && (
-                <p className="mt-1 text-xs text-red-500">No tienes cuentas disponibles para pagar esta obligación.</p>
+              {accounts.filter(a => a.is_active !== false && String(a.is_active) !== 'false').length === 0 && (
+                <p className="text-red-500 text-xs mt-2">No tienes cuentas activas disponibles para pagar.</p>
               )}
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Monto a pagar
-              </label>
+              <div className="flex justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Monto a pagar
+                </label>
+                {payModal.remainingAmount && (
+                  <button 
+                    onClick={() => setPayAmountInput(payModal.remainingAmount || '')}
+                    className="text-xs text-graphite-blue hover:underline font-medium"
+                    type="button"
+                  >
+                    Pagar restante
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <input
                   type="number"
@@ -478,14 +742,38 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                   {payModal.currency}
                 </div>
               </div>
+              
+              {previewLoading && (
+                 <p className="text-xs text-gray-400 mt-2 italic">Calculando vista previa...</p>
+              )}
+              {!previewLoading && previewData && (
+                <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 text-sm">
+                  {previewData.source_amount && previewData.applied_amount && previewData.fx_rate ? (
+                    <>
+                      <p className="text-graphite-blue">
+                        Nexum descontará aprox. <span className="font-semibold">{formatMoneyOrDash(previewData.source_amount, accounts.find(a => a.id === payAccountId)?.currency || '')}</span> para pagar <span className="font-semibold">{formatMoneyOrDash(previewData.applied_amount, payModal.currency)}</span>.
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Tasa estimada: 1 USD = {previewData.fx_rate} {payModal.currency === 'USD' ? 'COP' : 'COP'}
+                      </p>
+                      <p className="text-xs text-blue-600/80 mt-1">La conversión final puede ajustarse al confirmar el pago.</p>
+                    </>
+                  ) : previewData.source_amount ? (
+                    <p className="text-graphite-blue">
+                      Nexum descontará <span className="font-semibold">{formatMoneyOrDash(previewData.source_amount, payModal.currency)}</span> de esta cuenta.
+                    </p>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
                 onClick={() => {
-                  setPayModal({ open: false, obligationId: '', periodId: '', periodAmountRemaining: '', currency: '', isFifo: false });
+                  setPayModal({ open: false, obligationId: '', periodId: '', defaultAmount: '', currency: '', isFifo: false, remainingAmount: null });
                   setPayAccountId('');
                   setPayAmountInput('');
+                  setPreviewData(null);
                   setActionError(null);
                 }}
                 disabled={actionLoading}
@@ -495,7 +783,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
               </button>
               <button
                 onClick={handlePay}
-                disabled={actionLoading || !payAmountInput || !payAccountId}
+                disabled={actionLoading || !payAmountInput || !payAccountId || (previewLoading) || !!actionError}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? 'Registrando pago...' : 'Confirmar'}

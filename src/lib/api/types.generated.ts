@@ -393,6 +393,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/obligations/periods/{period_id}/pay/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview obligation period payment
+         * @description Preview the FX rate and amounts for a payment against a specific obligation period.
+         */
+        post: operations["preview_pay_period_api_v1_obligations_periods__period_id__pay_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/obligations/periods/{period_id}/amount": {
         parameters: {
             query?: never;
@@ -2212,6 +2232,53 @@ export interface components {
             /** Raw Message */
             raw_message?: string | null;
         };
+        /** ObligationPaymentPreviewCreate */
+        ObligationPaymentPreviewCreate: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount?: number | string | null;
+        };
+        /** ObligationPaymentPreviewRead */
+        ObligationPaymentPreviewRead: {
+            /**
+             * Period Id
+             * Format: uuid
+             */
+            period_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Obligation Currency */
+            obligation_currency: string;
+            /** Source Currency */
+            source_currency: string;
+            /** Requested Amount */
+            requested_amount: string;
+            /** Applied Amount */
+            applied_amount: string;
+            /** Source Amount */
+            source_amount: string;
+            /** Fx Rate */
+            fx_rate: string | null;
+            /** Is Estimated */
+            is_estimated: boolean;
+            /** Rate Source */
+            rate_source: string | null;
+            /** Rate Timestamp */
+            rate_timestamp: string | null;
+            /** Quote Expires At */
+            quote_expires_at: string | null;
+            /** Remaining Amount */
+            remaining_amount: string;
+            /** Can Pay */
+            can_pay: boolean;
+        };
         /** ObligationPaymentRead */
         ObligationPaymentRead: {
             /**
@@ -2314,6 +2381,8 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+            /** Remaining Amount */
+            remaining_amount?: string | null;
         };
         /** ObligationRead */
         ObligationRead: {
@@ -3601,6 +3670,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ObligationPaymentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_pay_period_api_v1_obligations_periods__period_id__pay_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                period_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObligationPaymentPreviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObligationPaymentPreviewRead"];
                 };
             };
             /** @description Validation Error */

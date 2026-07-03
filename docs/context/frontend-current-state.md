@@ -107,8 +107,10 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Phase 3:** Obligations Period UI (Completado)
 * **Phase 4A:** Period Mutations - Define Amount & Skip (Completado)
 * **Phase 4B:** Payment Flows - Specific & FIFO (Completado)
-* **Phase 5:** UX Polish & Runtime QA (Completado)
-
+* **Phase 5:** UX Polish & Runtime QA (Completado con UX correction, bugfixes, y second pass review)
+* **Phase 6:** P0 Runtime Regression Debug (Completado - Dashboard fallback now renders partial UI safely when snapshot fails.)
+* **Phase 7:** Create Obligation Flow (Completado - Create Obligation UX simplified payment mode to product language: Fija / Variable. Frontend maps simplified UX to Backend V1.6 payment_mode contract without exposing technical modes. No local financial calculations introduced.)
+* **Phase 8:** V1.6.2 Payment Preview UX & Remaining Amount (Completado - Integración de API preview, unificación de UX de pago, display de remaining_amount y preview FX, error parsing V1.6.2 rules.)
 ## Product Notes
 
 * Frontend V1.5 y UX Improvements están completados localmente.
