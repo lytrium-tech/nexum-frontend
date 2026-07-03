@@ -7,6 +7,7 @@
 - **Phase 3**: Replaced the temporary fallback with a functional, read-only Obligations UI based on the `ObligationPeriod` model. The `Obligation` is now correctly treated as a template, with all financial data, statuses, and due dates sourced directly from the backend periods. Mutable actions remain disabled.
 - **Phase 4A**: Implemented secure period mutations for defining variable amounts and skipping periods. The UI calls Backend V1.6 period endpoints and explicitly re-fetches updated data from the backend without resorting to optimistic financial local-state assumptions. Real payment actions remain disabled and deferred to Phase 4B.
 - **Phase 4B**: Implemented obligation payment flows for specific periods and FIFO obligation-wide payments. The frontend sends typed payment payloads to Backend V1.6 and refreshes period data after success. The frontend strictly avoids local calculation of FIFO distribution, period balances, account balances, and FX. Payment previews remain deferred until supported by a direct backend contract.
+- **Phase 5**: Executed UX polish and runtime QA for Obligations V1.6. Confirmed full decoupling of financial math from frontend. Generated QA report.
 
 ## [Unreleased] - Frontend V1.5
 ### Changed
