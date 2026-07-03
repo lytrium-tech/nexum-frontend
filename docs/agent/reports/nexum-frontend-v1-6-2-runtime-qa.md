@@ -20,6 +20,9 @@ This report details the final runtime QA execution and cache debugging for Front
    - Previously, the visual estimation was hidden behind a `previewLoading` state, causing it to disappear during debounced keystrokes.
    - Updated the UI logic to instantly render the visual estimation block using `cachedFxRate` regardless of the `previewLoading` boolean.
    - This achieves the "instant feel" requirement without ever calculating financial truth locally, explicitly tagging the instantaneous render as a "Visual estimate" while the backend validates.
+   - Added instant preload for `cachedFxRate`: opening the modal or changing the source account immediately fetches an initial quote without debounce.
+   - Replaced aggressive "Calculando conversión" states with subtle ping animations while maintaining the visual FX estimate visible in real-time.
+   - Normalized state colors (e.g. removed 'purple' from `pending_amount_definition`) and normalized product labels (e.g. mapped technical `partial_allowed` to `Fija`).
    - Cross-currency previews correctly hide the FX block if the source and target currencies match.
 
 ## Validation and QA Constraints Checked

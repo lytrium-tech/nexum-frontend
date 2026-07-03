@@ -60,8 +60,8 @@ function getStatusColor(status: string) {
     case 'overdue': return 'text-red-700 bg-red-50 border-red-200';
     case 'paid': return 'text-green-700 bg-green-50 border-green-200';
     case 'partially_paid': return 'text-blue-700 bg-blue-50 border-blue-200';
-    case 'pending_amount_definition': return 'text-purple-700 bg-purple-50 border-purple-200';
     case 'pending_payment': return 'text-amber-700 bg-amber-50 border-amber-200';
+    case 'pending_amount_definition':
     case 'skipped':
     case 'cancelled':
     default:
@@ -167,14 +167,16 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
     return () => { mounted = false; };
   }, [initialObligations]);
 
+  // Used to track if we've already fetched the initial quote for the current account
+  const [initialQuoteFetchedForAccount, setInitialQuoteFetchedForAccount] = useState<string>('');
+
   useEffect(() => {
     if (!payModal.open || !payAccountId || !payAmountInput || isNaN(Number(payAmountInput)) || payModal.isFifo) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPreviewData(null);
       return;
     }
 
-    const delayDebounceFn = setTimeout(async () => {
+    const isInitialFetch = initialQuoteFetchedForAccount !== payAccountId;
+    const fetchPreview = async () => {
       setPreviewLoading(true);
       const res = await previewObligationPeriodPaymentAction(payModal.periodId, {
         account_id: payAccountId,
@@ -191,10 +193,20 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
         setActionError(res.error || 'Error calculando vista previa.');
       }
       setPreviewLoading(false);
-    }, 500);
+      if (isInitialFetch) {
+        setInitialQuoteFetchedForAccount(payAccountId);
+      }
+    };
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [payAccountId, payAmountInput, payModal.open, payModal.periodId, payModal.isFifo]);
+    if (isInitialFetch) {
+      // Fetch immediately without debounce
+      fetchPreview();
+    } else {
+      // Debounce when user is typing
+      const delayDebounceFn = setTimeout(fetchPreview, 500);
+      return () => clearTimeout(delayDebounceFn);
+    }
+  }, [payAccountId, payAmountInput, payModal.open, payModal.periodId, payModal.isFifo, initialQuoteFetchedForAccount]);
 
   const handleDefineAmount = async () => {
     if (!amountInput || isNaN(Number(amountInput))) return;
@@ -247,8 +259,14 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
       isFifo,
       remainingAmount: period.remaining_amount ?? null
     });
-    setPayAmountInput(period.remaining_amount ?? defaultAmount);
+    const fallbackAmount = period.remaining_amount ?? defaultAmount;
+    setPayAmountInput(fallbackAmount);
     setPaymentMode(period.remaining_amount ? 'remaining' : 'custom');
+    
+    // Clear preview/quote state
+    setPreviewData(null);
+    setCachedFxRate(null);
+    setInitialQuoteFetchedForAccount('');
   };
 
   const handlePay = async () => {
@@ -418,7 +436,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                       {period.status === 'pending_amount_definition' ? (
                         <button
                           onClick={() => setDefineAmountModal({ open: true, periodId: period.id, obligationId: ob.id })}
-                          className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
+                          className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                         >
                           Definir monto
                         </button>
@@ -613,7 +631,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 type="number"
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all text-graphite-blue"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
                 placeholder="Ej. 150000"
                 disabled={actionLoading}
               />
@@ -634,7 +652,7 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
               <button
                 onClick={handleDefineAmount}
                 disabled={actionLoading || !amountInput}
-                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? 'Guardando...' : 'Guardar monto'}
               </button>
@@ -786,7 +804,9 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                 let fxRateVal: number | null = null;
                 let isEstimate = true;
 
-                if (!previewLoading && previewData && previewData.source_amount) {
+                const isPreviewStale = Number(previewData?.applied_amount) !== Number(payAmountInput);
+
+                if (!previewLoading && previewData && previewData.source_amount && !isPreviewStale) {
                   sourceAmountVal = Number(previewData.source_amount);
                   fxRateVal = Number(previewData.fx_rate);
                   isEstimate = false;
@@ -808,9 +828,15 @@ export default function ObligationsClient({ initialObligations, accounts }: Obli
                       Nexum descontará aprox. <span className="font-semibold">{formatMoneyOrDash(sourceAmountVal, sourceCurrency)}</span> para cubrir <span className="font-semibold">{formatMoneyOrDash(Number(payAmountInput), payModal.currency)}</span>.
                     </p>
                     {isEstimate ? (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Estimación visual (1 USD = {fxRateVal} COP). {previewLoading ? 'Calculando conversión real...' : 'Nexum validará al confirmar.'}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                        </span>
+                        <p className="text-xs text-gray-500">
+                          Actualizando cotización... (Aprox. 1 USD = {fxRateVal} COP)
+                        </p>
+                      </div>
                     ) : (
                       <p className="text-xs text-gray-500 mt-1">
                         Cotización: 1 USD = {fxRateVal} COP.
