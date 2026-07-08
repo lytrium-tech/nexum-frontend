@@ -3,7 +3,9 @@ import { api } from '@/lib/api/endpoints';
 import { getSessionToken } from '@/lib/api/client';
 import { redirect } from 'next/navigation';
 import ObligationsClient from './ObligationsClient';
+import ObligationsV17Client from './ObligationsV17Client';
 import { components } from '@/lib/api/types.generated';
+import { isObligationsV17Enabled } from '@/lib/features';
 
 export const metadata: Metadata = {
   title: 'Obligaciones | Nexum',
@@ -15,6 +17,10 @@ export default async function ObligationsPage() {
 
   if (!token) {
     redirect('/login');
+  }
+
+  if (isObligationsV17Enabled()) {
+    return <ObligationsV17Client />;
   }
 
   let obligations: components['schemas']['ObligationRead'][] = [];
