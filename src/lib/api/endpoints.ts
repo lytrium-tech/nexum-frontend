@@ -33,6 +33,20 @@ type CreditCardPaymentResult = components['schemas']['CreditCardPaymentResult'];
 type TransferCreate = components['schemas']['TransferCreate'];
 type TransferResult = components['schemas']['TransferResult'];
 
+// V1.7 Obligations Types
+type ObligationV17Response = components['schemas']['ObligationV17Response'];
+type ObligationV17CreateRequest = components['schemas']['ObligationV17CreateRequest'];
+type ObligationsV17SummaryResponse = components['schemas']['ObligationsV17SummaryResponse'];
+type ObligationsV17IntelligenceContextResponse = components['schemas']['ObligationsV17IntelligenceContextResponse'];
+type ObligationPeriodV17Response = components['schemas']['ObligationPeriodV17Response'];
+type ObligationPaymentV17Response = components['schemas']['ObligationPaymentV17Response'];
+type ObligationPeriodAmountDefineRequest = components['schemas']['ObligationPeriodAmountDefineRequest'];
+type ObligationPeriodPaymentCreateRequest = components['schemas']['ObligationPeriodPaymentCreateRequest'];
+type ObligationPeriodPaymentResultResponse = components['schemas']['ObligationPeriodPaymentResultResponse'];
+type ObligationFIFOPaymentCreateRequest = components['schemas']['ObligationFIFOPaymentCreateRequest'];
+type ObligationFIFOPaymentResultResponse = components['schemas']['ObligationFIFOPaymentResultResponse'];
+type ObligationPeriodRefreshOverdueResponse = components['schemas']['ObligationPeriodRefreshOverdueResponse'];
+
 export const api = {
   cash: {
     createIncome: (data: CashIncomeCreate, idempotencyKey: string, isServer = false) =>
@@ -175,6 +189,52 @@ export const api = {
           method: 'POST',
           body: JSON.stringify(data),
         }, isServer),
+    },
+    obligationsV17: {
+      list: (isServer = false) =>
+        apiClient<ObligationV17Response[]>('/api/v1.7/obligations', { method: 'GET' }, isServer),
+      create: (data: ObligationV17CreateRequest, isServer = false) =>
+        apiClient<ObligationV17Response>('/api/v1.7/obligations', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }, isServer),
+      summary: (month?: string, isServer = false) => {
+        const qs = month ? `?month=${month}` : '';
+        return apiClient<ObligationsV17SummaryResponse>(`/api/v1.7/obligations/summary${qs}`, { method: 'GET' }, isServer);
+      },
+      intelligenceContext: (month?: string, isServer = false) => {
+        const qs = month ? `?month=${month}` : '';
+        return apiClient<ObligationsV17IntelligenceContextResponse>(`/api/v1.7/obligations/intelligence-context${qs}`, { method: 'GET' }, isServer);
+      },
+      get: (id: string, isServer = false) =>
+        apiClient<ObligationV17Response>(`/api/v1.7/obligations/${id}`, { method: 'GET' }, isServer),
+      periods: (id: string, isServer = false) =>
+        apiClient<ObligationPeriodV17Response[]>(`/api/v1.7/obligations/${id}/periods`, { method: 'GET' }, isServer),
+      updatePeriodAmount: (id: string, periodId: string, data: ObligationPeriodAmountDefineRequest, isServer = false) =>
+        apiClient<ObligationPeriodV17Response>(`/api/v1.7/obligations/${id}/periods/${periodId}/amount`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }, isServer),
+      payPeriod: (id: string, periodId: string, data: ObligationPeriodPaymentCreateRequest, idempotencyKey: string, isServer = false) =>
+        apiClient<ObligationPeriodPaymentResultResponse>(`/api/v1.7/obligations/${id}/periods/${periodId}/payments`, {
+          method: 'POST',
+          headers: { 'Idempotency-Key': idempotencyKey },
+          body: JSON.stringify(data),
+        }, isServer),
+      payFifo: (id: string, data: ObligationFIFOPaymentCreateRequest, idempotencyKey: string, isServer = false) =>
+        apiClient<ObligationFIFOPaymentResultResponse>(`/api/v1.7/obligations/${id}/payments`, {
+          method: 'POST',
+          headers: { 'Idempotency-Key': idempotencyKey },
+          body: JSON.stringify(data),
+        }, isServer),
+      skipPeriod: (id: string, periodId: string, isServer = false) =>
+        apiClient<ObligationPeriodV17Response>(`/api/v1.7/obligations/${id}/periods/${periodId}/skip`, { method: 'POST' }, isServer),
+      cancelPeriod: (id: string, periodId: string, isServer = false) =>
+        apiClient<ObligationPeriodV17Response>(`/api/v1.7/obligations/${id}/periods/${periodId}/cancel`, { method: 'POST' }, isServer),
+      refreshOverdue: (id: string, isServer = false) =>
+        apiClient<ObligationPeriodRefreshOverdueResponse>(`/api/v1.7/obligations/${id}/periods/refresh-overdue`, { method: 'POST' }, isServer),
+      getPayment: (paymentId: string, isServer = false) =>
+        apiClient<ObligationPaymentV17Response>(`/api/v1.7/obligations/payments/${paymentId}`, { method: 'GET' }, isServer),
     },
     transfers: {
       list: (isServer = false) =>
