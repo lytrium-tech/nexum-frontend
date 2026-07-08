@@ -112,6 +112,11 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Phase 7:** Create Obligation Flow (Completado - Create Obligation UX simplified payment mode to product language: Fija / Variable. Frontend maps simplified UX to Backend V1.6 payment_mode contract without exposing technical modes. No local financial calculations introduced.)
 * **Phase 8:** V1.6.2 Payment Preview UX & Remaining Amount (Completado - Integración de API preview, unificación de UX de pago, display de remaining_amount y estimación instantánea de FX cacheada usando semántica de applied_amount. QA manual completado.)
 * **Phase 9:** V1.6.2 Runtime QA & Cache Fix (Completado - Desactivación de caché de Next.js en fetches de API de backend para prevenir lecturas stale, arreglando el estado de UI post-mutación. Mejoras en la UX modal de pago, incluyendo modos explícitos para pagar restante vs monto custom, precarga inicial de cotización de FX, y rendering inmediato de preview visual interactivo sin bloqueos ni delay de debounce. Estabilización de colores y labels de producto vs técnicos.)
+
+**Frontend V1.7**
+* **Phase 1:** OpenAPI Sync + Type Recovery (Completado - Se recuperaron los tipos y endpoints base de la V1.7 generados por backend).
+* **Phase 2:** Feature Flag Scaffolding (Completado - Infraestructura añadida para leer NEXT_PUBLIC_NEXUM_OBLIGATIONS_V17_ENABLED con fallback hacia la UI legacy intacta).
+
 ## Product Notes
 
 * Frontend V1.5 y UX Improvements están completados localmente.

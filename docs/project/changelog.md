@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased] - Frontend V1.7
+### Changed
+- **Phase 1**: Synchronized OpenAPI with Backend V1.7 Obligations namespace. Regenerated types and confirmed the presence of `ObligationsV17SummaryResponse` and new V1.7 schemas.
+- **Phase 2**: Scaffolded feature flag `NEXT_PUBLIC_NEXUM_OBLIGATIONS_V17_ENABLED` utility with fallback default to false to protect legacy UI.
+
 ## [Unreleased] - Frontend V1.6
 ### Changed
 - **Phase 1**: Synchronized OpenAPI with Backend V1.6 Obligations Core. Regenerated types and confirmed the presence of `ObligationPeriod` contracts. Temporarily placed the Obligations UI in a safe fallback state while waiting for the full UI refactor in subsequent phases. Type recovery completed successfully and build is clean without any local financial logic introduced.

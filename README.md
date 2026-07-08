@@ -26,6 +26,10 @@ The backend is the source of truth for financial calculations. The frontend must
 pnpm dev
 ```
 
+## Feature Flags
+
+- `NEXT_PUBLIC_NEXUM_OBLIGATIONS_V17_ENABLED`: En local se puede activar manualmente para probar V1.7. Por defecto `false` para preservar la experiencia legacy V1.5/1.6.
+
 ## API Types
 
 ```bash
