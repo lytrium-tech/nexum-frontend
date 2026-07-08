@@ -19,12 +19,21 @@ export default async function ObligationsPage() {
     redirect('/login');
   }
 
-  if (isObligationsV17Enabled()) {
-    return <ObligationsV17Client />;
-  }
-
   let obligations: components['schemas']['ObligationRead'][] = [];
   let accounts: components['schemas']['AccountRead'][] = [];
+  
+  if (isObligationsV17Enabled()) {
+    try {
+      accounts = await api.accounts.list(true, { include_archived: true });
+    } catch (error: unknown) {
+      console.error('Failed to load accounts for V1.7:', error);
+      const status = (error as { status?: number }).status;
+      if (status === 401 || status === 403) redirect('/login');
+    }
+    return <ObligationsV17Client accounts={accounts} />;
+  }
+
+
   try {
     const obligationsPromise = api.obligations.list(true, { include_archived: true });
     const accountsPromise = api.accounts.list(true, { include_archived: true });

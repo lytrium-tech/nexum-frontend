@@ -10,7 +10,8 @@ import {
   updateObligationPeriodAmountV17Action,
   skipObligationPeriodV17Action,
   cancelObligationPeriodV17Action,
-  refreshOverduePeriodsV17Action
+  refreshOverduePeriodsV17Action,
+  payObligationPeriodV17Action
 } from './v17-actions';
 
 type ObligationV17Response = components['schemas']['ObligationV17Response'];
@@ -70,7 +71,7 @@ function getRelevantPeriodV17(periods: ObligationPeriodV17Response[]): Obligatio
   return periods[periods.length - 1];
 }
 
-export default function ObligationsV17Client() {
+export default function ObligationsV17Client({ accounts = [] }: { accounts?: components['schemas']['AccountRead'][] }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -86,6 +87,9 @@ export default function ObligationsV17Client() {
   const [amountInput, setAmountInput] = useState('');
   const [skipModal, setSkipModal] = useState({ open: false, periodId: '', obligationId: '' });
   const [cancelModal, setCancelModal] = useState({ open: false, periodId: '', obligationId: '' });
+  const [payModal, setPayModal] = useState({ open: false, periodId: '', obligationId: '' });
+  const [payAmountInput, setPayAmountInput] = useState('');
+  const [payAccountInput, setPayAccountInput] = useState('');
 
   const fetchAllData = async (isInitial = false) => {
     try {
@@ -170,6 +174,26 @@ export default function ObligationsV17Client() {
       await fetchAllData();
     } else {
       setActionError(res.error || 'No pudimos cancelar este periodo.');
+    }
+    setActionLoading(false);
+  };
+
+  const handlePayPeriod = async () => {
+    if (!payAmountInput || isNaN(Number(payAmountInput)) || !payAccountInput) return;
+    setActionLoading(true);
+    setActionError(null);
+    const idempotencyKey = crypto.randomUUID();
+    const res = await payObligationPeriodV17Action(payModal.obligationId, payModal.periodId, {
+      amount: Number(payAmountInput),
+      source_account_id: payAccountInput
+    }, idempotencyKey);
+    if (res.success) {
+      setPayModal({ open: false, periodId: '', obligationId: '' });
+      setPayAmountInput('');
+      setPayAccountInput('');
+      await fetchAllData();
+    } else {
+      setActionError(res.error || 'No pudimos registrar este pago. Revisa el monto y la cuenta.');
     }
     setActionLoading(false);
   };
@@ -376,15 +400,14 @@ export default function ObligationsV17Client() {
                         >
                           Definir monto
                         </button>
-                      ) : (
+                      ) : ['pending_payment', 'partially_paid', 'overdue'].includes(period.status) ? (
                         <button
-                          disabled
-                          title="Pagos desactivados en Phase 5A"
-                          className="bg-gray-300 text-white px-5 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed w-full sm:w-auto"
+                          onClick={() => setPayModal({ open: true, periodId: period.id, obligationId: ob.id })}
+                          className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                         >
-                          Pagar periodo (Muy pronto)
+                          Pagar periodo
                         </button>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 )}
@@ -509,6 +532,72 @@ export default function ObligationsV17Client() {
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? 'Cancelando...' : 'Cancelar periodo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {payModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-gray-100">
+            <h3 className="text-xl font-semibold text-graphite-blue mb-2">Pagar periodo</h3>
+            <p className="text-sm text-gray-500 mb-6">Ingresa el monto a pagar y selecciona la cuenta de origen.</p>
+
+            {actionError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+                {actionError}
+              </div>
+            )}
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Cuenta fuente</label>
+                <select
+                  value={payAccountInput}
+                  onChange={(e) => setPayAccountInput(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                  disabled={actionLoading}
+                >
+                  <option value="">Selecciona una cuenta</option>
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>{acc.name} ({formatMoneyOrDash(acc.balance, acc.currency)})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Monto a pagar</label>
+                <input
+                  type="number"
+                  value={payAmountInput}
+                  onChange={(e) => setPayAmountInput(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                  placeholder="Ej. 150000"
+                  disabled={actionLoading}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+              <button
+                onClick={() => {
+                  setPayModal({ open: false, periodId: '', obligationId: '' });
+                  setPayAmountInput('');
+                  setPayAccountInput('');
+                  setActionError(null);
+                }}
+                disabled={actionLoading}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handlePayPeriod}
+                disabled={actionLoading || !payAmountInput || !payAccountInput}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
+              >
+                {actionLoading ? 'Procesando...' : 'Confirmar pago'}
               </button>
             </div>
           </div>
