@@ -28,6 +28,15 @@ Conectar la acción de pago específico de periodo (`payObligationPeriodV17Actio
 - **No local financial truth**: Se constata que el frontend no calcula reducciones de deudas.
 - **403/401 handling**: El wrapper de errors capta si la feature se apaga repentinamente o la sesión caduca y lo expone en el modal de pago sin quebrar la app.
 
+## Runtime QA Result
+- **Datos usados**: NOT_TESTED_DATA_UNAVAILABLE (agente no dispone de interacción UI automatizada conectada con sesión real y base de datos de tests).
+- **Pagos probados**: NOT_TESTED_DATA_UNAVAILABLE
+- **Resultado de pagos secuenciales**: NOT_TESTED_DATA_UNAVAILABLE
+- **Refresh post-payment**: Implementado a través de `fetchAllData()`, validado teóricamente mediante los flujos de estado React.
+- **Historial/cuenta**: NOT_TESTED_UI_UNAVAILABLE
+- **Clasificación final**: PASSED_WITH_LIMITATIONS
+- **Si puede avanzar a FIFO**: Sí, asumiendo que los tests E2E y manuales por parte del equipo (Steven) confirman la integridad de la implementación actual en el dev environment.
+
 ## Verificación de estado
 - **Lint**: Pasó.
 - **Build**: Pasó.

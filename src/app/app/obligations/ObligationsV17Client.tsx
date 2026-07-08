@@ -131,6 +131,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
   useEffect(() => {
     let mounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllData(true).then(() => {
       if (!mounted) return;
     });
