@@ -13,7 +13,7 @@ import {
   refreshOverduePeriodsV17Action,
   payObligationPeriodV17Action,
   createObligationV17Action,
-  previewObligationPeriodV17Action,
+  getLatestFxRateV17Action,
   getAccountsV17Action
 } from './v17-actions';
 
@@ -96,7 +96,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
   const [payAmountInput, setPayAmountInput] = useState('');
   const [payAccountInput, setPayAccountInput] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
-  const [fxQuote, setFxQuote] = useState<components['schemas']['ObligationPaymentPreviewV17Response'] | null>(null);
+  const [rateSnapshot, setRateSnapshot] = useState<components['schemas']['FXRateSnapshotResponse'] | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '',
@@ -159,7 +159,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
   useEffect(() => {
     if (!payModal.open || !payAccountInput) {
       // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-      setFxQuote(null);
+      setRateSnapshot(null);
       // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
       setPreviewLoading(false);
       return;
@@ -170,46 +170,26 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     
     if (!currentOb || !selectedAcc || currentOb.currency === selectedAcc.currency) {
       // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-      setFxQuote(null);
+      setRateSnapshot(null);
       // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
       setPreviewLoading(false);
       return;
     }
 
-    const currentPeriod = periodsByObligation[payModal.obligationId]?.find(p => p.id === payModal.periodId);
-    const currentAmountDue = currentPeriod?.amount_due || '0';
-    const finalAmount = payMode === 'remaining' ? currentAmountDue : payAmountInput;
-    if (!finalAmount || isNaN(Number(finalAmount)) || Number(finalAmount) <= 0) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-      setFxQuote(null);
-      // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-      setPreviewLoading(false);
-      return;
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-    setPreviewLoading(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-    setFxQuote(null);
-
-    const timer = setTimeout(async () => {
-      const res = await previewObligationPeriodV17Action(payModal.obligationId, payModal.periodId, {
-        amount: Number(finalAmount),
-        source_account_id: selectedAcc.id,
-      });
+    const fetchRate = async () => {
+      setPreviewLoading(true);
+      setRateSnapshot(null);
+      const res = await getLatestFxRateV17Action(selectedAcc.currency, currentOb.currency);
       if (res.success && res.result) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        setFxQuote(res.result);
+        setRateSnapshot(res.result);
       } else {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        setFxQuote(null);
+        setRateSnapshot(null);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       setPreviewLoading(false);
-    }, 500);
+    };
 
-    return () => clearTimeout(timer);
-  }, [payModal.open, payModal.obligationId, payModal.periodId, payMode, payAmountInput, payAccountInput, obligations, localAccounts, periodsByObligation]);
+    fetchRate();
+  }, [payModal.open, payModal.obligationId, payAccountInput, obligations, localAccounts]);
 
   const refreshObligationAfterMutation = async (obligationId: string) => {
     try {
@@ -299,8 +279,8 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
       source_account_id: payAccountInput,
     };
 
-    if (fxQuote && fxQuote.quote_id) {
-      payload.quote_id = fxQuote.quote_id;
+    if (rateSnapshot && rateSnapshot.id) {
+      payload.rate_snapshot_id = rateSnapshot.id;
     }
 
     const res = await payObligationPeriodV17Action(payModal.obligationId, payModal.periodId, payload, idempotencyKey);
@@ -310,7 +290,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
       setPayAmountInput('');
       setPayAccountInput('');
       setPayMode('remaining');
-      setFxQuote(null);
+      setRateSnapshot(null);
       await refreshObligationAfterMutation(obId);
     } else {
       setActionError(res.error || 'No pudimos registrar este pago. Revisa el monto y la cuenta.');
@@ -937,8 +917,8 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                         if (previewLoading) {
                           return "Calculando conversión...";
                         }
-                        if (fxQuote && fxQuote.fx_rate) {
-                          const estimatedAmount = Number(amt) / Number(fxQuote.fx_rate);
+                        if (rateSnapshot && rateSnapshot.rate) {
+                          const estimatedAmount = Number(amt) / Number(rateSnapshot.rate);
                           return `Nexum descontará aprox. ${formatMoneyOrDash(estimatedAmount.toString(), selectedAcc.currency)} para cubrir ${formatMoneyOrDash(amt, currentOb.currency)}.`;
                         } else {
                           return "No pudimos calcular la conversión.";
@@ -961,7 +941,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                   setPayAmountInput('');
                   setPayAccountInput('');
                   setPayMode('remaining');
-                  setFxQuote(null);
+                  setRateSnapshot(null);
                   setActionError(null);
                 }}
                 disabled={actionLoading}
@@ -972,7 +952,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
               <button
                 type="button"
                 onClick={handlePayPeriod}
-                disabled={actionLoading || previewLoading || (payMode === 'other' && !payAmountInput) || !payAccountInput || (localAccounts.find(a => a.id === payAccountInput)?.currency !== obligations.find(o => o.id === payModal.obligationId)?.currency && !fxQuote)}
+                disabled={actionLoading || previewLoading || (payMode === 'other' && !payAmountInput) || !payAccountInput || (localAccounts.find(a => a.id === payAccountInput)?.currency !== obligations.find(o => o.id === payModal.obligationId)?.currency && !rateSnapshot)}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? 'Procesando...' : 'Confirmar pago'}

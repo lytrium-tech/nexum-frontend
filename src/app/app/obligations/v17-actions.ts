@@ -46,6 +46,9 @@ function handleV17Error(err: unknown, defaultMessage: string) {
     if (combinedErrorString.includes('fx_preview_failed') || combinedErrorString.includes('fxprovidererror')) {
       return 'No pudimos calcular la conversión.';
     }
+    if (combinedErrorString.includes('fx_rate_snapshot_expired') || combinedErrorString.includes('fx_rate_snapshot_not_found') || combinedErrorString.includes('invalid_fx_quote') || combinedErrorString.includes('stale_fx_rate')) {
+      return 'La cotización de conversión ha expirado. Por favor, intenta nuevamente.';
+    }
   }
 
   return handleFinancialError(err, defaultMessage);
@@ -184,16 +187,6 @@ export async function getObligationPaymentV17Action(paymentId: string) {
   }
 }
 
-export async function previewObligationPeriodV17Action(id: string, periodId: string, data: components['schemas']['ObligationPaymentPreviewV17Request']) {
-  try {
-    checkV17FeatureFlag();
-    const result = await api.obligationsV17.previewPeriod(id, periodId, data, true);
-    return { success: true, result };
-  } catch (err: unknown) {
-    console.error('V1.7 preview period error:', err);
-    return { success: false, error: handleV17Error(err, 'No pudimos calcular la conversión en este momento.') };
-  }
-}
 
 export async function getAccountsV17Action() {
   try {
@@ -203,5 +196,19 @@ export async function getAccountsV17Action() {
   } catch (err: unknown) {
     console.error('V1.7 get accounts error:', err);
     return { success: false, error: handleV17Error(err, 'No pudimos cargar las cuentas.') };
+  }
+}
+
+export async function getLatestFxRateV17Action(baseCurrency: string, quoteCurrency: string) {
+  try {
+    checkV17FeatureFlag();
+    const result = await api.fxV17.getLatestRate(baseCurrency, quoteCurrency, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('V1.7 get latest fx rate error:', err);
+    if (err instanceof ApiError && err.status === 401) {
+      return { success: false, error: 'Tu sesión expiró. Vuelve a iniciar sesión.' };
+    }
+    return { success: false, error: handleV17Error(err, 'No pudimos obtener la tasa de cambio. Intenta de nuevo.') };
   }
 }
