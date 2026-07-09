@@ -43,8 +43,8 @@ La UI captura el escenario donde la conversión falla o el proveedor se encuentr
 El código pasó una ejecución exitosa de `pnpm lint`, sin advertencias ni errores relacionados a tipos faltantes. La compilación estática y dinámica a través de `pnpm build` también validó que el tipado inferido de openapi y el enrutamiento operan en armonía. No se rompió la UI general del dashboard y la retrocompatibilidad con las dependencias existentes se conserva.
 
 ## 12. Known Risks / Follow-ups
-- A nivel del backend, la migración de dependencias directas sobre `quote_id` y `source_amount` debe ser finalizada. Actualmente el frontend se encuentra listo con el payload correcto, pero si el backend aún los requiere fallará en tiempo de ejecución de la V1.7.
+- Backend FX Rate Snapshot refactor is already deployed to the VPS under commit fcd47c0, with DB at v1_7_phase_fx_rate_snapshot (head). Frontend local QA can now proceed against https://api.nexum.lytrium.tech. Remaining risks are local QA findings, auth/session behavior, expired snapshot UX, and future removal of the temporary NEXT_PUBLIC_NEXUM_OBLIGATIONS_V17_ENABLED flag.
 - Remover temporal feature flag (`NEXT_PUBLIC_NEXUM_OBLIGATIONS_V17_ENABLED`) tan pronto QA confirme operación de ambos lados.
 
 ## 13. Ready for Steven Local QA
-El frontend local V1.7 está listo para el QA cruzado local tan pronto como el Backend consolide el refactor para consumir los payments mediante `rate_snapshot_id`.
+El frontend local V1.7 está listo para QA local de Steven usando pnpm dev y la API https://api.nexum.lytrium.tech. Backend FX Rate Snapshot ya está desplegado en VPS. No existe frontend deploy ni Vercel.
