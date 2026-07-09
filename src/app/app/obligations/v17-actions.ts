@@ -180,3 +180,14 @@ export async function previewObligationPeriodV17Action(id: string, periodId: str
     return { success: false, error: handleV17Error(err, 'No pudimos calcular la conversión en este momento.') };
   }
 }
+
+export async function getAccountsV17Action() {
+  try {
+    checkV17FeatureFlag();
+    const result = await api.accounts.list(true, { include_archived: true });
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('V1.7 get accounts error:', err);
+    return { success: false, error: handleV17Error(err, 'No pudimos cargar las cuentas.') };
+  }
+}

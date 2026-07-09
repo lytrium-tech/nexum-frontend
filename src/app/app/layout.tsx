@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { redirect } from 'next/navigation';
 import { api } from '@/lib/api/endpoints';
 import { getSessionToken } from '@/lib/api/client';
