@@ -1060,7 +1060,7 @@ export interface paths {
         put?: never;
         /**
          * Preview a specific period payment (V1.7)
-         * @description Simula o previsualiza un pago para un periodo especÃ­fico, retornando el tipo de cambio y los montos exactos requeridos.
+         * @description Simula o previsualiza un pago para un periodo específico, retornando el tipo de cambio y los montos exactos requeridos.
          */
         post: operations["preview_pay_period_v17_api_v1_7_obligations__obligation_id__periods__period_id__payments_preview_post"];
         delete?: never;
@@ -2711,10 +2711,10 @@ export interface components {
         /** ObligationPaymentPreviewV17Request */
         ObligationPaymentPreviewV17Request: {
             /**
-             * Account Id
+             * Source Account Id
              * Format: uuid
              */
-            account_id: string;
+            source_account_id: string;
             /** Amount */
             amount: number | string;
         };
@@ -2950,6 +2950,8 @@ export interface components {
              * @default false
              */
             is_current: boolean;
+            /** Amount */
+            amount: string;
             /** Amount Due */
             amount_due: string;
             /** Amount Paid */

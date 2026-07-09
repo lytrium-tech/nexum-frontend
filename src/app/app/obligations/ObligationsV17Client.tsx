@@ -195,7 +195,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     const timer = setTimeout(async () => {
       const res = await previewObligationPeriodV17Action(payModal.obligationId, payModal.periodId, {
         amount: Number(finalAmount),
-        account_id: selectedAcc.id,
+        source_account_id: selectedAcc.id,
       });
       if (res.success && res.result) {
         // eslint-disable-next-line react-hooks/exhaustive-deps

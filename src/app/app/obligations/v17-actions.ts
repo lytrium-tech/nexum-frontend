@@ -26,11 +26,25 @@ function handleV17Error(err: unknown, defaultMessage: string) {
   }
 
   if (err instanceof ApiError) {
+    const errorCode = err.errorCode?.toLowerCase() || '';
+    const message = err.message?.toLowerCase() || '';
+    const detail = (err.data as Record<string, unknown>)?.detail?.toString()?.toLowerCase() || '';
+    const combinedErrorString = `${errorCode} ${message} ${detail}`;
+
     if (err.status === 401) {
       return 'Tu sesión expiró. Vuelve a iniciar sesión.';
     }
-    if (err.status === 403) {
+    if (err.status === 403 || combinedErrorString.includes('feature_disabled')) {
       return 'Obligaciones V1.7 no está habilitado todavía.';
+    }
+    if (combinedErrorString.includes('payment_exceeds_remaining_amount')) {
+      return 'El monto supera el saldo pendiente de este periodo.';
+    }
+    if (combinedErrorString.includes('insufficient_funds') || combinedErrorString.includes('insufficient_balance')) {
+      return 'No tienes saldo suficiente en la cuenta seleccionada.';
+    }
+    if (combinedErrorString.includes('fx_preview_failed') || combinedErrorString.includes('fxprovidererror')) {
+      return 'No pudimos calcular la conversión.';
     }
   }
 
