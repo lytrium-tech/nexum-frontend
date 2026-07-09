@@ -1049,6 +1049,26 @@ export interface paths {
         patch: operations["define_period_amount_v17_api_v1_7_obligations__obligation_id__periods__period_id__amount_patch"];
         trace?: never;
     };
+    "/api/v1.7/obligations/{obligation_id}/periods/{period_id}/payments/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a specific period payment (V1.7)
+         * @description Simula o previsualiza un pago para un periodo especÃ­fico, retornando el tipo de cambio y los montos exactos requeridos.
+         */
+        post: operations["preview_pay_period_v17_api_v1_7_obligations__obligation_id__periods__period_id__payments_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1.7/obligations/{obligation_id}/periods/{period_id}/payments": {
         parameters: {
             query?: never;
@@ -2688,6 +2708,35 @@ export interface components {
             /** Can Pay */
             can_pay: boolean;
         };
+        /** ObligationPaymentPreviewV17Request */
+        ObligationPaymentPreviewV17Request: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount: number | string;
+        };
+        /** ObligationPaymentPreviewV17Response */
+        ObligationPaymentPreviewV17Response: {
+            /** Obligation Currency */
+            obligation_currency: string;
+            /** Source Currency */
+            source_currency: string;
+            /** Applied Amount */
+            applied_amount: string;
+            /** Source Amount */
+            source_amount: string;
+            /** Fx Rate */
+            fx_rate?: string | null;
+            /** Rate Timestamp */
+            rate_timestamp?: string | null;
+            /** Quote Expires At */
+            quote_expires_at?: string | null;
+            /** Quote Id */
+            quote_id?: string | null;
+        };
         /** ObligationPaymentRead */
         ObligationPaymentRead: {
             /**
@@ -2937,23 +2986,17 @@ export interface components {
             /** Currency */
             currency: string;
             /** Type */
-            type: string;
+            type?: string | null;
             /** Frequency */
             frequency: string;
             /** Payment Mode */
             payment_mode: string;
             /** Base Amount */
             base_amount: string | null;
-            /**
-             * Start Date
-             * Format: date
-             */
-            start_date: string;
-            /**
-             * First Due Date
-             * Format: date
-             */
-            first_due_date: string;
+            /** Start Date */
+            start_date?: string | null;
+            /** First Due Date */
+            first_due_date?: string | null;
             /** Due Day */
             due_day: number | null;
             /** Due Month */
@@ -2965,7 +3008,7 @@ export interface components {
             /** End Count */
             end_count: number | null;
             /** Status */
-            status: string;
+            status?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -5691,10 +5734,57 @@ export interface operations {
             };
         };
     };
-    create_period_payment_v17_api_v1_7_obligations__obligation_id__periods__period_id__payments_post: {
+    preview_pay_period_v17_api_v1_7_obligations__obligation_id__periods__period_id__payments_preview_post: {
         parameters: {
             query?: never;
             header?: never;
+            path: {
+                obligation_id: string;
+                period_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObligationPaymentPreviewV17Request"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObligationPaymentPreviewV17Response"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    create_period_payment_v17_api_v1_7_obligations__obligation_id__periods__period_id__payments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
             path: {
                 obligation_id: string;
                 period_id: string;
@@ -5748,7 +5838,9 @@ export interface operations {
     create_obligation_payment_fifo_v17_api_v1_7_obligations__obligation_id__payments_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
             path: {
                 obligation_id: string;
             };

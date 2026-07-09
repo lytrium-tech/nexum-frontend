@@ -46,6 +46,8 @@ type ObligationPeriodPaymentResultResponse = components['schemas']['ObligationPe
 type ObligationFIFOPaymentCreateRequest = components['schemas']['ObligationFIFOPaymentCreateRequest'];
 type ObligationFIFOPaymentResultResponse = components['schemas']['ObligationFIFOPaymentResultResponse'];
 type ObligationPeriodRefreshOverdueResponse = components['schemas']['ObligationPeriodRefreshOverdueResponse'];
+type ObligationPaymentPreviewV17Request = components['schemas']['ObligationPaymentPreviewV17Request'];
+type ObligationPaymentPreviewV17Response = components['schemas']['ObligationPaymentPreviewV17Response'];
 
 export const api = {
   cash: {
@@ -235,6 +237,11 @@ export const api = {
         apiClient<ObligationPeriodRefreshOverdueResponse>(`/api/v1.7/obligations/${id}/periods/refresh-overdue`, { method: 'POST' }, isServer),
       getPayment: (paymentId: string, isServer = false) =>
         apiClient<ObligationPaymentV17Response>(`/api/v1.7/obligations/payments/${paymentId}`, { method: 'GET' }, isServer),
+      previewPeriod: (id: string, periodId: string, data: ObligationPaymentPreviewV17Request, isServer = false) =>
+        apiClient<ObligationPaymentPreviewV17Response>(`/api/v1.7/obligations/${id}/periods/${periodId}/payments/preview`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }, isServer),
     },
     transfers: {
       list: (isServer = false) =>

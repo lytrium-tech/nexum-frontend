@@ -1,7 +1,6 @@
 'use server';
 
 import { api } from '@/lib/api/endpoints';
-import { revalidatePath } from 'next/cache';
 import { components } from '@/lib/api/types.generated';
 import { handleFinancialError } from '@/lib/api/errors';
 import { isObligationsV17Enabled } from '@/lib/features';
@@ -168,5 +167,16 @@ export async function getObligationPaymentV17Action(paymentId: string) {
   } catch (err: unknown) {
     console.error('V1.7 get payment error:', err);
     return { success: false, error: handleV17Error(err, 'No encontramos este pago.') };
+  }
+}
+
+export async function previewObligationPeriodV17Action(id: string, periodId: string, data: components['schemas']['ObligationPaymentPreviewV17Request']) {
+  try {
+    checkV17FeatureFlag();
+    const result = await api.obligationsV17.previewPeriod(id, periodId, data, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('V1.7 preview period error:', err);
+    return { success: false, error: handleV17Error(err, 'No pudimos calcular la conversión en este momento.') };
   }
 }

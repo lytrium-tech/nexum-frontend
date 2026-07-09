@@ -12,7 +12,8 @@ import {
   cancelObligationPeriodV17Action,
   refreshOverduePeriodsV17Action,
   payObligationPeriodV17Action,
-  createObligationV17Action
+  createObligationV17Action,
+  previewObligationPeriodV17Action
 } from './v17-actions';
 
 type ObligationV17Response = components['schemas']['ObligationV17Response'];
@@ -92,6 +93,8 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
   const [payMode, setPayMode] = useState<'remaining' | 'other'>('remaining');
   const [payAmountInput, setPayAmountInput] = useState('');
   const [payAccountInput, setPayAccountInput] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [fxQuote, setFxQuote] = useState<components['schemas']['ObligationPaymentPreviewV17Response'] | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '',
@@ -150,6 +153,49 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     });
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    if (!payModal.open || !payAccountInput) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setFxQuote(null);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setPreviewLoading(false);
+      return;
+    }
+    
+    const currentOb = obligations.find(o => o.id === payModal.obligationId);
+    const selectedAcc = accounts.find(a => a.id === payAccountInput);
+    
+    if (!currentOb || !selectedAcc || currentOb.currency === selectedAcc.currency) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setFxQuote(null);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setPreviewLoading(false);
+      return;
+    }
+
+    const finalAmount = payMode === 'remaining' ? payModal.amountDue : payAmountInput;
+    if (!finalAmount || isNaN(Number(finalAmount)) || Number(finalAmount) <= 0) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setPreviewLoading(true);
+      const res = await previewObligationPeriodV17Action(payModal.obligationId, payModal.periodId, {
+        amount: Number(finalAmount),
+        account_id: selectedAcc.id,
+      });
+      if (res.success && res.result) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        setFxQuote(res.result);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setPreviewLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [payModal.open, payModal.obligationId, payModal.periodId, payModal.amountDue, payMode, payAmountInput, payAccountInput, obligations, accounts]);
 
   const refreshObligationAfterMutation = async (obligationId: string) => {
     try {
@@ -227,16 +273,24 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     setActionLoading(true);
     setActionError(null);
     const idempotencyKey = crypto.randomUUID();
-    const res = await payObligationPeriodV17Action(payModal.obligationId, payModal.periodId, {
+    
+    const payload: components['schemas']['ObligationPeriodPaymentCreateRequest'] = {
       amount: Number(finalAmount),
-      source_account_id: payAccountInput
-    }, idempotencyKey);
+      source_account_id: payAccountInput,
+    };
+
+    if (fxQuote && fxQuote.quote_id) {
+      payload.quote_id = fxQuote.quote_id;
+    }
+
+    const res = await payObligationPeriodV17Action(payModal.obligationId, payModal.periodId, payload, idempotencyKey);
     if (res.success) {
       const obId = payModal.obligationId;
       setPayModal({ open: false, periodId: '', obligationId: '', amountDue: '' });
       setPayAmountInput('');
       setPayAccountInput('');
       setPayMode('remaining');
+      setFxQuote(null);
       await refreshObligationAfterMutation(obId);
     } else {
       setActionError(res.error || 'No pudimos registrar este pago. Revisa el monto y la cuenta.');
@@ -852,10 +906,15 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                     const selectedAcc = accounts.find(a => a.id === payAccountInput);
                     const currentOb = obligations.find(o => o.id === payModal.obligationId);
                     if (selectedAcc && currentOb) {
+                      const amt = payMode === 'remaining' ? payModal.amountDue : (payAmountInput || '0');
                       if (selectedAcc.currency !== currentOb.currency) {
-                        return "Calculando conversión... (Preview no disponible: endpoint no sincronizado en OpenAPI)";
+                        if (fxQuote && fxQuote.fx_rate) {
+                          const estimatedAmount = Number(amt) / Number(fxQuote.fx_rate);
+                          return `Nexum descontará aprox. ${formatMoneyOrDash(estimatedAmount.toString(), selectedAcc.currency)} para cubrir ${formatMoneyOrDash(amt, currentOb.currency)}.`;
+                        } else {
+                          return "Calculando conversión...";
+                        }
                       } else {
-                        const amt = payMode === 'remaining' ? payModal.amountDue : (payAmountInput || '0');
                         return `Se descontará ${formatMoneyOrDash(amt, currentOb.currency)} de esta cuenta.`;
                       }
                     }
@@ -873,6 +932,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                   setPayAmountInput('');
                   setPayAccountInput('');
                   setPayMode('remaining');
+                  setFxQuote(null);
                   setActionError(null);
                 }}
                 disabled={actionLoading}
@@ -883,7 +943,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
               <button
                 type="button"
                 onClick={handlePayPeriod}
-                disabled={actionLoading || (payMode === 'other' && !payAmountInput) || !payAccountInput}
+                disabled={actionLoading || previewLoading || (payMode === 'other' && !payAmountInput) || !payAccountInput || (accounts.find(a => a.id === payAccountInput)?.currency !== obligations.find(o => o.id === payModal.obligationId)?.currency && !fxQuote)}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? 'Procesando...' : 'Confirmar pago'}
