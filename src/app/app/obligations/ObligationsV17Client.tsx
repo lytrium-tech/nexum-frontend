@@ -11,7 +11,8 @@ import {
   skipObligationPeriodV17Action,
   cancelObligationPeriodV17Action,
   refreshOverduePeriodsV17Action,
-  payObligationPeriodV17Action
+  payObligationPeriodV17Action,
+  createObligationV17Action
 } from './v17-actions';
 
 type ObligationV17Response = components['schemas']['ObligationV17Response'];
@@ -87,9 +88,21 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
   const [amountInput, setAmountInput] = useState('');
   const [skipModal, setSkipModal] = useState({ open: false, periodId: '', obligationId: '' });
   const [cancelModal, setCancelModal] = useState({ open: false, periodId: '', obligationId: '' });
-  const [payModal, setPayModal] = useState({ open: false, periodId: '', obligationId: '' });
+  const [payModal, setPayModal] = useState({ open: false, periodId: '', obligationId: '', amountDue: '' });
+  const [payMode, setPayMode] = useState<'remaining' | 'other'>('remaining');
   const [payAmountInput, setPayAmountInput] = useState('');
   const [payAccountInput, setPayAccountInput] = useState('');
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    obligation_type: 'recurring' as components['schemas']['ObligationType'],
+    frequency: 'monthly' as components['schemas']['Frequency'],
+    amount_type: 'fixed' as components['schemas']['AmountType'],
+    base_amount: '',
+    currency: 'COP',
+    start_date: new Date().toISOString().split('T')[0],
+    first_due_date: new Date().toISOString().split('T')[0],
+  });
 
   const fetchAllData = async (isInitial = false) => {
     try {
@@ -138,15 +151,42 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     return () => { mounted = false; };
   }, []);
 
+  const refreshObligationAfterMutation = async (obligationId: string) => {
+    try {
+      const [summaryRes, periodsRes, listRes] = await Promise.all([
+        getObligationsSummaryV17Action(),
+        getObligationPeriodsV17Action(obligationId),
+        listObligationsV17Action()
+      ]);
+      
+      if (summaryRes.success && summaryRes.result) {
+        setSummary(summaryRes.result);
+      }
+      if (periodsRes.success && periodsRes.result) {
+        setPeriodsByObligation(prev => ({
+          ...prev,
+          [obligationId]: Array.isArray(periodsRes.result) ? periodsRes.result : []
+        }));
+      }
+      if (listRes.success && listRes.result) {
+        setObligations(listRes.result);
+      }
+    } catch (e) {
+      console.error(e);
+      await fetchAllData();
+    }
+  };
+
   const handleDefineAmount = async () => {
     if (!amountInput || isNaN(Number(amountInput))) return;
     setActionLoading(true);
     setActionError(null);
     const res = await updateObligationPeriodAmountV17Action(defineAmountModal.obligationId, defineAmountModal.periodId, { amount: Number(amountInput) });
     if (res.success) {
+      const obId = defineAmountModal.obligationId;
       setDefineAmountModal({ open: false, periodId: '', obligationId: '' });
       setAmountInput('');
-      await fetchAllData();
+      await refreshObligationAfterMutation(obId);
     } else {
       setActionError(res.error || 'No pudimos definir el monto de este periodo.');
     }
@@ -158,8 +198,9 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     setActionError(null);
     const res = await skipObligationPeriodV17Action(skipModal.obligationId, skipModal.periodId);
     if (res.success) {
+      const obId = skipModal.obligationId;
       setSkipModal({ open: false, periodId: '', obligationId: '' });
-      await fetchAllData();
+      await refreshObligationAfterMutation(obId);
     } else {
       setActionError(res.error || 'No pudimos saltar este periodo.');
     }
@@ -171,8 +212,9 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     setActionError(null);
     const res = await cancelObligationPeriodV17Action(cancelModal.obligationId, cancelModal.periodId);
     if (res.success) {
+      const obId = cancelModal.obligationId;
       setCancelModal({ open: false, periodId: '', obligationId: '' });
-      await fetchAllData();
+      await refreshObligationAfterMutation(obId);
     } else {
       setActionError(res.error || 'No pudimos cancelar este periodo.');
     }
@@ -180,19 +222,22 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
   };
 
   const handlePayPeriod = async () => {
-    if (!payAmountInput || isNaN(Number(payAmountInput)) || !payAccountInput) return;
+    const finalAmount = payMode === 'remaining' ? payModal.amountDue : payAmountInput;
+    if (!finalAmount || isNaN(Number(finalAmount)) || !payAccountInput) return;
     setActionLoading(true);
     setActionError(null);
     const idempotencyKey = crypto.randomUUID();
     const res = await payObligationPeriodV17Action(payModal.obligationId, payModal.periodId, {
-      amount: Number(payAmountInput),
+      amount: Number(finalAmount),
       source_account_id: payAccountInput
     }, idempotencyKey);
     if (res.success) {
-      setPayModal({ open: false, periodId: '', obligationId: '' });
+      const obId = payModal.obligationId;
+      setPayModal({ open: false, periodId: '', obligationId: '', amountDue: '' });
       setPayAmountInput('');
       setPayAccountInput('');
-      await fetchAllData();
+      setPayMode('remaining');
+      await refreshObligationAfterMutation(obId);
     } else {
       setActionError(res.error || 'No pudimos registrar este pago. Revisa el monto y la cuenta.');
     }
@@ -206,6 +251,42 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
       await fetchAllData();
     }
     setSyncing(prev => ({ ...prev, [id]: false }));
+  };
+
+  const handleCreateObligation = async () => {
+    if (!createForm.name) return;
+    setActionLoading(true);
+    setActionError(null);
+    const payload: components['schemas']['ObligationV17CreateRequest'] = {
+      name: createForm.name,
+      obligation_type: createForm.obligation_type,
+      frequency: createForm.frequency,
+      amount_type: createForm.amount_type,
+      currency: createForm.currency,
+      start_date: createForm.start_date,
+      first_due_date: createForm.first_due_date,
+    };
+    if (createForm.base_amount) {
+      payload.base_amount = Number(createForm.base_amount);
+    }
+    const res = await createObligationV17Action(payload);
+    if (res.success) {
+      setCreateModalOpen(false);
+      setCreateForm({
+        name: '',
+        obligation_type: 'recurring',
+        frequency: 'monthly',
+        amount_type: 'fixed',
+        base_amount: '',
+        currency: 'COP',
+        start_date: new Date().toISOString().split('T')[0],
+        first_due_date: new Date().toISOString().split('T')[0],
+      });
+      await fetchAllData();
+    } else {
+      setActionError(res.error || 'Ocurrió un error al crear la obligación.');
+    }
+    setActionLoading(false);
   };
 
   if (loading) {
@@ -237,6 +318,12 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
             Controla tus compromisos y pagos pendientes.
           </p>
         </div>
+        <button
+          onClick={() => { setActionError(null); setCreateModalOpen(true); }}
+          className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap"
+        >
+          Nueva obligación
+        </button>
       </div>
 
       {summary && (
@@ -380,12 +467,14 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                       {['pending_amount_definition', 'pending_payment', 'partially_paid', 'overdue'].includes(period.status) && (
                         <>
                           <button
+                            type="button"
                             onClick={() => setCancelModal({ open: true, periodId: period.id, obligationId: ob.id })}
                             className="bg-white hover:bg-gray-50 border border-gray-200 text-red-600 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                           >
                             Cancelar
                           </button>
                           <button
+                            type="button"
                             onClick={() => setSkipModal({ open: true, periodId: period.id, obligationId: ob.id })}
                             className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-600 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                           >
@@ -396,6 +485,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
                       {period.status === 'pending_amount_definition' ? (
                         <button
+                          type="button"
                           onClick={() => setDefineAmountModal({ open: true, periodId: period.id, obligationId: ob.id })}
                           className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                         >
@@ -403,7 +493,11 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                         </button>
                       ) : ['pending_payment', 'partially_paid', 'overdue'].includes(period.status) ? (
                         <button
-                          onClick={() => setPayModal({ open: true, periodId: period.id, obligationId: ob.id })}
+                          type="button"
+                          onClick={() => {
+                            setPayModal({ open: true, periodId: period.id, obligationId: ob.id, amountDue: period.amount_due });
+                            setPayMode('remaining');
+                          }}
                           className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                         >
                           Pagar periodo
@@ -415,6 +509,147 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {createModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-xl border border-gray-100 my-8">
+            <h3 className="text-xl font-semibold text-graphite-blue mb-2">Nueva obligación</h3>
+            <p className="text-sm text-gray-500 mb-6">Registra un nuevo compromiso financiero.</p>
+
+            {actionError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+                {actionError}
+              </div>
+            )}
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none text-graphite-blue"
+                  placeholder="Ej. Tarjeta de Crédito, Arriendo..."
+                  disabled={actionLoading}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                  <select
+                    value={createForm.obligation_type}
+                    onChange={(e) => setCreateForm({ ...createForm, obligation_type: e.target.value as components['schemas']['ObligationType'] })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue bg-white"
+                    disabled={actionLoading}
+                  >
+                    <option value="recurring">Recurrente</option>
+                    <option value="one_time">Una vez</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia</label>
+                  <select
+                    value={createForm.frequency}
+                    onChange={(e) => setCreateForm({ ...createForm, frequency: e.target.value as components['schemas']['Frequency'] })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue bg-white"
+                    disabled={actionLoading}
+                  >
+                    <option value="monthly">Mensual</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="biweekly">Quincenal</option>
+                    <option value="yearly">Anual</option>
+                    <option value="one_time">Una vez</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de monto</label>
+                  <select
+                    value={createForm.amount_type}
+                    onChange={(e) => setCreateForm({ ...createForm, amount_type: e.target.value as components['schemas']['AmountType'] })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue bg-white"
+                    disabled={actionLoading}
+                  >
+                    <option value="fixed">Fija</option>
+                    <option value="variable">Variable</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
+                  <select
+                    value={createForm.currency}
+                    onChange={(e) => setCreateForm({ ...createForm, currency: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue bg-white"
+                    disabled={actionLoading}
+                  >
+                    <option value="COP">COP</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Monto base (opcional)</label>
+                <input
+                  type="number"
+                  value={createForm.base_amount}
+                  onChange={(e) => setCreateForm({ ...createForm, base_amount: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue"
+                  placeholder="Ej. 150000"
+                  disabled={actionLoading}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de inicio</label>
+                  <input
+                    type="date"
+                    value={createForm.start_date}
+                    onChange={(e) => setCreateForm({ ...createForm, start_date: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue"
+                    disabled={actionLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Primer vencimiento</label>
+                  <input
+                    type="date"
+                    value={createForm.first_due_date}
+                    onChange={(e) => setCreateForm({ ...createForm, first_due_date: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue"
+                    disabled={actionLoading}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(false)}
+                disabled={actionLoading}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateObligation}
+                disabled={actionLoading || !createForm.name}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
+              >
+                {actionLoading ? 'Creando...' : 'Crear obligación'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -447,6 +682,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
+                type="button"
                 onClick={() => {
                   setDefineAmountModal({ open: false, periodId: '', obligationId: '' });
                   setAmountInput('');
@@ -458,6 +694,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={handleDefineAmount}
                 disabled={actionLoading || !amountInput}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
@@ -483,6 +720,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
+                type="button"
                 onClick={() => {
                   setSkipModal({ open: false, periodId: '', obligationId: '' });
                   setActionError(null);
@@ -493,6 +731,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                 Cerrar
               </button>
               <button
+                type="button"
                 onClick={handleSkip}
                 disabled={actionLoading}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 transition-colors"
@@ -518,6 +757,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
+                type="button"
                 onClick={() => {
                   setCancelModal({ open: false, periodId: '', obligationId: '' });
                   setActionError(null);
@@ -528,6 +768,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                 Cerrar
               </button>
               <button
+                type="button"
                 onClick={handleCancel}
                 disabled={actionLoading}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
@@ -567,25 +808,71 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Monto a pagar</label>
-                <input
-                  type="number"
-                  value={payAmountInput}
-                  onChange={(e) => setPayAmountInput(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
-                  placeholder="Ej. 150000"
-                  disabled={actionLoading}
-                />
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setPayMode('remaining')}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${payMode === 'remaining' ? 'bg-graphite-blue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  Pagar restante
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayMode('other')}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${payMode === 'other' ? 'bg-graphite-blue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  Otro monto
+                </button>
               </div>
+
+              {payMode === 'remaining' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Monto a pagar</label>
+                  <div className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500">
+                    {payModal.amountDue} (Monto restante)
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Monto a pagar</label>
+                  <input
+                    type="number"
+                    value={payAmountInput}
+                    onChange={(e) => setPayAmountInput(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-graphite-blue focus:ring-2 focus:ring-graphite-blue/20 outline-none transition-all text-graphite-blue"
+                    placeholder="Ej. 150000"
+                    disabled={actionLoading}
+                  />
+                </div>
+              )}
+              
+              {payAccountInput && (
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
+                  {(() => {
+                    const selectedAcc = accounts.find(a => a.id === payAccountInput);
+                    const currentOb = obligations.find(o => o.id === payModal.obligationId);
+                    if (selectedAcc && currentOb) {
+                      if (selectedAcc.currency !== currentOb.currency) {
+                        return "Calculando conversión... (Preview no disponible: endpoint no sincronizado en OpenAPI)";
+                      } else {
+                        const amt = payMode === 'remaining' ? payModal.amountDue : (payAmountInput || '0');
+                        return `Se descontará ${formatMoneyOrDash(amt, currentOb.currency)} de esta cuenta.`;
+                      }
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
+                type="button"
                 onClick={() => {
-                  setPayModal({ open: false, periodId: '', obligationId: '' });
+                  setPayModal({ open: false, periodId: '', obligationId: '', amountDue: '' });
                   setPayAmountInput('');
                   setPayAccountInput('');
+                  setPayMode('remaining');
                   setActionError(null);
                 }}
                 disabled={actionLoading}
@@ -594,8 +881,9 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={handlePayPeriod}
-                disabled={actionLoading || !payAmountInput || !payAccountInput}
+                disabled={actionLoading || (payMode === 'other' && !payAmountInput) || !payAccountInput}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-graphite-blue hover:bg-graphite-blue/90 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? 'Procesando...' : 'Confirmar pago'}
