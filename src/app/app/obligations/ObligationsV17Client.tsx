@@ -309,19 +309,31 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
   const handleCreateObligation = async () => {
     if (!createForm.name) return;
+    
+    const isOneTime = createForm.obligation_type === 'one_time';
+    const isFixed = createForm.amount_type === 'fixed';
+    const baseAmtNum = Number(createForm.base_amount);
+
+    if (isOneTime || isFixed) {
+       if (!createForm.base_amount || isNaN(baseAmtNum) || baseAmtNum <= 0) {
+          setActionError('El monto es requerido y debe ser mayor a 0.');
+          return;
+       }
+    }
+
     setActionLoading(true);
     setActionError(null);
     const payload: components['schemas']['ObligationV17CreateRequest'] = {
       name: createForm.name,
       obligation_type: createForm.obligation_type,
-      frequency: createForm.frequency,
-      amount_type: createForm.amount_type,
+      frequency: isOneTime ? 'one_time' : createForm.frequency,
+      amount_type: isOneTime ? 'fixed' : createForm.amount_type,
       currency: createForm.currency,
-      start_date: createForm.start_date,
+      start_date: isOneTime ? createForm.first_due_date : createForm.start_date,
       first_due_date: createForm.first_due_date,
     };
-    if (createForm.base_amount) {
-      payload.base_amount = Number(createForm.base_amount);
+    if (isOneTime || isFixed) {
+      payload.base_amount = baseAmtNum;
     }
     const res = await createObligationV17Action(payload);
     if (res.success) {
@@ -467,7 +479,9 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                   <div>
                     <h2 className="text-xl font-semibold text-graphite-blue">{ob.name}</h2>
                     <p className="text-sm text-graphite-blue/60 mt-1 capitalize">
-                      {ob.frequency.replace('_', ' ')} • {ob.amount_type ? getPaymentModeLabel(ob.amount_type) : '—'} • {ob.currency}
+                      {ob.obligation_type === 'one_time' 
+                        ? `Una vez • ${ob.currency}`
+                        : `${ob.frequency.replace('_', ' ')} • ${ob.amount_type ? getPaymentModeLabel(ob.amount_type) : '—'} • ${ob.currency}`}
                     </p>
                   </div>
                 </div>
@@ -502,9 +516,11 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
                     <div className="grid grid-cols-1 gap-4">
                       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                        <p className="text-xs text-gray-400 mb-1">Monto del Periodo</p>
+                        <p className="text-xs text-gray-400 mb-1">
+                          {ob.obligation_type === 'one_time' ? 'Monto' : (ob.amount_type === 'fixed' ? 'Monto base' : 'Monto del Periodo')}
+                        </p>
                         <p className="text-lg font-semibold text-graphite-blue">
-                          {formatMoneyOrDash(period.amount_due, ob.currency)}
+                          {period.status === 'pending_amount_definition' ? 'Monto por definir' : formatMoneyOrDash(period.amount_due, ob.currency)}
                         </p>
                       </div>
                     </div>
@@ -605,36 +621,39 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                     <option value="one_time">Una vez</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia</label>
-                  <select
-                    value={createForm.frequency}
-                    onChange={(e) => setCreateForm({ ...createForm, frequency: e.target.value as components['schemas']['Frequency'] })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue bg-white"
-                    disabled={actionLoading}
-                  >
-                    <option value="monthly">Mensual</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="biweekly">Quincenal</option>
-                    <option value="yearly">Anual</option>
-                    <option value="one_time">Una vez</option>
-                  </select>
-                </div>
+                {createForm.obligation_type !== 'one_time' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia</label>
+                    <select
+                      value={createForm.frequency}
+                      onChange={(e) => setCreateForm({ ...createForm, frequency: e.target.value as components['schemas']['Frequency'] })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue bg-white"
+                      disabled={actionLoading}
+                    >
+                      <option value="monthly">Mensual</option>
+                      <option value="weekly">Semanal</option>
+                      <option value="biweekly">Quincenal</option>
+                      <option value="yearly">Anual</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de monto</label>
-                  <select
-                    value={createForm.amount_type}
-                    onChange={(e) => setCreateForm({ ...createForm, amount_type: e.target.value as components['schemas']['AmountType'] })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue bg-white"
-                    disabled={actionLoading}
-                  >
-                    <option value="fixed">Fija</option>
-                    <option value="variable">Variable</option>
-                  </select>
-                </div>
+                {createForm.obligation_type !== 'one_time' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de monto</label>
+                    <select
+                      value={createForm.amount_type}
+                      onChange={(e) => setCreateForm({ ...createForm, amount_type: e.target.value as components['schemas']['AmountType'] })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue bg-white"
+                      disabled={actionLoading}
+                    >
+                      <option value="fixed">Fija</option>
+                      <option value="variable">Variable</option>
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
                   <select
@@ -649,31 +668,48 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Monto base (opcional)</label>
-                <input
-                  type="number"
-                  value={createForm.base_amount}
-                  onChange={(e) => setCreateForm({ ...createForm, base_amount: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue"
-                  placeholder="Ej. 150000"
-                  disabled={actionLoading}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              {(createForm.obligation_type === 'one_time' || createForm.amount_type === 'fixed') && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de inicio</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {createForm.obligation_type === 'one_time' ? 'Monto' : 'Monto base'}
+                  </label>
                   <input
-                    type="date"
-                    value={createForm.start_date}
-                    onChange={(e) => setCreateForm({ ...createForm, start_date: e.target.value })}
+                    type="number"
+                    value={createForm.base_amount}
+                    onChange={(e) => setCreateForm({ ...createForm, base_amount: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue"
+                    placeholder="Ej. 150000"
                     disabled={actionLoading}
                   />
+                  {createForm.obligation_type !== 'one_time' && (
+                    <p className="mt-1 text-sm text-gray-500">Este monto se usará como valor esperado en cada periodo.</p>
+                  )}
                 </div>
+              )}
+
+              {createForm.obligation_type === 'recurring' && createForm.amount_type === 'variable' && (
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <p className="text-sm text-gray-600">Definirás el monto de cada periodo cuando llegue el momento de pagarlo.</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                {createForm.obligation_type !== 'one_time' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de inicio</label>
+                    <input
+                      type="date"
+                      value={createForm.start_date}
+                      onChange={(e) => setCreateForm({ ...createForm, start_date: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-graphite-blue outline-none text-graphite-blue"
+                      disabled={actionLoading}
+                    />
+                  </div>
+                )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Primer vencimiento</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {createForm.obligation_type === 'one_time' ? 'Fecha de vencimiento' : 'Primer vencimiento'}
+                  </label>
                   <input
                     type="date"
                     value={createForm.first_due_date}
