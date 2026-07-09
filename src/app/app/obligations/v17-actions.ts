@@ -5,7 +5,6 @@ import { components } from '@/lib/api/types.generated';
 import { handleFinancialError } from '@/lib/api/errors';
 import { isObligationsV17Enabled } from '@/lib/features';
 import { ApiError } from '@/lib/api/errors';
-
 /**
  * Helper to ensure the feature is enabled before executing V1.7 actions.
  * If disabled, returns a controlled error structure instead of crashing.
@@ -121,6 +120,19 @@ export async function updateObligationPeriodAmountV17Action(id: string, periodId
   }
 }
 
+export async function payObligationFifoV17Action(id: string, data: components['schemas']['ObligationFIFOPaymentCreateRequest']) {
+  try {
+    checkV17FeatureFlag();
+    const idempotencyKey = crypto.randomUUID();
+    const result = await api.obligationsV17.payFifo(id, data, idempotencyKey, true);
+    
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('V1.7 FIFO payment error:', err);
+    return { success: false, error: handleV17Error(err, 'No pudimos registrar tu pago. Por favor, intenta de nuevo.') };
+  }
+}
+
 export async function payObligationPeriodV17Action(id: string, periodId: string, data: components['schemas']['ObligationPeriodPaymentCreateRequest'], idempotencyKey: string) {
   try {
     checkV17FeatureFlag();
@@ -132,16 +144,6 @@ export async function payObligationPeriodV17Action(id: string, periodId: string,
   }
 }
 
-export async function payObligationFifoV17Action(id: string, data: components['schemas']['ObligationFIFOPaymentCreateRequest'], idempotencyKey: string) {
-  try {
-    checkV17FeatureFlag();
-    const result = await api.obligationsV17.payFifo(id, data, idempotencyKey, true);
-    return { success: true, result };
-  } catch (err: unknown) {
-    console.error('V1.7 pay fifo error:', err);
-    return { success: false, error: handleV17Error(err, 'Ocurrió un error al registrar el pago general.') };
-  }
-}
 
 export async function skipObligationPeriodV17Action(id: string, periodId: string) {
   try {
