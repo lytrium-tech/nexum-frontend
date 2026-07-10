@@ -10,7 +10,6 @@ import {
   updateObligationPeriodAmountV17Action,
   skipObligationPeriodV17Action,
   cancelObligationPeriodV17Action,
-  refreshOverduePeriodsV17Action,
   payObligationPeriodV17Action,
   payObligationFifoV17Action,
   createObligationV17Action,
@@ -76,6 +75,33 @@ function getRelevantPeriodV17(periods: ObligationPeriodV17Response[]): Obligatio
   return periods[periods.length - 1];
 }
 
+function canShowPayObligation(periods: ObligationPeriodV17Response[]) {
+  if (!periods) return false;
+  const payableStatuses = ['pending_payment', 'partially_paid', 'overdue'];
+  const payablePeriods = periods.filter(p => p.status && payableStatuses.includes(p.status));
+  const overduePeriods = periods.filter(p => p.status === 'overdue');
+
+  if (payablePeriods.length >= 2) return true;
+  if (overduePeriods.length > 0) return true;
+  
+  return false;
+}
+
+function getPeriodLabel(period: ObligationPeriodV17Response) {
+  if (period.status === 'paid') return 'Último Periodo Pagado';
+  if (period.status === 'skipped') return 'Último Periodo Saltado';
+  if (period.status === 'cancelled') return 'Último Periodo Cancelado';
+  if (period.status === 'overdue') return 'Periodo Vencido';
+  
+  if (period.due_date) {
+    const today = new Date().toISOString().split('T')[0];
+    if (period.due_date > today && period.status === 'pending_payment') {
+      return 'Próximo Periodo';
+    }
+  }
+  return 'Periodo Actual';
+}
+
 export default function ObligationsV17Client({ accounts = [] }: { accounts?: components['schemas']['AccountRead'][] }) {
   const [localAccounts, setLocalAccounts] = useState<components['schemas']['AccountRead'][]>(accounts);
   const [loading, setLoading] = useState(true);
@@ -85,7 +111,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
   const [summary, setSummary] = useState<ObligationsV17SummaryResponse | null>(null);
   const [periodsByObligation, setPeriodsByObligation] = useState<Record<string, ObligationPeriodV17Response[]>>({});
 
-  const [syncing, setSyncing] = useState<Record<string, boolean>>({});
+
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -305,15 +331,6 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     setActionLoading(false);
   };
 
-  const handleRefreshOverdue = async (id: string) => {
-    setSyncing(prev => ({ ...prev, [id]: true }));
-    const res = await refreshOverduePeriodsV17Action(id);
-    if (res.success) {
-      await fetchAllData();
-    }
-    setSyncing(prev => ({ ...prev, [id]: false }));
-  };
-
   const handleCreateObligation = async () => {
     if (!createForm.name) return;
     
@@ -491,12 +508,12 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                         : `${ob.frequency.replace('_', ' ')} • ${ob.amount_type ? getPaymentModeLabel(ob.amount_type) : '—'} • ${ob.currency}`}
                     </p>
                   </div>
-                  {periods.some(p => ['pending_payment', 'partially_paid', 'overdue'].includes(p.status)) && (
+                  {canShowPayObligation(periods) && (
                     <button
                       type="button"
                       onClick={() => {
                         const totalDue = periods
-                          .filter(p => ['pending_payment', 'partially_paid', 'overdue'].includes(p.status))
+                          .filter(p => ['pending_payment', 'partially_paid', 'overdue'].includes(p.status || ''))
                           .reduce((sum, p) => sum + parseFloat(p.amount_due || '0'), 0);
                         
                         setPayModal({ 
@@ -515,16 +532,6 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                   )}
                 </div>
 
-                <div className="mt-3 flex items-center justify-end gap-3 mb-2">
-                  <button
-                    onClick={() => handleRefreshOverdue(ob.id)}
-                    disabled={syncing[ob.id]}
-                    className="text-xs text-gray-400 hover:text-gray-600 underline disabled:opacity-50 transition-colors"
-                  >
-                    {syncing[ob.id] ? 'Actualizando...' : 'Actualizar vencimientos'}
-                  </button>
-                </div>
-
                 {!period ? (
                   <div className="bg-gray-50 rounded-2xl p-4 text-center text-sm text-gray-500">
                     Esta obligación aún no tiene periodos generados.
@@ -533,7 +540,9 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                   <div className="bg-gray-50/50 rounded-2xl p-5 border border-graphite-blue/5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                       <div>
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Periodo Actual</p>
+                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                          {getPeriodLabel(period)}
+                        </p>
                         <p className="text-sm font-medium text-graphite-blue">
                           Vence: {period.due_date ? new Date(period.due_date + 'T00:00:00').toLocaleDateString('es-CO', { timeZone: 'UTC' }) : 'No definida'}
                         </p>
@@ -546,21 +555,24 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                     <div className="grid grid-cols-1 gap-4">
                       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                         <p className="text-xs text-gray-400 mb-1">
-                          {ob.obligation_type === 'one_time' ? 'Monto' : (ob.amount_type === 'fixed' ? 'Monto base' : 'Monto del Periodo')}
+                          {['paid', 'skipped', 'cancelled'].includes(period.status) ? 'Monto del Periodo' : (ob.obligation_type === 'one_time' ? 'Monto' : (ob.amount_type === 'fixed' ? 'Monto base' : 'Monto del Periodo'))}
                         </p>
                         <p className="text-lg font-semibold text-graphite-blue">
-                          {period.status === 'pending_amount_definition' ? 'Monto por definir' : formatMoneyOrDash(period.amount_due, ob.currency)}
+                          {period.status === 'pending_amount_definition' ? 'Monto por definir' : formatMoneyOrDash(period.amount, ob.currency)}
                         </p>
                       </div>
                     </div>
 
-                    {parseFloat(period.amount_paid || '0') > 0 && (
-                      <div className="mt-3 text-right">
-                        <p className="text-sm text-gray-500">
+                    <div className="mt-3 text-right">
+                      {parseFloat(period.amount_paid || '0') > 0 && (
+                        <p className="text-sm text-gray-500 mb-1">
                           Pagado: <span className="font-medium text-graphite-blue">{formatMoneyOrDash(period.amount_paid, ob.currency)}</span>
                         </p>
-                      </div>
-                    )}
+                      )}
+                      <p className="text-sm text-gray-500">
+                        Saldo pendiente: <span className="font-medium text-graphite-blue">{formatMoneyOrDash(period.amount_due, ob.currency)}</span>
+                      </p>
+                    </div>
 
                     <div className="mt-5 pt-5 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3">
                       {['pending_amount_definition', 'pending_payment', 'partially_paid', 'overdue'].includes(period.status) && (
@@ -590,7 +602,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                         >
                           Definir monto
                         </button>
-                      ) : ['pending_payment', 'partially_paid', 'overdue'].includes(period.status) ? (
+                      ) : ['pending_payment', 'partially_paid', 'overdue'].includes(period.status || '') && parseFloat(period.amount_due || '0') > 0 ? (
                         <button
                           type="button"
                           onClick={() => {
@@ -601,6 +613,10 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                         >
                           Pagar periodo
                         </button>
+                      ) : ['pending_payment', 'partially_paid', 'overdue'].includes(period.status || '') && parseFloat(period.amount_due || '0') <= 0 ? (
+                        <div className="text-sm text-gray-500 py-2.5">
+                          Sin saldo por pagar
+                        </div>
                       ) : null}
                     </div>
                   </div>
