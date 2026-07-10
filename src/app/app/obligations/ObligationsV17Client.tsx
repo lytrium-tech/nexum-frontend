@@ -11,7 +11,7 @@ import {
   skipObligationPeriodV17Action,
   cancelObligationPeriodV17Action,
   payObligationPeriodV17Action,
-  payObligationFifoV17Action,
+  payObligationSmartV17Action,
   createObligationV17Action,
   getLatestFxRateV17Action,
   getAccountsV17Action
@@ -73,18 +73,6 @@ function getRelevantPeriodV17(periods: ObligationPeriodV17Response[]): Obligatio
   const unclosed = periods.find(p => !['paid', 'skipped', 'cancelled'].includes(p.status));
   if (unclosed) return unclosed;
   return periods[periods.length - 1];
-}
-
-function canShowPayObligation(periods: ObligationPeriodV17Response[]) {
-  if (!periods) return false;
-  const payableStatuses = ['pending_payment', 'partially_paid', 'overdue'];
-  const payablePeriods = periods.filter(p => p.status && payableStatuses.includes(p.status));
-  const overduePeriods = periods.filter(p => p.status === 'overdue');
-
-  if (payablePeriods.length >= 2) return true;
-  if (overduePeriods.length > 0) return true;
-  
-  return false;
 }
 
 function getPeriodLabel(period: ObligationPeriodV17Response) {
@@ -312,7 +300,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
     let res;
     if (payModal.isFifo) {
-      res = await payObligationFifoV17Action(payModal.obligationId, payload);
+      res = await payObligationSmartV17Action(payModal.obligationId, payload);
     } else {
       res = await payObligationPeriodV17Action(payModal.obligationId, payModal.periodId, payload, idempotencyKey);
     }
@@ -508,28 +496,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                         : `${ob.frequency.replace('_', ' ')} • ${ob.amount_type ? getPaymentModeLabel(ob.amount_type) : '—'} • ${ob.currency}`}
                     </p>
                   </div>
-                  {canShowPayObligation(periods) && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const totalDue = periods
-                          .filter(p => ['pending_payment', 'partially_paid', 'overdue'].includes(p.status || ''))
-                          .reduce((sum, p) => sum + parseFloat(p.amount_due || '0'), 0);
-                        
-                        setPayModal({ 
-                          open: true, 
-                          periodId: '', 
-                          obligationId: ob.id, 
-                          amountDue: totalDue.toString(),
-                          isFifo: true
-                        });
-                        setPayMode('remaining');
-                      }}
-                      className="bg-gray-100 hover:bg-gray-200 text-graphite-blue border border-gray-200 px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap"
-                    >
-                      Pagar obligación
-                    </button>
-                  )}
+                  {/* Un solo botón Pagar reubicado abajo */}
                 </div>
 
                 {!period ? (
@@ -606,12 +573,21 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                         <button
                           type="button"
                           onClick={() => {
-                            setPayModal({ open: true, periodId: period.id, obligationId: ob.id, amountDue: period.amount_due, isFifo: false });
+                            const payablePeriods = periods.filter(p => ['pending_payment', 'partially_paid', 'overdue'].includes(p.status || ''));
+                            const totalDue = payablePeriods.reduce((sum, p) => sum + parseFloat(p.amount_due || '0'), 0);
+                            
+                            setPayModal({ 
+                              open: true, 
+                              periodId: period.id, 
+                              obligationId: ob.id, 
+                              amountDue: totalDue.toString(), 
+                              isFifo: payablePeriods.length > 1 // Send as smart
+                            });
                             setPayMode('remaining');
                           }}
                           className="bg-graphite-blue hover:bg-graphite-blue/90 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                         >
-                          Pagar periodo
+                          Pagar
                         </button>
                       ) : ['pending_payment', 'partially_paid', 'overdue'].includes(period.status || '') && parseFloat(period.amount_due || '0') <= 0 ? (
                         <div className="text-sm text-gray-500 py-2.5">
@@ -919,7 +895,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-gray-100">
             <h3 className="text-xl font-semibold text-graphite-blue mb-2">
-              {payModal.isFifo ? 'Pagar obligación' : 'Pagar periodo'}
+              Pagar
             </h3>
             <p className="text-sm text-gray-500 mb-6">
               {payModal.isFifo 

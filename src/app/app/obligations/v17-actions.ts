@@ -139,6 +139,22 @@ export async function payObligationFifoV17Action(id: string, data: components['s
   }
 }
 
+export async function payObligationSmartV17Action(id: string, data: components['schemas']['ObligationFIFOPaymentCreateRequest']) {
+  try {
+    checkV17FeatureFlag();
+    const idempotencyKey = crypto.randomUUID();
+    const result = await api.obligationsV17.paySmart(id, data, idempotencyKey, true);
+    
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('V1.7 Smart payment error:', err);
+    if (err instanceof ApiError && err.status === 422 && (err.data as Record<string, unknown>)?.detail?.toString()?.toLowerCase()?.includes('oldest_period_requires_amount_definition')) {
+      return { success: false, error: 'Debes definir el monto del periodo pendiente más antiguo antes de poder realizar un pago.' };
+    }
+    return { success: false, error: handleV17Error(err, 'No pudimos registrar tu pago. Por favor, intenta de nuevo.') };
+  }
+}
+
 export async function payObligationPeriodV17Action(id: string, periodId: string, data: components['schemas']['ObligationPeriodPaymentCreateRequest'], idempotencyKey: string) {
   try {
     checkV17FeatureFlag();

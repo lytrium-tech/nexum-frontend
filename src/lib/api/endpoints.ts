@@ -228,6 +228,12 @@ export const api = {
           headers: { 'Idempotency-Key': idempotencyKey },
           body: JSON.stringify(data),
         }, isServer),
+      paySmart: (id: string, data: ObligationFIFOPaymentCreateRequest, idempotencyKey: string, isServer = false) =>
+        apiClient<ObligationFIFOPaymentResultResponse>(`/api/v1.7/obligations/${id}/payments/smart`, {
+          method: 'POST',
+          headers: { 'Idempotency-Key': idempotencyKey },
+          body: JSON.stringify(data),
+        }, isServer),
       skipPeriod: (id: string, periodId: string, isServer = false) =>
         apiClient<ObligationPeriodV17Response>(`/api/v1.7/obligations/${id}/periods/${periodId}/skip`, { method: 'POST' }, isServer),
       cancelPeriod: (id: string, periodId: string, isServer = false) =>
