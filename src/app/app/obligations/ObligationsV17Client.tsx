@@ -118,11 +118,11 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
       ]);
       
       if (!listRes.success) {
-        if (isInitial) setError(listRes.error || 'No pudimos cargar Obligaciones V1.7.');
+        if (isInitial) setError(listRes.error || 'No pudimos cargar tus obligaciones.');
         return;
       }
       if (!summaryRes.success) {
-        if (isInitial) setError(summaryRes.error || 'No pudimos cargar Obligaciones V1.7.');
+        if (isInitial) setError(summaryRes.error || 'No pudimos cargar tus obligaciones.');
         return;
       }
 
@@ -130,7 +130,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
       setSummary(summaryRes.result || null);
     } catch (e) {
       console.error(e);
-      if (isInitial) setError('No pudimos cargar Obligaciones V1.7.');
+      if (isInitial) setError('No pudimos cargar tus obligaciones.');
     } finally {
       if (isInitial) setLoading(false);
     }
@@ -350,7 +350,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-graphite-blue sm:text-3xl">
-            Obligaciones (V1.7)
+            Obligaciones
           </h1>
           <p className="mt-2 text-sm text-graphite-blue/60 sm:text-base">
             Controla tus compromisos y pagos pendientes.
