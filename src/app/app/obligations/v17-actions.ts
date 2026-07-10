@@ -39,6 +39,12 @@ function handleV17Error(err: unknown, defaultMessage: string) {
     if (combinedErrorString.includes('payment_exceeds_remaining_amount')) {
       return 'El monto supera el saldo pendiente de este periodo.';
     }
+    if (combinedErrorString.includes('no_payable_periods')) {
+      return 'No hay periodos pendientes disponibles para pago.';
+    }
+    if (combinedErrorString.includes('period_not_payable')) {
+      return 'Este periodo no está disponible para pago.';
+    }
     if (combinedErrorString.includes('insufficient_funds') || combinedErrorString.includes('insufficient_balance')) {
       return 'No tienes saldo suficiente en la cuenta seleccionada.';
     }
