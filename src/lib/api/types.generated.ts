@@ -949,6 +949,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1.7/obligations/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Obligations Overview (V1.7)
+         * @description List all obligations with pre-computed action state and relevant periods.
+         */
+        get: operations["list_obligations_overview_v17_api_v1_7_obligations_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1.7/obligations/summary": {
         parameters: {
             query?: never;
@@ -1103,6 +1123,27 @@ export interface paths {
          * @description Registers a payment using FIFO strategy across obligation periods.
          */
         post: operations["create_obligation_payment_fifo_v17_api_v1_7_obligations__obligation_id__payments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1.7/obligations/{obligation_id}/payments/smart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pay Obligation Smart
+         * @description Unified smart payment endpoint.
+         *     Automatically applies payment to the oldest payable periods.
+         */
+        post: operations["pay_obligation_smart_api_v1_7_obligations__obligation_id__payments_smart_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3084,6 +3125,23 @@ export interface components {
          * @enum {string}
          */
         ObligationType: "recurring" | "one_time";
+        /** ObligationV17ActionState */
+        ObligationV17ActionState: {
+            /** Can Pay */
+            can_pay: boolean;
+            /** Requires Amount Definition */
+            requires_amount_definition: boolean;
+            /** Can Skip */
+            can_skip: boolean;
+            /** Can Cancel */
+            can_cancel: boolean;
+            /** Has Overdue */
+            has_overdue: boolean;
+            /** Payable Period Count */
+            payable_period_count: number;
+            /** Payable Total Amount */
+            payable_total_amount: string;
+        };
         /** ObligationV17CreateRequest */
         ObligationV17CreateRequest: {
             /** Name */
@@ -3116,6 +3174,59 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** ObligationV17OverviewResponse */
+        ObligationV17OverviewResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Amount */
+            amount: string;
+            amount_type?: components["schemas"]["AmountType"] | null;
+            /** Currency */
+            currency: string;
+            frequency: components["schemas"]["Frequency"];
+            obligation_type: components["schemas"]["ObligationType"];
+            status: components["schemas"]["ObligationStatus"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            relevant_period: components["schemas"]["ObligationPeriodV17Response"] | null;
+            period_counts: components["schemas"]["ObligationV17PeriodCounts"];
+            action_state: components["schemas"]["ObligationV17ActionState"];
+        };
+        /** ObligationV17PeriodCounts */
+        ObligationV17PeriodCounts: {
+            /** Payable */
+            payable: number;
+            /** Overdue */
+            overdue: number;
+            /** Pending */
+            pending: number;
+            /** Paid */
+            paid: number;
+            /** Cancelled */
+            cancelled: number;
+            /** Skipped */
+            skipped: number;
         };
         /** ObligationV17Response */
         ObligationV17Response: {
@@ -5568,6 +5679,26 @@ export interface operations {
             };
         };
     };
+    list_obligations_overview_v17_api_v1_7_obligations_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObligationV17OverviewResponse"][];
+                };
+            };
+        };
+    };
     get_obligations_summary_v17_api_v1_7_obligations_summary_get: {
         parameters: {
             query?: {
@@ -5945,6 +6076,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    pay_obligation_smart_api_v1_7_obligations__obligation_id__payments_smart_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path: {
+                obligation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObligationFIFOPaymentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObligationFIFOPaymentResultResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

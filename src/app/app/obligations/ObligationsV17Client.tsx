@@ -4,17 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
 import { formatMoneyOrDash } from '@/lib/format/money';
 import { 
-  listObligationsV17Action, 
   getObligationsSummaryV17Action,
-  getObligationPeriodsV17Action,
   updateObligationPeriodAmountV17Action,
   skipObligationPeriodV17Action,
   cancelObligationPeriodV17Action,
-  payObligationPeriodV17Action,
   payObligationSmartV17Action,
   createObligationV17Action,
   getLatestFxRateV17Action,
-  getAccountsV17Action
+  getAccountsV17Action,
+  getObligationsOverviewV17Action
 } from './v17-actions';
 
 
@@ -60,20 +58,7 @@ function getPaymentModeLabel(mode: string) {
   return map[mode] || mode;
 }
 
-function getRelevantPeriodV17(periods: ObligationPeriodV17Response[]): ObligationPeriodV17Response | null {
-  if (!periods || periods.length === 0) return null;
-  const overdue = periods.find(p => p.status === 'overdue');
-  if (overdue) return overdue;
-  const pendingAmount = periods.find(p => p.status === 'pending_amount_definition');
-  if (pendingAmount) return pendingAmount;
-  const pendingPayment = periods.find(p => p.status === 'pending_payment');
-  if (pendingPayment) return pendingPayment;
-  const partiallyPaid = periods.find(p => p.status === 'partially_paid');
-  if (partiallyPaid) return partiallyPaid;
-  const unclosed = periods.find(p => !['paid', 'skipped', 'cancelled'].includes(p.status));
-  if (unclosed) return unclosed;
-  return periods[periods.length - 1];
-}
+
 
 function getPeriodLabel(period: ObligationPeriodV17Response) {
   if (period.status === 'paid') return 'Último Periodo Pagado';
@@ -95,9 +80,8 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [obligations, setObligations] = useState<ObligationV17Response[]>([]);
+  const [obligations, setObligations] = useState<components['schemas']['ObligationV17OverviewResponse'][]>([]);
   const [summary, setSummary] = useState<ObligationsV17SummaryResponse | null>(null);
-  const [periodsByObligation, setPeriodsByObligation] = useState<Record<string, ObligationPeriodV17Response[]>>({});
 
 
   const [actionLoading, setActionLoading] = useState(false);
@@ -107,7 +91,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
   const [amountInput, setAmountInput] = useState('');
   const [skipModal, setSkipModal] = useState({ open: false, periodId: '', obligationId: '' });
   const [cancelModal, setCancelModal] = useState({ open: false, periodId: '', obligationId: '' });
-  const [payModal, setPayModal] = useState({ open: false, periodId: '', obligationId: '', amountDue: '', isFifo: false });
+  const [payModal, setPayModal] = useState({ open: false, periodId: '', obligationId: '', amountDue: '' });
   const [payMode, setPayMode] = useState<'remaining' | 'other'>('remaining');
   const [payAmountInput, setPayAmountInput] = useState('');
   const [payAccountInput, setPayAccountInput] = useState('');
@@ -129,7 +113,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     try {
       if (isInitial) setLoading(true);
       const [listRes, summaryRes] = await Promise.all([
-        listObligationsV17Action(),
+        getObligationsOverviewV17Action(),
         getObligationsSummaryV17Action()
       ]);
       
@@ -144,17 +128,6 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
       setObligations(listRes.result || []);
       setSummary(summaryRes.result || null);
-
-      if (listRes.result) {
-        const periodsData: Record<string, ObligationPeriodV17Response[]> = {};
-        for (const ob of listRes.result) {
-          const periodsRes = await getObligationPeriodsV17Action(ob.id);
-          if (periodsRes.success && periodsRes.result) {
-            periodsData[ob.id] = Array.isArray(periodsRes.result) ? periodsRes.result : [];
-          }
-        }
-        setPeriodsByObligation(periodsData);
-      }
     } catch (e) {
       console.error(e);
       if (isInitial) setError('No pudimos cargar Obligaciones V1.7.');
@@ -209,21 +182,14 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
 
   const refreshObligationAfterMutation = async (obligationId: string) => {
     try {
-      const [summaryRes, periodsRes, listRes, accountsRes] = await Promise.all([
+      const [summaryRes, listRes, accountsRes] = await Promise.all([
         getObligationsSummaryV17Action(),
-        getObligationPeriodsV17Action(obligationId),
-        listObligationsV17Action(),
+        getObligationsOverviewV17Action(),
         getAccountsV17Action()
       ]);
       
       if (summaryRes.success && summaryRes.result) {
         setSummary(summaryRes.result);
-      }
-      if (periodsRes.success && periodsRes.result) {
-        setPeriodsByObligation(prev => ({
-          ...prev,
-          [obligationId]: Array.isArray(periodsRes.result) ? periodsRes.result : []
-        }));
       }
       if (listRes.success && listRes.result) {
         setObligations(listRes.result);
@@ -287,8 +253,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     if (!finalAmount || isNaN(Number(finalAmount)) || !payAccountInput) return;
     setActionLoading(true);
     setActionError(null);
-    const idempotencyKey = crypto.randomUUID();
-    
+    setPreviewLoading(true);
     const payload: components['schemas']['ObligationPeriodPaymentCreateRequest'] | components['schemas']['ObligationFIFOPaymentCreateRequest'] = {
       amount: Number(finalAmount),
       source_account_id: payAccountInput,
@@ -298,16 +263,11 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
       payload.rate_snapshot_id = rateSnapshot.id;
     }
 
-    let res;
-    if (payModal.isFifo) {
-      res = await payObligationSmartV17Action(payModal.obligationId, payload);
-    } else {
-      res = await payObligationPeriodV17Action(payModal.obligationId, payModal.periodId, payload, idempotencyKey);
-    }
+    const res = await payObligationSmartV17Action(payModal.obligationId, payload);
 
     if (res.success) {
       const obId = payModal.obligationId;
-      setPayModal({ open: false, periodId: '', obligationId: '', amountDue: '', isFifo: false });
+      setPayModal({ open: false, periodId: '', obligationId: '', amountDue: '' });
       setPayAmountInput('');
       setPayAccountInput('');
       setPayMode('remaining');
@@ -482,8 +442,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
       ) : (
         <div className="space-y-6">
           {obligations.map(ob => {
-            const periods = periodsByObligation[ob.id] || [];
-            const period = getRelevantPeriodV17(periods);
+            const period = ob.relevant_period;
             
             return (
               <div key={ob.id} className="bg-white rounded-3xl border border-graphite-blue/10 shadow-sm p-6 overflow-hidden">
@@ -573,15 +532,11 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                         <button
                           type="button"
                           onClick={() => {
-                            const payablePeriods = periods.filter(p => ['pending_payment', 'partially_paid', 'overdue'].includes(p.status || ''));
-                            const totalDue = payablePeriods.reduce((sum, p) => sum + parseFloat(p.amount_due || '0'), 0);
-                            
                             setPayModal({ 
                               open: true, 
                               periodId: period.id, 
                               obligationId: ob.id, 
-                              amountDue: totalDue.toString(), 
-                              isFifo: payablePeriods.length > 1 // Send as smart
+                              amountDue: ob.action_state?.payable_total_amount || String(period.amount_due || '0')
                             });
                             setPayMode('remaining');
                           }}
@@ -898,9 +853,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
               Pagar
             </h3>
             <p className="text-sm text-gray-500 mb-6">
-              {payModal.isFifo 
-                ? 'Nexum aplicará este pago a los periodos pendientes más antiguos primero.'
-                : 'Ingresa el monto a pagar y selecciona la cuenta de origen.'}
+              Ingresa el monto a pagar y selecciona la cuenta de origen.
             </p>
 
             {actionError && (
@@ -955,8 +908,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {(() => {
-                      const currentOb = obligations.find(o => o.id === payModal.obligationId);
-                      return payModal.isFifo ? `Monto a aplicar a la obligación (${currentOb?.currency || ''})` : 'Monto a pagar';
+                      return 'Monto a pagar';
                     })()}
                   </label>
                   <input
@@ -1002,7 +954,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
               <button
                 type="button"
                 onClick={() => {
-                  setPayModal({ open: false, periodId: '', obligationId: '', amountDue: '', isFifo: false });
+                  setPayModal({ open: false, periodId: '', obligationId: '', amountDue: '' });
                   setPayAmountInput('');
                   setPayAccountInput('');
                   setPayMode('remaining');

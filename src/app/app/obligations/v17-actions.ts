@@ -92,6 +92,17 @@ export async function listObligationsV17Action() {
   }
 }
 
+export async function getObligationsOverviewV17Action() {
+  try {
+    checkV17FeatureFlag();
+    const result = await api.obligationsV17.overview(true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('V1.7 list obligations overview error:', err);
+    return { success: false, error: handleV17Error(err, 'No pudimos cargar la lista de obligaciones.') };
+  }
+}
+
 export async function createObligationV17Action(data: components['schemas']['ObligationV17CreateRequest']) {
   try {
     checkV17FeatureFlag();

@@ -194,6 +194,8 @@ export const api = {
     obligationsV17: {
       list: (isServer = false) =>
         apiClient<ObligationV17Response[]>('/api/v1.7/obligations', { method: 'GET' }, isServer),
+      overview: (isServer = false) =>
+        apiClient<components['schemas']['ObligationV17OverviewResponse'][]>('/api/v1.7/obligations/overview', { method: 'GET' }, isServer),
       create: (data: ObligationV17CreateRequest, isServer = false) =>
         apiClient<ObligationV17Response>('/api/v1.7/obligations', {
           method: 'POST',
