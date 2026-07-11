@@ -215,3 +215,26 @@ export async function getLatestFxRateV17Action(baseCurrency: string, quoteCurren
     return { success: false, error: handleV17Error(err, 'No pudimos obtener la tasa de cambio. Intenta de nuevo.') };
   }
 }
+
+export async function getObligationsScreenDataAction() {
+  try {
+    const [overview, summary, accounts] = await Promise.all([
+      api.obligationsV17.overview(true),
+      api.obligationsV17.summary(undefined, true),
+      api.accounts.list(true, { include_archived: true }),
+    ]);
+
+    return {
+      success: true,
+      result: {
+        overview,
+        summary,
+        accounts,
+      },
+    };
+  } catch (err: unknown) {
+    console.error('V1.7 get screen data error:', err);
+    return { success: false, error: handleV17Error(err, 'No pudimos cargar la información actualizada.') };
+  }
+}
+

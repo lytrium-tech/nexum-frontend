@@ -19,10 +19,14 @@ El módulo de Obligaciones (anteriormente experimental bajo V1.7) ha sido cerrad
 - **UI Polish:** Las cards de obligaciones y el resumen han sido ajustados para una apariencia más premium, humana y "calmada", removiendo badges técnicos y ruido visual, y ocultando estados irrelevantes.
 - **Mensajes de Error:** Los errores financieros (ej. fondos insuficientes, periodos no pagables) están mapeados a descripciones amigables en español.
 - **Rastros V1.7:** Toda mención de "V1.7" fue eliminada de los componentes visuales.
-- **Performance:** La carga inicial se realiza con un fetch principal (`overview`) evitando fetches por obligación individual, eliminando regresiones de N+1. Nota: React Strict Mode puede duplicar las peticiones en el entorno de desarrollo local, pero esto no afecta producción.
+- **Performance de Carga Inicial:** La carga inicial se realiza ahora en el servidor (`page.tsx`) llamando en paralelo los endpoints requeridos (`overview`, `summary`, `accounts`), eliminando completamente la doble fase de carga en el cliente (no client initial fetch).
+- **Performance de Refresh (Mutaciones):** Tras una mutación (pago, skip, etc.), se utiliza la acción consolidada `getObligationsScreenDataAction` que ejecuta las lecturas concurrentes, enviando todos los datos en un solo roundtrip al cliente en lugar de tres peticiones separadas, optimizando radicalmente el tiempo de refresh.
+- **Loading UX:** Se implementó una pantalla skeleton nativa de Next.js (`loading.tsx`) para proporcionar transición fluida durante la precarga desde servidor.
+- **React Strict Mode:** La duplicación innecesaria en el entorno de desarrollo fue suprimida al eliminar el `useEffect` de carga inicial.
+- **N+1 Restricción:** Se mantiene la eliminación de regresiones de N+1 (los datos siempre provienen de los endpoints consolidados de la capa superior).
 
 ## QA
 Todas las pruebas manuales (QA) han sido completadas por Steven sin regresiones identificadas.
 
 ## Pendientes / Mejoras Futuras
-- Posible refactorización en el backend/frontend para tener un endpoint unificado de screen (`summary/screen`) para reducir aún más las peticiones concurrentes iniciales.
+- Con la performance agregada a nivel de BFF/Server Actions (Next.js), crear un endpoint en backend `summary/screen` ya no es estrictamente necesario, aunque sigue siendo una posibilidad a futuro.

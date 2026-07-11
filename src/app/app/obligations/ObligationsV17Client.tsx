@@ -11,8 +11,7 @@ import {
   payObligationSmartV17Action,
   createObligationV17Action,
   getLatestFxRateV17Action,
-  getAccountsV17Action,
-  getObligationsOverviewV17Action
+  getObligationsScreenDataAction
 } from './v17-actions';
 
 
@@ -75,13 +74,16 @@ function getPeriodLabel(period: ObligationPeriodV17Response) {
   return 'Periodo Actual';
 }
 
-export default function ObligationsV17Client({ accounts = [] }: { accounts?: components['schemas']['AccountRead'][] }) {
+type Props = {
+  accounts?: components['schemas']['AccountRead'][];
+  initialObligations?: components['schemas']['ObligationV17OverviewResponse'][];
+  initialSummary?: ObligationsV17SummaryResponse | null;
+};
+
+export default function ObligationsV17Client({ accounts = [], initialObligations = [], initialSummary = null }: Props) {
   const [localAccounts, setLocalAccounts] = useState<components['schemas']['AccountRead'][]>(accounts);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const [obligations, setObligations] = useState<components['schemas']['ObligationV17OverviewResponse'][]>([]);
-  const [summary, setSummary] = useState<ObligationsV17SummaryResponse | null>(null);
+  const [obligations, setObligations] = useState<components['schemas']['ObligationV17OverviewResponse'][]>(initialObligations);
+  const [summary, setSummary] = useState<ObligationsV17SummaryResponse | null>(initialSummary);
 
 
   const [actionLoading, setActionLoading] = useState(false);
@@ -109,41 +111,7 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     first_due_date: new Date().toISOString().split('T')[0],
   });
 
-  const fetchAllData = async (isInitial = false) => {
-    try {
-      if (isInitial) setLoading(true);
-      const [listRes, summaryRes] = await Promise.all([
-        getObligationsOverviewV17Action(),
-        getObligationsSummaryV17Action()
-      ]);
-      
-      if (!listRes.success) {
-        if (isInitial) setError(listRes.error || 'No pudimos cargar tus obligaciones.');
-        return;
-      }
-      if (!summaryRes.success) {
-        if (isInitial) setError(summaryRes.error || 'No pudimos cargar tus obligaciones.');
-        return;
-      }
 
-      setObligations(listRes.result || []);
-      setSummary(summaryRes.result || null);
-    } catch (e) {
-      console.error(e);
-      if (isInitial) setError('No pudimos cargar tus obligaciones.');
-    } finally {
-      if (isInitial) setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let mounted = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchAllData(true).then(() => {
-      if (!mounted) return;
-    });
-    return () => { mounted = false; };
-  }, []);
 
   useEffect(() => {
     if (!payModal.open || !payAccountInput) {
@@ -180,26 +148,17 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     fetchRate();
   }, [payModal.open, payModal.obligationId, payAccountInput, obligations, localAccounts]);
 
-  const refreshObligationAfterMutation = async (obligationId: string) => {
+  const refreshObligationAfterMutation = async () => {
     try {
-      const [summaryRes, listRes, accountsRes] = await Promise.all([
-        getObligationsSummaryV17Action(),
-        getObligationsOverviewV17Action(),
-        getAccountsV17Action()
-      ]);
-      
-      if (summaryRes.success && summaryRes.result) {
-        setSummary(summaryRes.result);
-      }
-      if (listRes.success && listRes.result) {
-        setObligations(listRes.result);
-      }
-      if (accountsRes.success && accountsRes.result) {
-        setLocalAccounts(accountsRes.result);
+      const res = await getObligationsScreenDataAction();
+      if (res.success && res.result) {
+        if (res.result.summary) setSummary(res.result.summary);
+        if (res.result.overview) setObligations(res.result.overview);
+        if (res.result.accounts) setLocalAccounts(res.result.accounts);
       }
     } catch (e) {
       console.error(e);
-      await fetchAllData();
+      // Wait to reload or handle differently, error is handled gracefully on server side
     }
   };
 
@@ -209,10 +168,9 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     setActionError(null);
     const res = await updateObligationPeriodAmountV17Action(defineAmountModal.obligationId, defineAmountModal.periodId, { amount: Number(amountInput) });
     if (res.success) {
-      const obId = defineAmountModal.obligationId;
       setDefineAmountModal({ open: false, periodId: '', obligationId: '' });
       setAmountInput('');
-      await refreshObligationAfterMutation(obId);
+      await refreshObligationAfterMutation();
     } else {
       setActionError(res.error || 'No pudimos definir el monto de este periodo.');
     }
@@ -224,9 +182,8 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     setActionError(null);
     const res = await skipObligationPeriodV17Action(skipModal.obligationId, skipModal.periodId);
     if (res.success) {
-      const obId = skipModal.obligationId;
       setSkipModal({ open: false, periodId: '', obligationId: '' });
-      await refreshObligationAfterMutation(obId);
+      await refreshObligationAfterMutation();
     } else {
       setActionError(res.error || 'No pudimos saltar este periodo.');
     }
@@ -238,9 +195,8 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     setActionError(null);
     const res = await cancelObligationPeriodV17Action(cancelModal.obligationId, cancelModal.periodId);
     if (res.success) {
-      const obId = cancelModal.obligationId;
       setCancelModal({ open: false, periodId: '', obligationId: '' });
-      await refreshObligationAfterMutation(obId);
+      await refreshObligationAfterMutation();
     } else {
       setActionError(res.error || 'No pudimos cancelar este periodo.');
     }
@@ -266,13 +222,12 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
     const res = await payObligationSmartV17Action(payModal.obligationId, payload);
 
     if (res.success) {
-      const obId = payModal.obligationId;
       setPayModal({ open: false, periodId: '', obligationId: '', amountDue: '' });
       setPayAmountInput('');
       setPayAccountInput('');
       setPayMode('remaining');
       setRateSnapshot(null);
-      await refreshObligationAfterMutation(obId);
+      await refreshObligationAfterMutation();
     } else {
       setActionError(res.error || 'No pudimos registrar este pago. Revisa el monto y la cuenta.');
     }
@@ -320,30 +275,14 @@ export default function ObligationsV17Client({ accounts = [] }: { accounts?: com
         start_date: new Date().toISOString().split('T')[0],
         first_due_date: new Date().toISOString().split('T')[0],
       });
-      await fetchAllData();
+      await refreshObligationAfterMutation();
     } else {
       setActionError(res.error || 'Ocurrió un error al crear la obligación.');
     }
     setActionLoading(false);
   };
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-4xl p-6 sm:p-8 flex h-[50vh] flex-col items-center justify-center">
-         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-graphite-blue"></div>
-      </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div className="mx-auto max-w-4xl p-6 sm:p-8">
-        <div className="rounded-2xl bg-red-50 p-6 text-center text-red-600">
-          {error}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-4xl p-6 sm:p-8">

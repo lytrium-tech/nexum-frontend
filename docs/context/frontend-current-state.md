@@ -118,6 +118,7 @@ This document describes the current frontend state only. Backend truth lives in 
 * **Phase 2:** Feature Flag Scaffolding (Completado - Infraestructura añadida para leer NEXT_PUBLIC_NEXUM_OBLIGATIONS_V17_ENABLED con fallback hacia la UI legacy intacta).
 * **Phase 3:** Obligations UX Polish & Frontend Logic (Completado - Implementación de UI de pagos simplificada "One-Button Payment", integración funcional de FX snapshot bidireccional, soporte para montos variables requeridos, limpieza de estados inválidos, eliminación de N+1 peticiones con overview).
 * **Phase 4:** Obligations Module Closure (Completado - El módulo de Obligations V1.7 pasó a producción formalmente. Se eliminaron rastros y UI texts de "V1.7", se neutralizó el feature flag para habilitar el módulo por defecto, y se completó la auditoría de checklist V1.5 para indicadores visuales).
+* **Phase 5:** Obligations Final Performance Closure (Completado - Se eliminó la doble fase de carga moviendo los llamados a endpoints al lado del servidor `page.tsx` ejecutándolos en paralelo, previniendo fallos bajo React Strict Mode. Unificación de los endpoints en una única server action `getObligationsScreenDataAction` para actualizar la vista luego de mutaciones (pagos, skip, etc.), logrando máxima performance sin alterar el backend).
 
 ## Product Notes
 

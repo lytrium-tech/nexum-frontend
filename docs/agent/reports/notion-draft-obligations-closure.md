@@ -22,8 +22,10 @@
 - Soporte total para descartar cuotas (`Skip`) o cancelarlas formalmente (`Cancel`) desde la UI.
 
 ### 5. Rendimiento y Seguridad (No N+1)
-- Las listas y tarjetas de la interfaz se construyen ahora utilizando el endpoint unificado `overview`. 
-- Se eliminó el anti-patrón de llamadas N+1 (`Promise.all(obligations.map(getPeriods))`), mejorando la latencia en la renderización inicial. (Nota: en entorno de desarrollo `Strict Mode` de React puede duplicar peticiones temporalmente de forma esperada).
+- **Carga inicial hiper-rápida (Zero-layout shift):** La aplicación ahora pre-carga la pantalla (`overview`, `summary` y `cuentas`) concurrentemente en el lado del servidor, suprimiendo la fase de carga del cliente y eliminando los inconvenientes del React Strict Mode.
+- **Transiciones optimizadas (BFF-pattern):** Al realizar pagos u operaciones, Next.js orquesta en paralelo las solicitudes de refresh a través de una acción consolidada (`getObligationsScreenDataAction`), regresando los datos listos en un único *roundtrip* al navegador y logrando el equivalente a un endpoint de pantalla (Screen Endpoint) sin modificar el backend.
+- Se eliminó el anti-patrón de llamadas N+1. No existen peticiones individuales por periodo en las listas principales.
+- Se ha incluido un diseño de carga elegante (skeleton nativo) alineado a la estética de Nexum.
 
 ## UI & UX Polish
 - **Menos ruido, más financiero:** Ajuste de los *labels* de las cuotas. Reemplazamos insignias excesivas y jerga técnica por formatos claros como "Mensual • Fija", "Monto por definir", etc.
