@@ -124,7 +124,10 @@ export interface paths {
         get: operations["get_account_api_v1_accounts__account_id__get"];
         put?: never;
         post?: never;
-        /** Delete Account */
+        /**
+         * Delete Account
+         * @deprecated
+         */
         delete: operations["delete_account_api_v1_accounts__account_id__delete"];
         options?: never;
         head?: never;
@@ -132,7 +135,41 @@ export interface paths {
         patch: operations["update_account_api_v1_accounts__account_id__patch"];
         trace?: never;
     };
-    "/api/v1/accounts/{account_id}/balance-adjustments": {
+    "/api/v1/accounts/{account_id}/movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Account Movements */
+        get: operations["list_account_movements_api_v1_accounts__account_id__movements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account Period Summary */
+        get: operations["get_account_period_summary_api_v1_accounts__account_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/adjustments": {
         parameters: {
             query?: never;
             header?: never;
@@ -142,7 +179,41 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create Balance Adjustment */
-        post: operations["create_balance_adjustment_api_v1_accounts__account_id__balance_adjustments_post"];
+        post: operations["create_balance_adjustment_api_v1_accounts__account_id__adjustments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Account */
+        post: operations["archive_account_api_v1_accounts__account_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Account */
+        post: operations["restore_account_api_v1_accounts__account_id__restore_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1281,6 +1352,71 @@ export interface components {
              */
             initial_balance: number | string;
         };
+        /** AccountDetailRead */
+        AccountDetailRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Name */
+            name: string;
+            type: components["schemas"]["AccountType"];
+            /** Balance */
+            balance: string;
+            /** Currency */
+            currency: string;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Has Movements
+             * @default false
+             */
+            has_movements: boolean;
+            /**
+             * Movement Count
+             * @default 0
+             */
+            movement_count: number;
+            /** Last Movement At */
+            last_movement_at?: string | null;
+        };
+        /** AccountPeriodSummary */
+        AccountPeriodSummary: {
+            /** Total Inflows */
+            total_inflows: string;
+            /** Total Outflows */
+            total_outflows: string;
+            /** Net Flow */
+            net_flow: string;
+            /** Transfer Inflows */
+            transfer_inflows: string;
+            /** Transfer Outflows */
+            transfer_outflows: string;
+            /** Movement Count */
+            movement_count: number;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+            /** Currency */
+            currency: string;
+        };
         /** AccountRead */
         AccountRead: {
             /**
@@ -1302,6 +1438,16 @@ export interface components {
             currency: string;
             /** Is Active */
             is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** AccountRef */
         AccountRef: {
@@ -1333,8 +1479,7 @@ export interface components {
         AccountUpdate: {
             /** Name */
             name?: string | null;
-            /** Is Active */
-            is_active?: boolean | null;
+            type?: components["schemas"]["AccountType"] | null;
         };
         /**
          * AmountType
@@ -1349,20 +1494,18 @@ export interface components {
         /** BalanceAdjustmentCreate */
         BalanceAdjustmentCreate: {
             /**
-             * Amount
-             * @description Cantidad a ajustar (siempre positiva)
+             * Target Balance
+             * @description Saldo real deseado (positivo o cero)
              */
-            amount: number | string;
+            target_balance: number | string;
+            /** Reason */
+            reason: string;
             /**
-             * Direction
-             * @description Si aumenta o disminuye el balance
-             * @enum {string}
+             * Idempotency Key
+             * Format: uuid
+             * @description Clave de idempotencia única para el ajuste
              */
-            direction: "increase" | "decrease";
-            /** @description opening_balance o balance_adjustment */
-            type: components["schemas"]["EventType"];
-            /** Description */
-            description?: string | null;
+            idempotency_key: string;
         };
         /** CashExpenseCreate */
         CashExpenseCreate: {
@@ -2095,13 +2238,6 @@ export interface components {
          * @enum {string}
          */
         EventSource: "api" | "pwa" | "manual" | "system";
-        /**
-         * EventType
-         * @description Catálogo central de eventos financieros de Nexum.
-         *     No define impactos financieros directamente, solo categoriza el evento.
-         * @enum {string}
-         */
-        EventType: "income" | "expense" | "goal_contribution" | "obligation_payment" | "credit_card_purchase" | "credit_card_payment" | "manual_adjustment" | "transfer_out" | "transfer_in" | "opening_balance" | "balance_adjustment";
         /** FXQuoteRequest */
         FXQuoteRequest: {
             /**
@@ -3866,7 +4002,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AccountRead"];
+                    "application/json": components["schemas"]["AccountDetailRead"];
                 };
             };
             /** @description Validation Error */
@@ -3892,19 +4028,12 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": unknown;
                 };
             };
         };
@@ -3944,7 +4073,78 @@ export interface operations {
             };
         };
     };
-    create_balance_adjustment_api_v1_accounts__account_id__balance_adjustments_post: {
+    list_account_movements_api_v1_accounts__account_id__movements_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                date_from?: string | null;
+                date_to?: string | null;
+                event_type?: string | null;
+                direction?: string | null;
+            };
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEventsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_account_period_summary_api_v1_accounts__account_id__summary_get: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountPeriodSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_balance_adjustment_api_v1_accounts__account_id__adjustments_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -3958,6 +4158,68 @@ export interface operations {
                 "application/json": components["schemas"]["BalanceAdjustmentCreate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_account_api_v1_accounts__account_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_account_api_v1_accounts__account_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

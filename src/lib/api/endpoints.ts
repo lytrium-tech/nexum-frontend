@@ -81,10 +81,11 @@ export const api = {
       const qs = params?.include_archived ? '?include_archived=true' : '';
       return apiClient<AccountRead[]>(`/api/v1/accounts${qs}`, { method: 'GET' }, isServer);
     },
+    // Global summary (if still applicable)
     summary: (isServer = false) =>
       apiClient<components['schemas']['AccountSummary']>('/api/v1/accounts/summary', { method: 'GET' }, isServer),
     get: (id: string, isServer = false) =>
-      apiClient<AccountRead>(`/api/v1/accounts/${id}`, { method: 'GET' }, isServer),
+      apiClient<components['schemas']['AccountDetailRead']>(`/api/v1/accounts/${id}`, { method: 'GET' }, isServer),
     create: (data: AccountCreate, isServer = false) =>
       apiClient<AccountRead>('/api/v1/accounts', {
         method: 'POST',
@@ -95,13 +96,26 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(data),
       }, isServer),
+    /** @deprecated account deletion is not supported. Use archive. */
     delete: (id: string, isServer = false) =>
       apiClient<unknown>(`/api/v1/accounts/${id}`, { method: 'DELETE' }, isServer),
-    createBalanceAdjustment: (id: string, data: components['schemas']['BalanceAdjustmentCreate'], isServer = false) =>
-      apiClient<AccountRead>(`/api/v1/accounts/${id}/balance-adjustments`, {
+    archive: (id: string, isServer = false) =>
+      apiClient<AccountRead>(`/api/v1/accounts/${id}/archive`, { method: 'POST' }, isServer),
+    restore: (id: string, isServer = false) =>
+      apiClient<AccountRead>(`/api/v1/accounts/${id}/restore`, { method: 'POST' }, isServer),
+    adjustBalance: (id: string, data: components['schemas']['BalanceAdjustmentCreate'], isServer = false) =>
+      apiClient<AccountRead>(`/api/v1/accounts/${id}/adjustments`, {
         method: 'POST',
         body: JSON.stringify(data),
       }, isServer),
+    getMovements: (id: string, params?: { limit?: number; offset?: number; date_from?: string; date_to?: string; event_type?: string; direction?: string }, isServer = false) => {
+      const qsObj: Record<string, string> = {};
+      if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qsObj[k] = String(v); });
+      const qs = Object.keys(qsObj).length > 0 ? '?' + new URLSearchParams(qsObj).toString() : '';
+      return apiClient<components['schemas']['LedgerEventsResponse']>(`/api/v1/accounts/${id}/movements${qs}`, { method: 'GET' }, isServer);
+    },
+    getPeriodSummary: (id: string, month: string, isServer = false) =>
+      apiClient<components['schemas']['AccountPeriodSummary']>(`/api/v1/accounts/${id}/summary?month=${month}`, { method: 'GET' }, isServer),
   },
   categories: {
     list: (params?: { include_inactive?: boolean }, isServer = false) => {
