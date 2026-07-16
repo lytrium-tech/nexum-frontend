@@ -3,7 +3,7 @@
 Este documento describe la sincronización de los contratos de Wallets V1 desde el backend de Nexum hacia el frontend.
 
 **Backend baseline:** eb2991a
-**Estado de producción backend:** Pendiente de validación.
+**Estado de producción backend:** Desplegado en VPS (commit eb2991a) - API api.nexum.lytrium.tech consumible.
 **Fecha de sincronización:** Julio 2026
 
 ## Cambios realizados
