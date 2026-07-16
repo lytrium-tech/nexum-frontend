@@ -6,6 +6,7 @@ import { getSessionToken } from '@/lib/api/client';
 import { api } from '@/lib/api/endpoints';
 import { components } from '@/lib/api/types.generated';
 import { formatLedgerAmount, getLedgerEventName } from '@/lib/format/ledger';
+import ReclassifyButton from './ReclassifyButton';
 
 export const metadata = {
   title: 'Nexum - Historial Financiero',
@@ -59,12 +60,14 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   const filterType = typeof resolvedSearchParams.event_type === 'string' ? resolvedSearchParams.event_type : null;
   
   let eventsData = null;
+  let categories: components['schemas']['CategoryRead'][] = [];
   let hasError = false;
 
   try {
     const params: Record<string, string | number> = { limit: 50 };
     if (filterType) params.event_type = filterType;
     eventsData = await api.ledger.events(params, true);
+    categories = await api.categories.list({ include_inactive: false }, true);
   } catch (error) {
     console.error('Error fetching ledger events:', error);
     hasError = true;
@@ -153,6 +156,10 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                     {formatLedgerAmount({ amount: evt.amount, currency: evt.currency, direction: evt.direction, eventType: evt.event_type })}
                   </p>
                   <p className="text-[10px] text-gray-400 uppercase">{evt.currency || '???'}</p>
+                  
+                  {(evt.event_type === 'income' || evt.event_type === 'expense') && (
+                    <ReclassifyButton event={evt} categories={categories} />
+                  )}
                 </div>
               </div>
             ))}

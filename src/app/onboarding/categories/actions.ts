@@ -6,7 +6,7 @@ import type { components } from '@/lib/api/types.generated'
 
 type CategoryType = components['schemas']['CategoryType']
 
-const categoryTypeMap: Record<string, CategoryType> = {
+const categoryTypeMap: Record<string, 'expense' | 'income'> = {
   'Alimentación': 'expense',
   'Transporte': 'expense',
   'Vivienda': 'expense',
@@ -42,7 +42,7 @@ export async function createCategories(formData: FormData) {
       if (existingNames.has(name.toLowerCase())) {
         continue;
       }
-      const type: CategoryType = categoryTypeMap[name] || 'expense';
+      const type = categoryTypeMap[name] || 'expense';
       try {
         await api.categories.create({ name, type }, true);
       } catch (err: unknown) {

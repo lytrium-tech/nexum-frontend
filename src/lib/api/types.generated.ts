@@ -248,12 +248,49 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete Category */
+        /**
+         * Delete Category
+         * @deprecated
+         */
         delete: operations["delete_category_api_v1_categories__category_id__delete"];
         options?: never;
         head?: never;
         /** Update Category */
         patch: operations["update_category_api_v1_categories__category_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/categories/{category_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Category */
+        post: operations["archive_category_api_v1_categories__category_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/categories/{category_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Category */
+        post: operations["restore_category_api_v1_categories__category_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/cash/income": {
@@ -765,6 +802,27 @@ export interface paths {
         get: operations["get_timeline_api_v1_ledger_timeline_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/events/{event_id}/reclassify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reclassify Event
+         * @description Reclasifica analíticamente la categoría de un evento financiero existente.
+         *     Operación idempotente (mediante idempotency_key).
+         */
+        post: operations["reclassify_event_api_v1_ledger_events__event_id__reclassify_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1582,7 +1640,9 @@ export interface components {
         CategoryCreate: {
             /** Name */
             name: string;
-            type: components["schemas"]["CategoryType"];
+            type: components["schemas"]["ConfigurableCategoryType"];
+            /** Icon Key */
+            icon_key?: string | null;
         };
         /** CategoryRead */
         CategoryRead: {
@@ -1603,6 +1663,10 @@ export interface components {
             type: components["schemas"]["CategoryType"] | null;
             /** Is Active */
             is_active: boolean;
+            /** Icon Key */
+            icon_key?: string | null;
+            /** Stable Key */
+            stable_key?: string | null;
         };
         /** CategoryRef */
         CategoryRef: {
@@ -1623,9 +1687,19 @@ export interface components {
         CategoryUpdate: {
             /** Name */
             name?: string | null;
-            /** Is Active */
+            /** Icon Key */
+            icon_key?: string | null;
+            /**
+             * Is Active
+             * @description Legacy compatibility. Prefer /archive or /restore.
+             */
             is_active?: boolean | null;
         };
+        /**
+         * ConfigurableCategoryType
+         * @enum {string}
+         */
+        ConfigurableCategoryType: "income" | "expense";
         /**
          * ConversationalRequest
          * @description Payload de entrada del endpoint POST /api/v1/conversations/message
@@ -3542,6 +3616,54 @@ export interface components {
          * @enum {string}
          */
         PeriodStatus: "pending_amount_definition" | "pending_payment" | "partially_paid" | "paid" | "overdue" | "skipped" | "cancelled";
+        /** ReclassificationRequest */
+        ReclassificationRequest: {
+            /**
+             * New Category Id
+             * Format: uuid
+             */
+            new_category_id: string;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Idempotency Key
+             * Format: uuid
+             */
+            idempotency_key: string;
+        };
+        /** ReclassificationResponse */
+        ReclassificationResponse: {
+            /** Status */
+            status: string;
+            /**
+             * Reclassification Id
+             * Format: uuid
+             */
+            reclassification_id: string;
+            /**
+             * Event Id
+             * Format: uuid
+             */
+            event_id: string;
+            /** Previous Category Id */
+            previous_category_id: string | null;
+            /** New Category Id */
+            new_category_id: string | null;
+            /**
+             * Idempotency Key
+             * Format: uuid
+             */
+            idempotency_key: string;
+            /** Source */
+            source: string;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** SnapshotCash */
         SnapshotCash: {
             /** Total Balance */
@@ -4349,6 +4471,68 @@ export interface operations {
                 "application/json": components["schemas"]["CategoryUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_category_api_v1_categories__category_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_category_api_v1_categories__category_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -5529,6 +5713,67 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    reclassify_event_api_v1_ledger_events__event_id__reclassify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReclassificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReclassificationResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Event or Category not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict or Idempotency Key reused */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

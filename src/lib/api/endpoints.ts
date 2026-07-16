@@ -134,6 +134,10 @@ export const api = {
       }, isServer),
     delete: (id: string, isServer = false) =>
       apiClient<void>(`/api/v1/categories/${id}`, { method: 'DELETE' }, isServer),
+    archive: (id: string, isServer = false) =>
+      apiClient<CategoryRead>(`/api/v1/categories/${id}/archive`, { method: 'POST' }, isServer),
+    restore: (id: string, isServer = false) =>
+      apiClient<CategoryRead>(`/api/v1/categories/${id}/restore`, { method: 'POST' }, isServer),
   },
   goals: {
     list: (isServer = false) =>
@@ -368,7 +372,12 @@ export const api = {
       if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qsObj[k] = String(v); });
       const qs = Object.keys(qsObj).length > 0 ? '?' + new URLSearchParams(qsObj).toString() : '';
       return apiClient<components['schemas']['LedgerTimelineResponse']>(`/api/v1/ledger/timeline${qs}`, { method: 'GET' }, isServer);
-    }
+    },
+    reclassifyEvent: (eventId: string, data: components['schemas']['ReclassificationRequest'], isServer = false) =>
+      apiClient<components['schemas']['ReclassificationResponse']>(`/api/v1/ledger/events/${eventId}/reclassify`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }, isServer),
   },
   conversations: {
     message: (data: { message: string; channel?: string; external_message_id?: string | null; pending_action_id?: string | null }, isServer = false) =>

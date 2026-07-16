@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createCategoryAction, updateCategoryAction } from './actions';
+import { createCategoryAction, updateCategoryAction, archiveCategoryAction, restoreCategoryAction } from './actions';
 
 type CategoryRead = components['schemas']['CategoryRead'];
 
@@ -14,6 +14,32 @@ const TYPE_LABELS: Record<string, string> = {
   obligation: 'Obligación',
   goal: 'Meta',
   system: 'Sistema'
+};
+
+const IconMap: Record<string, string> = {
+  food: '🍔',
+  transport: '🚗',
+  housing: '🏠',
+  health: '⚕️',
+  education: '📚',
+  entertainment: '🎬',
+  shopping: '🛍️',
+  debt: '💳',
+  other: '📦',
+  help_circle: '❓',
+  salary: '💰',
+  plus_circle: '➕',
+  trending_up: '📈',
+  gift: '🎁',
+  credit_card: '💳',
+  obligation: '📄',
+  goal: '🎯',
+  transfer: '🔄',
+};
+
+const getCategoryIcon = (iconKey?: string | null) => {
+  if (!iconKey) return '📁';
+  return IconMap[iconKey] || '📁';
 };
 
 export default function CategoriesClient({ initialCategories }: { initialCategories: CategoryRead[] }) {
@@ -29,9 +55,9 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const globalCategories = categories.filter(c => c.is_global);
-  const activeCustomCategories = categories.filter(c => !c.is_global && c.is_active !== false);
-  const inactiveCustomCategories = categories.filter(c => !c.is_global && c.is_active === false);
+  const globalCategories = categories.filter(c => c.is_global && (c.type === 'income' || c.type === 'expense'));
+  const activeCustomCategories = categories.filter(c => !c.is_global && c.is_active !== false && (c.type === 'income' || c.type === 'expense'));
+  const inactiveCustomCategories = categories.filter(c => !c.is_global && c.is_active === false && (c.type === 'income' || c.type === 'expense'));
 
   const [showInactive, setShowInactive] = useState(false);
 
@@ -93,16 +119,29 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
     }
   };
 
-  const handleToggleActive = async (id: string, is_active: boolean) => {
+  const handleArchive = async (id: string) => {
     setError(null);
     setIsSubmitting(true);
-    const result = await updateCategoryAction(id, { is_active });
+    const result = await archiveCategoryAction(id);
     setIsSubmitting(false);
 
     if (result.success && result.result) {
       setCategories(categories.map(c => c.id === id ? result.result! : c));
     } else {
-      setError(typeof result.error === 'string' ? result.error : 'Error al cambiar estado de la categoría.');
+      setError(typeof result.error === 'string' ? result.error : 'Error al archivar la categoría.');
+    }
+  };
+
+  const handleRestore = async (id: string) => {
+    setError(null);
+    setIsSubmitting(true);
+    const result = await restoreCategoryAction(id);
+    setIsSubmitting(false);
+
+    if (result.success && result.result) {
+      setCategories(categories.map(c => c.id === id ? result.result! : c));
+    } else {
+      setError(typeof result.error === 'string' ? result.error : 'Error al restaurar la categoría.');
     }
   };
 
@@ -223,7 +262,7 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                 ) : (
                   <>
                     <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-lg">{getCategoryIcon(cat.icon_key)}</div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-slate-800">{cat.name}</p>
                         <p className="text-xs text-slate-400 capitalize hidden sm:block">{cat.type ? TYPE_LABELS[cat.type] || cat.type : 'General'}</p>
@@ -237,11 +276,11 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                         Editar
                       </button>
                       <button
-                        onClick={() => handleToggleActive(cat.id, false)}
+                        onClick={() => handleArchive(cat.id)}
                         disabled={isSubmitting}
                         className="text-sm font-medium text-slate-500 hover:text-red-600 transition-colors disabled:opacity-50"
                       >
-                        Desactivar
+                        Archivar
                       </button>
                     </div>
                   </>
@@ -261,7 +300,7 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
       {inactiveCustomCategories.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-medium text-slate-800">Categorías Inactivas</h2>
+            <h2 className="text-lg font-medium text-slate-800">Categorías Archivadas</h2>
             <button
               onClick={() => setShowInactive(!showInactive)}
               className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
@@ -275,7 +314,7 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
               {inactiveCustomCategories.map(cat => (
                 <div key={cat.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-slate-300" />
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-lg opacity-60">{getCategoryIcon(cat.icon_key)}</div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-slate-500 line-through">{cat.name}</p>
                       <p className="text-xs text-slate-400 capitalize hidden sm:block">{cat.type ? TYPE_LABELS[cat.type] || cat.type : 'General'}</p>
@@ -283,11 +322,11 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleToggleActive(cat.id, true)}
+                      onClick={() => handleRestore(cat.id)}
                       disabled={isSubmitting}
                       className="text-sm font-medium text-slate-500 hover:text-emerald-600 transition-colors disabled:opacity-50"
                     >
-                      Reactivar
+                      Restaurar
                     </button>
                   </div>
                 </div>
@@ -303,7 +342,7 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {globalCategories.map(cat => (
             <div key={cat.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-              <div className="w-2 h-2 rounded-full bg-slate-400" />
+              <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-lg">{getCategoryIcon(cat.icon_key)}</div>
               <div>
                 <p className="font-medium text-slate-700 text-sm">
                   {cat.name === 'sin_clasificar' ? 'Sin clasificar' : cat.name}

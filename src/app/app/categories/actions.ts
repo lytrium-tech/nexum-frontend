@@ -57,4 +57,26 @@ export async function updateCategoryAction(id: string, data: components['schemas
   }
 }
 
+export async function archiveCategoryAction(id: string) {
+  try {
+    const result = await api.categories.archive(id, true);
+    revalidatePath('/app/categories');
+    revalidatePath('/app/new');
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Archive category error:', err);
+    return { success: false, error: 'No se pudo archivar la categoría.' };
+  }
+}
 
+export async function restoreCategoryAction(id: string) {
+  try {
+    const result = await api.categories.restore(id, true);
+    revalidatePath('/app/categories');
+    revalidatePath('/app/new');
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Restore category error:', err);
+    return { success: false, error: 'No se pudo restaurar la categoría.' };
+  }
+}

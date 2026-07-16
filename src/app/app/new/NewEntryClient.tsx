@@ -4,20 +4,10 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createEntryAction } from './actions';
 
-type AccountRead = {
-  id: string;
-  name: string;
-  type: string;
-  currency: string;
-  is_active?: boolean | null;
-};
+import { components } from '@/lib/api/types.generated';
 
-type CategoryRead = {
-  id: string;
-  name: string;
-  type?: string | null;
-  is_active?: boolean | null;
-};
+type AccountRead = components['schemas']['AccountRead'];
+type CategoryRead = components['schemas']['CategoryRead'];
 
 export default function NewEntryClient({
   initialAccounts,
@@ -37,9 +27,42 @@ export default function NewEntryClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() => {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return '';
+  });
 
   const activeAccounts = initialAccounts.filter(a => a.is_active !== false && String(a.is_active) !== 'false');
-  const filteredCategories = initialCategories.filter(c => c.is_active !== false && (c.type === type || c.type === 'transfer'));
+  
+  const normalCategories = initialCategories
+    .filter(c => 
+      c.is_active !== false && 
+      c.type === type && 
+      c.stable_key !== 'expense_uncategorized' && 
+      c.stable_key !== 'income_uncategorized'
+    )
+    .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+    
+  const uncategorizedCategory = initialCategories.find(c => 
+    c.is_active !== false && 
+    c.type === type && 
+    (c.stable_key === 'expense_uncategorized' || c.stable_key === 'income_uncategorized')
+  );
+
+  const filteredCategories = [...normalCategories];
+  if (uncategorizedCategory) {
+    filteredCategories.push(uncategorizedCategory);
+  }
+
+  const selectedAccount = activeAccounts.find(a => a.id === accountId);
+  const formattedBalance = selectedAccount ? new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: selectedAccount.currency,
+    minimumFractionDigits: selectedAccount.currency.toUpperCase() === 'COP' ? 0 : 2,
+    maximumFractionDigits: selectedAccount.currency.toUpperCase() === 'COP' ? 0 : 2
+  }).format(parseFloat(selectedAccount.balance)) : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +79,16 @@ export default function NewEntryClient({
       return;
     }
 
+    if (!categoryId) {
+      setError('Selecciona una categoría.');
+      return;
+    }
+
+    if (!idempotencyKey) {
+      setError('Inicializando formulario... intenta de nuevo.');
+      return;
+    }
+
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       setError('El monto debe ser un número mayor a cero.');
@@ -64,7 +97,6 @@ export default function NewEntryClient({
 
     setIsSubmitting(true);
 
-    const selectedAccount = activeAccounts.find(a => a.id === accountId);
     if (!selectedAccount || !selectedAccount.currency) {
       setError('No pudimos identificar la moneda de esta cuenta. Intenta seleccionarla nuevamente.');
       return;
@@ -76,8 +108,9 @@ export default function NewEntryClient({
       accountId,
       amount: numAmount,
       currency,
-      categoryId: categoryId || undefined,
-      description: description.trim() || undefined
+      categoryId: categoryId,
+      description: description.trim() || undefined,
+      idempotencyKey
     });
 
     setIsSubmitting(false);
@@ -86,6 +119,7 @@ export default function NewEntryClient({
       setShowSuccess(true);
       setAmount('');
       setDescription('');
+      setIdempotencyKey(crypto.randomUUID());
     } else {
       setError(result.error || 'Error al registrar el movimiento.');
     }
@@ -196,6 +230,11 @@ export default function NewEntryClient({
               </option>
             ))}
           </select>
+          {selectedAccount && (
+            <p className="mt-1.5 text-xs text-slate-500">
+              Saldo disponible: <span className="font-medium text-slate-700">{formattedBalance}</span>
+            </p>
+          )}
         </div>
 
         {initialCategories.length > 0 && (
@@ -204,10 +243,10 @@ export default function NewEntryClient({
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              disabled={isSubmitting}
+              required
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all appearance-none"
             >
-              <option value="">-- Sin categoría --</option>
+              <option value="" disabled hidden>Selecciona una categoría</option>
               {filteredCategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}

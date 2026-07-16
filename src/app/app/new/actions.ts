@@ -2,7 +2,7 @@
 
 import { api } from '@/lib/api/endpoints';
 import { revalidatePath } from 'next/cache';
-import crypto from 'crypto';
+
 import { handleFinancialError } from '@/lib/api/errors';
 
 export async function createEntryAction(data: {
@@ -12,9 +12,10 @@ export async function createEntryAction(data: {
   currency: string;
   categoryId?: string;
   description?: string;
+  idempotencyKey: string;
 }) {
   try {
-    const idempotencyKey = crypto.randomUUID();
+    const idempotencyKey = data.idempotencyKey;
     const payload = {
       account_id: data.accountId,
       amount: data.amount,
