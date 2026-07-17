@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { MonthYearPicker } from '@/components/MonthYearPicker';
 import { components } from '@/lib/api/types.generated';
 import { 
   updateAccountAction, 
@@ -46,7 +47,61 @@ const formatBalance = (val: string | number | null | undefined, currency: string
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
 };
 
-export default function AccountDetailClient({ 
+const formatAbsoluteBalance = (val: string | number | null | undefined, currency: string = 'COP') => {
+  if (val === null || val === undefined || val === '—') return '—';
+  const num = typeof val === 'string' ? parseFloat(val) : val;
+  if (isNaN(num)) return '—';
+  return formatBalance(Math.abs(num), currency);
+};
+
+type MovementPresentation = {
+  semanticType: 'income' | 'expense' | 'transfer' | 'neutral';
+  sign: string;
+  textColor: string;
+  formattedAmount: string;
+  label: string;
+};
+
+function getMovementAmountPresentation(movement: components['schemas']['LedgerEventDetail']): MovementPresentation {
+  const isTransfer = movement.event_type?.includes('transfer');
+  const isInflow = movement.direction === 'inflow';
+  
+  let semanticType: 'income' | 'expense' | 'transfer' | 'neutral' = 'neutral';
+  let sign = '';
+  let textColor = 'text-gray-900';
+  
+  if (isTransfer) {
+    semanticType = 'transfer';
+    sign = isInflow ? '+' : '-';
+    textColor = 'text-graphite-blue';
+  } else {
+    if (isInflow) {
+      semanticType = 'income';
+      sign = '+';
+      textColor = 'text-green-600';
+    } else {
+      semanticType = 'expense';
+      sign = '-';
+      textColor = 'text-red-600';
+    }
+  }
+
+  const baseLabel = isTransfer 
+    ? (isInflow ? 'Transferencia recibida' : 'Transferencia enviada') 
+    : (movement.description || 'Movimiento');
+
+  const absoluteFormatted = formatAbsoluteBalance(movement.amount, movement.currency);
+  
+  return {
+    semanticType,
+    sign,
+    textColor,
+    formattedAmount: absoluteFormatted !== '—' ? `${sign}${absoluteFormatted}` : '—',
+    label: baseLabel
+  };
+}
+
+export default function AccountDetailClient({
   initialAccount,
   initialMovements,
   initialSummary,
@@ -102,8 +157,7 @@ export default function AccountDetailClient({
     setSummaryLoading(false);
   };
 
-  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newMonth = e.target.value;
+  const handleMonthChange = (newMonth: string) => {
     setMonth(newMonth);
     refreshAll(newMonth);
   };
@@ -287,13 +341,11 @@ export default function AccountDetailClient({
         {/* Left Column: Summary */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-soft-gray">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-graphite-blue">Resumen</h2>
-              <input 
-                type="month" 
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+              <h2 className="text-lg font-semibold text-graphite-blue whitespace-nowrap">Resumen</h2>
+              <MonthYearPicker 
                 value={month}
                 onChange={handleMonthChange}
-                className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-graphite-blue"
               />
             </div>
             
@@ -378,21 +430,19 @@ export default function AccountDetailClient({
             ) : (
               <div className="space-y-1">
                 {movements?.items?.map(movement => {
-                  const isInflow = movement.direction === 'inflow';
-                  const isTransfer = movement.event_type?.includes('transfer');
-                  const desc = isTransfer ? (isInflow ? 'Transferencia recibida' : 'Transferencia enviada') : movement.description;
+                  const presentation = getMovementAmountPresentation(movement);
                   
                   return (
                     <div key={movement.id} className="flex justify-between items-center py-3 px-2 hover:bg-gray-50 rounded-xl transition-colors">
                       <div>
-                        <p className="font-medium text-gray-900 text-sm">{desc}</p>
+                        <p className="font-medium text-gray-900 text-sm">{presentation.label}</p>
                         <p className="text-xs text-gray-500 mt-0.5">
                           {new Date(movement.occurred_at || movement.created_at || '').toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className={`font-semibold text-sm ${isInflow ? 'text-green-600' : 'text-gray-900'}`}>
-                          {isInflow ? '+' : ''}{formatBalance(movement.amount, movement.currency)}
+                        <p className={`font-semibold text-sm ${presentation.textColor}`}>
+                          {presentation.formattedAmount}
                         </p>
                       </div>
                     </div>
