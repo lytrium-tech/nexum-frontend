@@ -101,6 +101,35 @@ function getMovementAmountPresentation(movement: components['schemas']['LedgerEv
   };
 }
 
+function createSafeUuid(): string {
+  if (
+    typeof globalThis.crypto !== 'undefined' &&
+    typeof globalThis.crypto.randomUUID === 'function'
+  ) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  if (
+    typeof globalThis.crypto !== 'undefined' &&
+    typeof globalThis.crypto.getRandomValues === 'function'
+  ) {
+    const bytes = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(bytes);
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    return Array.from(bytes, (byte) =>
+      byte.toString(16).padStart(2, '0')
+    ).join('').replace(
+      /^(.{8})(.{4})(.{4})(.{4})(.{12})$/,
+      '$1-$2-$3-$4-$5'
+    );
+  }
+
+  throw new Error('Secure UUID generation is unavailable.');
+}
+
 export default function AccountDetailClient({
   initialAccount,
   initialMovements,
@@ -224,13 +253,22 @@ export default function AccountDetailClient({
   };
 
   const openAdjustModal = () => {
+    let key = '';
+    let errorMessage = null;
+    try {
+      key = createSafeUuid();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      errorMessage = msg || 'No se puede generar un identificador seguro.';
+    }
+
     setAdjustModal({
       isOpen: true,
       target_balance: account.balance || '0',
       reason: '',
-      idempotency_key: crypto.randomUUID()
+      idempotency_key: key
     });
-    setError(null);
+    setError(errorMessage);
   };
 
   const handleArchive = async () => {
@@ -585,8 +623,17 @@ export default function AccountDetailClient({
                 </button>
                 <button 
                   type="submit" 
-                  className="bg-graphite-blue text-white px-6 py-2 rounded-xl hover:bg-graphite-blue/90 font-medium text-sm transition-colors min-w-[120px]"
-                  disabled={isSubmitting || !adjustModal.target_balance || !adjustModal.reason}
+                  className="bg-graphite-blue text-white px-6 py-2 rounded-xl hover:bg-graphite-blue/90 font-medium text-sm transition-colors min-w-[120px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    isSubmitting || 
+                    !adjustModal.target_balance.trim() || 
+                    isNaN(parseFloat(adjustModal.target_balance)) || 
+                    parseFloat(adjustModal.target_balance) < 0 || 
+                    !adjustModal.reason.trim() ||
+                    !adjustModal.idempotency_key ||
+                    account.is_active === false ||
+                    String(account.is_active) === 'false'
+                  }
                 >
                   {isSubmitting ? 'Ajustando...' : 'Aplicar Ajuste'}
                 </button>
