@@ -5,11 +5,13 @@ import { revalidatePath } from 'next/cache';
 import { components } from '@/lib/api/types.generated';
 import { handleFinancialError } from '@/lib/api/errors';
 
-export async function createTransferAction(data: components['schemas']['TransferCreate'], idempotencyKey: string) {
+export async function createTransferAction(data: components['schemas']['TransferRequest'], idempotencyKey: string) {
   try {
     const result = await api.transfers.create(data, idempotencyKey, true);
     revalidatePath('/app/transfers');
     revalidatePath('/app/accounts');
+    revalidatePath(`/app/accounts/${data.source_account_id}`);
+    revalidatePath(`/app/accounts/${data.destination_account_id}`);
     revalidatePath('/app/history');
     revalidatePath('/app');
     return { success: true, result };

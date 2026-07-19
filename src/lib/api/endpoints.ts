@@ -30,7 +30,7 @@ type CreditCardPurchaseCreate = components['schemas']['CreditCardPurchaseCreate'
 type CreditCardPurchaseResult = components['schemas']['CreditCardPurchaseResult'];
 type CreditCardPaymentCreate = components['schemas']['CreditCardPaymentCreate'];
 type CreditCardPaymentResult = components['schemas']['CreditCardPaymentResult'];
-type TransferCreate = components['schemas']['TransferCreate'];
+type TransferRequest = components['schemas']['TransferRequest'];
 type TransferResult = components['schemas']['TransferResult'];
 
 // V1.7 Obligations Types
@@ -271,7 +271,7 @@ export const api = {
     transfers: {
       list: (isServer = false) =>
         apiClient<TransferResult[]>('/api/v1/transfers', { method: 'GET' }, isServer),
-      create: (data: TransferCreate, idempotencyKey: string, isServer = false) =>
+      create: (data: TransferRequest, idempotencyKey: string, isServer = false) =>
         apiClient<TransferResult>('/api/v1/transfers', {
           method: 'POST',
           headers: {

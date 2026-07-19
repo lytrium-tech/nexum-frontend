@@ -3798,10 +3798,10 @@ export interface components {
             };
         };
         /**
-         * TransferCreate
-         * @description Payload para crear transferencia.
+         * TransferRequest
+         * @description Contrato HTTP público para crear una transferencia V1 de la misma moneda.
          */
-        TransferCreate: {
+        TransferRequest: {
             /**
              * Source Account Id
              * Format: uuid
@@ -3814,20 +3814,19 @@ export interface components {
             destination_account_id: string;
             /** Amount */
             amount: number | string;
-            /** Currency */
-            currency?: string | null;
-            /** Target Currency */
-            target_currency?: string | null;
             /** Description */
             description?: string | null;
-            /** Occurred At */
-            occurred_at?: string | null;
-            /** Command Id */
-            command_id?: string | null;
-            /** Source Message Id */
-            source_message_id?: string | null;
-            /** Raw Message */
-            raw_message?: string | null;
+            /**
+             * Rate Snapshot Id
+             * @description Requerido si origen y destino tienen monedas distintas
+             */
+            rate_snapshot_id?: string | null;
+            /**
+             * Command Id
+             * Format: uuid
+             * @description Clave de idempotencia obligatoria
+             */
+            command_id: string;
         };
         /** TransferResult */
         TransferResult: {
@@ -3852,6 +3851,8 @@ export interface components {
             rate_source?: string | null;
             /** Rate Timestamp */
             rate_timestamp?: string | null;
+            /** Rate Snapshot Id */
+            rate_snapshot_id?: string | null;
             /**
              * Is Estimated
              * @default false
@@ -3861,6 +3862,11 @@ export interface components {
             description: string | null;
             /** Status */
             status: string;
+            /**
+             * Is Idempotent
+             * @default false
+             */
+            is_idempotent: boolean;
             ledger_events?: components["schemas"]["LedgerEventsRef"] | null;
             /**
              * Created At
@@ -5993,6 +5999,13 @@ export interface operations {
                     "application/json": components["schemas"]["TransferResult"][];
                 };
             };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -6013,7 +6026,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TransferCreate"];
+                "application/json": components["schemas"]["TransferRequest"];
             };
         };
         responses: {
@@ -6025,6 +6038,27 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TransferResult"];
                 };
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cuenta no encontrada o inaccesible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflicto financiero o idempotente */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -6056,6 +6090,20 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TransferResult"];
                 };
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Transferencia no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
