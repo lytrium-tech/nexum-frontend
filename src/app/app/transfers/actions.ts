@@ -20,3 +20,13 @@ export async function createTransferAction(data: components['schemas']['Transfer
     return { success: false, error: handleFinancialError(err, 'Ocurrió un error al registrar la transferencia. Intenta nuevamente.') };
   }
 }
+
+export async function getFXSnapshotAction(baseCurrency: string, quoteCurrency: string) {
+  try {
+    const snapshot = await api.fxV17.getLatestRate(baseCurrency, quoteCurrency, true);
+    return { success: true, snapshot };
+  } catch (err: unknown) {
+    console.error('FX Snapshot error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos obtener la tasa de cambio actual.') };
+  }
+}

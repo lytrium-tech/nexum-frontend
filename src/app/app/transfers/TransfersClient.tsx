@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createTransferAction } from './actions';
+import { createTransferAction, getFXSnapshotAction } from './actions';
 import { formatMoneyOrDash } from '@/lib/format/money';
 
 type TransferResult = components['schemas']['TransferResult'];
 type AccountRead = components['schemas']['AccountRead'];
+type FXRateSnapshotResponse = components['schemas']['FXRateSnapshotResponse'];
 
 interface TransfersClientProps {
   initialTransfers: TransferResult[];
@@ -56,18 +57,58 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
 
   const [commandId, setCommandId] = useState<string>(() => createSafeUuid());
 
+  // FX state
+  const [fxSnapshot, setFxSnapshot] = useState<FXRateSnapshotResponse | null>(null);
+  const [isFxLoading, setIsFxLoading] = useState(false);
+  const [fxError, setFxError] = useState<string | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    // Tick every second to evaluate FX expiry
+    if (fxSnapshot) {
+      const interval = setInterval(() => setNow(Date.now()), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [fxSnapshot]);
+
   const activeAccounts = accounts.filter(a => a.is_active);
 
   const sourceAccount = activeAccounts.find(a => a.id === sourceAccountId);
   
-  // Filtering for destination: active, different from source, same currency.
+  // Filtering for destination: active, different from source (cross-currency is allowed!)
   const eligibleDestinationAccounts = activeAccounts.filter(a => 
-    sourceAccount 
-      ? a.id !== sourceAccountId && a.currency === sourceAccount.currency
-      : false
+    sourceAccount ? a.id !== sourceAccountId : false
   );
 
   const destinationAccount = eligibleDestinationAccounts.find(a => a.id === destinationAccountId);
+
+  const isCrossCurrency = sourceAccount && destinationAccount && sourceAccount.currency !== destinationAccount.currency;
+
+  const fetchFXSnapshot = async (baseCurrency: string, quoteCurrency: string) => {
+    setIsFxLoading(true);
+    setFxError(null);
+    setFxSnapshot(null);
+    
+    const res = await getFXSnapshotAction(baseCurrency, quoteCurrency);
+    if (res.success && res.snapshot) {
+      setFxSnapshot(res.snapshot);
+    } else {
+      setFxError(res.error || 'Error al obtener la tasa de cambio.');
+    }
+    setIsFxLoading(false);
+    setNow(new Date().getTime());
+  };
+
+  useEffect(() => {
+    if (isCrossCurrency && sourceAccount && destinationAccount) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchFXSnapshot(sourceAccount.currency, destinationAccount.currency);
+    } else {
+      setFxSnapshot(null);
+      setFxError(null);
+      setIsFxLoading(false);
+    }
+  }, [isCrossCurrency, sourceAccount, destinationAccount]);
 
   const handleSourceChange = (newSourceId: string) => {
     setSourceAccountId(newSourceId);
@@ -77,8 +118,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
     if (newSource) {
       const isStillEligible = activeAccounts.some(a => 
         a.id === destinationAccountId && 
-        a.id !== newSourceId && 
-        a.currency === newSource.currency
+        a.id !== newSourceId
       );
       if (!isStillEligible) {
         setDestinationAccountId('');
@@ -104,6 +144,9 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
   // Max 2 decimals
   const hasValidDecimals = amountStr === '' || /^\d+(\.\d{1,2})?$/.test(amountStr);
 
+  const isFxExpired = fxSnapshot ? now >= new Date(fxSnapshot.expires_at).getTime() : false;
+  const isFxStale = fxSnapshot?.stale || false;
+
   let isFormValid = true;
   if (!sourceAccount) isFormValid = false;
   if (!destinationAccount) isFormValid = false;
@@ -111,6 +154,11 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
   if (sourceAccount && isValidAmount && amount > parseFloat(sourceAccount.balance as string)) isFormValid = false;
   if (isSubmitting) isFormValid = false;
   if (!commandId) isFormValid = false;
+  if (isCrossCurrency) {
+    if (isFxLoading || fxError || !fxSnapshot || isFxExpired || isFxStale) {
+      isFormValid = false;
+    }
+  }
 
   const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -125,7 +173,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
       amount: amount.toString(),
       description: description.trim() || null,
       command_id: commandId,
-      rate_snapshot_id: null,
+      rate_snapshot_id: isCrossCurrency && fxSnapshot ? fxSnapshot.id : null,
     };
 
     const res = await createTransferAction(payload, commandId);
@@ -136,8 +184,15 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
       setTransfers(prev => [res.result!, ...prev]);
       // Regenerate command_id for future transfers
       setCommandId(createSafeUuid());
+      // Clear FX
+      setFxSnapshot(null);
     } else {
       setError(res.error || 'Ocurrió un error inesperado al registrar la transferencia.');
+      
+      // If error is related to FX, we should force a refresh or at least allow it
+      if (res.error?.includes('tasa') || res.error?.includes('cambio')) {
+        // Just let the user click update manually, the backend rejected the snapshot
+      }
     }
     
     setIsSubmitting(false);
@@ -151,6 +206,8 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
     setAmountStr('');
     setDescription('');
     setError(null);
+    setFxSnapshot(null);
+    setFxError(null);
     setCommandId(createSafeUuid());
   };
 
@@ -217,7 +274,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                       </p>
                       {t.fx_rate && (
                         <p className="text-[10px] text-gray-400 mt-1">
-                          Tasa usada: 1 {t.currency} = {formatMoneyOrDash(t.fx_rate, t.target_currency)}
+                          Tasa: 1 {t.currency} = {formatMoneyOrDash(t.fx_rate, t.target_currency)}
                         </p>
                       )}
                     </>
@@ -238,10 +295,10 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
 
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-graphite-blue/20 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-xl border border-soft-gray">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-xl border border-soft-gray max-h-screen flex flex-col">
             
             {successResult ? (
-              <div className="p-8 text-center">
+              <div className="p-8 text-center overflow-y-auto">
                 <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -264,9 +321,21 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                     <span className="font-medium text-graphite-blue">{formatMoneyOrDash(successResult.amount, successResult.currency)}</span>
                   </div>
                   {successResult.target_amount && successResult.target_currency && successResult.currency !== successResult.target_currency && (
-                    <div className="flex justify-between items-center text-sm">
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200 mt-2">
                       <span className="text-gray-500">Monto recibido</span>
                       <span className="font-medium text-graphite-blue">{formatMoneyOrDash(successResult.target_amount, successResult.target_currency)}</span>
+                    </div>
+                  )}
+                  {successResult.fx_rate && (
+                    <div className="flex justify-between items-center text-xs text-gray-400 mt-1">
+                      <span>Tasa de cambio</span>
+                      <span>1 {successResult.currency} = {formatMoneyOrDash(successResult.fx_rate, successResult.target_currency!)}</span>
+                    </div>
+                  )}
+                  {successResult.rate_source && (
+                    <div className="flex justify-between items-center text-[10px] text-gray-400 mt-1">
+                      <span>Proveedor</span>
+                      <span>{successResult.rate_source}</span>
                     </div>
                   )}
                   {successResult.is_idempotent && (
@@ -286,7 +355,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
               </div>
             ) : (
               <>
-                <div className="p-6 border-b border-soft-gray flex justify-between items-center">
+                <div className="p-6 border-b border-soft-gray flex justify-between items-center shrink-0">
                   <h3 className="text-xl font-semibold text-graphite-blue">Nueva Transferencia</h3>
                   <button 
                     onClick={resetFormAndClose}
@@ -298,7 +367,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                   </button>
                 </div>
                 
-                <form onSubmit={handleCreateSubmit} className="p-6">
+                <form onSubmit={handleCreateSubmit} className="p-6 overflow-y-auto">
                   {error && (
                     <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm" aria-describedby="transfer-error">
                       <span id="transfer-error">{error}</span>
@@ -342,10 +411,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                         ))}
                       </select>
                       {sourceAccount && eligibleDestinationAccounts.length === 0 && (
-                        <p className="text-xs text-amber-600 mt-1">No tienes otras cuentas en la misma moneda ({sourceAccount.currency}).</p>
-                      )}
-                      {sourceAccount && activeAccounts.some(a => a.currency !== sourceAccount.currency) && (
-                        <p className="text-xs text-gray-500 mt-1">Las transferencias entre diferentes monedas estarán disponibles próximamente.</p>
+                        <p className="text-xs text-amber-600 mt-1">No tienes otras cuentas disponibles.</p>
                       )}
                     </div>
 
@@ -372,6 +438,71 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                         <p className="text-xs text-red-500 mt-1">El monto supera tu saldo actual ({formatMoneyOrDash(sourceAccount.balance, sourceAccount.currency)}).</p>
                       )}
                     </div>
+
+                    {isCrossCurrency && (
+                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Conversión (Estimación)</h4>
+                        
+                        {isFxLoading ? (
+                          <div className="text-sm text-gray-500 flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-gray-300 border-t-graphite-blue rounded-full animate-spin"></div>
+                            Consultando tasa...
+                          </div>
+                        ) : fxError ? (
+                          <div className="text-sm text-red-500">
+                            {fxError}
+                            <button
+                              type="button"
+                              onClick={() => fetchFXSnapshot(sourceAccount!.currency, destinationAccount!.currency)}
+                              className="ml-2 text-graphite-blue underline font-medium"
+                            >
+                              Reintentar
+                            </button>
+                          </div>
+                        ) : fxSnapshot ? (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600">Tasa de cambio</span>
+                              <span className="font-medium text-graphite-blue">
+                                1 {fxSnapshot.from_currency} = {formatMoneyOrDash(fxSnapshot.rate, fxSnapshot.to_currency)}
+                              </span>
+                            </div>
+                            
+                            {isValidAmount ? (
+                              <div className="flex justify-between items-center text-sm pt-1">
+                                <span className="text-gray-600">Recibes aprox.</span>
+                                <span className="font-semibold text-graphite-blue">
+                                  {formatMoneyOrDash((amount * parseFloat(fxSnapshot.rate as string)).toString(), fxSnapshot.to_currency)}
+                                </span>
+                              </div>
+                            ) : null}
+
+                            <div className="flex justify-between items-center pt-2 mt-2 border-t border-gray-200">
+                              <span className="text-[10px] text-gray-400">
+                                {fxSnapshot.source ? `Ref: ${fxSnapshot.source}` : 'Tasa de referencia'}
+                              </span>
+                              
+                              {isFxExpired || isFxStale ? (
+                                <span className="text-[10px] text-red-500 font-medium">
+                                  {isFxStale ? 'Tasa no vigente' : 'La tasa expiró'}
+                                  <button
+                                    type="button"
+                                    onClick={() => fetchFXSnapshot(sourceAccount!.currency, destinationAccount!.currency)}
+                                    className="ml-2 underline text-red-600"
+                                  >
+                                    Actualizar
+                                  </button>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-gray-400">
+                                  Expira en {Math.max(0, Math.floor((new Date(fxSnapshot.expires_at).getTime() - now) / 1000))}s
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
 
                     <div>
                       <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descripción <span className="text-gray-400 font-normal">(Opcional)</span></label>
