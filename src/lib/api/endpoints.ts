@@ -269,8 +269,14 @@ export const api = {
         apiClient<components['schemas']['FXRateSnapshotResponse']>(`/api/v1.7/fx/rates/latest?from_currency=${baseCurrency}&to_currency=${quoteCurrency}`, { method: 'GET' }, isServer),
     },
     transfers: {
-      list: (isServer = false) =>
-        apiClient<TransferResult[]>('/api/v1/transfers', { method: 'GET' }, isServer),
+      list: (limit?: number, offset?: number, isServer = false) => {
+        const params = new URLSearchParams();
+        if (limit !== undefined) params.append('limit', limit.toString());
+        if (offset !== undefined) params.append('offset', offset.toString());
+        const qs = params.toString();
+        const url = qs ? `/api/v1/transfers?${qs}` : '/api/v1/transfers';
+        return apiClient<TransferResult[]>(url, { method: 'GET' }, isServer);
+      },
       create: (data: TransferRequest, idempotencyKey: string, isServer = false) =>
         apiClient<TransferResult>('/api/v1/transfers', {
           method: 'POST',

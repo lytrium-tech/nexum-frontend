@@ -30,3 +30,13 @@ export async function getFXSnapshotAction(baseCurrency: string, quoteCurrency: s
     return { success: false, error: handleFinancialError(err, 'No pudimos obtener la tasa de cambio actual.') };
   }
 }
+
+export async function getTransfersAction(limit: number = 50, offset: number = 0) {
+  try {
+    const results = await api.transfers.list(limit, offset, true);
+    return { success: true, results };
+  } catch (err: unknown) {
+    console.error('List transfers error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos cargar más transferencias.') };
+  }
+}

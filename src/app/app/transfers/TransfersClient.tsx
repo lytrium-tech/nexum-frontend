@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createTransferAction, getFXSnapshotAction } from './actions';
+import { createTransferAction, getFXSnapshotAction, getTransfersAction } from './actions';
 import { formatMoneyOrDash } from '@/lib/format/money';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { emitFinancialEvent } from '@/lib/browser/financial-events';
 
 type TransferResult = components['schemas']['TransferResult'];
 type AccountRead = components['schemas']['AccountRead'];
@@ -56,12 +59,53 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
   const [description, setDescription] = useState('');
 
   const [commandId, setCommandId] = useState<string>(() => createSafeUuid());
+  const router = useRouter();
+  const [syncNotice, setSyncNotice] = useState(false);
+  const prevAccountsRef = useRef(accounts);
+
+  useEffect(() => {
+    if (prevAccountsRef.current !== accounts) {
+      if (isCreateModalOpen && !successResult) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSyncNotice(true);
+      }
+      prevAccountsRef.current = accounts;
+    }
+  }, [accounts, isCreateModalOpen, successResult]);
 
   // FX state
   const [fxSnapshot, setFxSnapshot] = useState<FXRateSnapshotResponse | null>(null);
   const [isFxLoading, setIsFxLoading] = useState(false);
   const [fxError, setFxError] = useState<string | null>(null);
   const [now, setNow] = useState<number>(() => Date.now());
+
+  const LIMIT = 50;
+  const [offset, setOffset] = useState(initialTransfers.length);
+  const [hasMore, setHasMore] = useState(initialTransfers.length >= LIMIT);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    setLoadError(null);
+    const res = await getTransfersAction(LIMIT, offset);
+    if (res.success && res.results) {
+      setTransfers(prev => {
+        // filter out potential duplicates just in case
+        const existingIds = new Set(prev.map(t => t.id));
+        const newTransfers = res.results!.filter(t => !existingIds.has(t.id));
+        return [...prev, ...newTransfers];
+      });
+      setOffset(prev => prev + res.results!.length);
+      if (res.results!.length < LIMIT) {
+        setHasMore(false);
+      }
+    } else {
+      setLoadError(res.error || 'Error al cargar más transferencias.');
+    }
+    setIsLoadingMore(false);
+  };
 
   useEffect(() => {
     // Tick every second to evaluate FX expiry
@@ -182,16 +226,35 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
       setSuccessResult(res.result);
       // Prepend to list
       setTransfers(prev => [res.result!, ...prev]);
+      setOffset(prev => prev + 1); // Account for the new item in db offset
       // Regenerate command_id for future transfers
       setCommandId(createSafeUuid());
       // Clear FX
       setFxSnapshot(null);
+
+      emitFinancialEvent({
+        type: 'transfer_completed',
+        sourceAccountId: sourceAccount.id,
+        destinationAccountId: destinationAccount.id,
+        transferId: res.result.id,
+      });
     } else {
       setError(res.error || 'Ocurrió un error inesperado al registrar la transferencia.');
       
       // If error is related to FX, we should force a refresh or at least allow it
       if (res.error?.includes('tasa') || res.error?.includes('cambio')) {
         // Just let the user click update manually, the backend rejected the snapshot
+      }
+
+      const e = (res.error || '').toLowerCase();
+      if (
+        e.includes('saldo') ||
+        e.includes('fondos') ||
+        e.includes('inactiva') ||
+        e.includes('disponible') ||
+        e.includes('válido')
+      ) {
+        router.refresh();
       }
     }
     
@@ -209,6 +272,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
     setFxSnapshot(null);
     setFxError(null);
     setCommandId(createSafeUuid());
+    setSyncNotice(false);
   };
 
   return (
@@ -246,8 +310,9 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
         <div className="bg-white rounded-3xl shadow-sm border border-soft-gray overflow-hidden">
           <div className="divide-y divide-soft-gray">
             {transfers.map((t) => (
-              <div key={t.id} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+              <Link href={`/app/transfers/${t.id}`} key={t.id} className="block p-4 sm:p-6 hover:bg-gray-50 transition-colors focus:bg-gray-50 focus:outline-none">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-graphite-blue shrink-0">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -288,8 +353,28 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                   )}
                 </div>
               </div>
+              </Link>
             ))}
           </div>
+
+          {(hasMore || isLoadingMore || loadError) && (
+            <div className="p-6 border-t border-soft-gray flex flex-col items-center justify-center">
+              {loadError && (
+                <div className="text-red-500 text-sm mb-4">
+                  {loadError}
+                </div>
+              )}
+              {hasMore && (
+                <button
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  className="px-6 py-2 bg-white border border-gray-200 text-graphite-blue rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                >
+                  {isLoadingMore ? 'Cargando...' : 'Cargar más'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -368,6 +453,13 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                 </div>
                 
                 <form onSubmit={handleCreateSubmit} className="p-6 overflow-y-auto">
+                  {syncNotice && (
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-100 rounded-xl text-graphite-blue text-sm flex items-start gap-3">
+                      <svg className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <span>Los saldos se actualizaron porque hubo cambios en otra pestaña.</span>
+                    </div>
+                  )}
+
                   {error && (
                     <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm" aria-describedby="transfer-error">
                       <span id="transfer-error">{error}</span>

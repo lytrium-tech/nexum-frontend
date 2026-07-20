@@ -3,17 +3,17 @@ export const dynamic = 'force-dynamic';
 import React from 'react';
 import { getSessionToken } from '@/lib/api/client';
 import { api } from '@/lib/api/endpoints';
-import { components } from '@/lib/api/types.generated';
-import TransfersClient from './TransfersClient';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import TransferDetailClient from './TransferDetailClient';
 
 export const metadata = {
-  title: 'Nexum - Transferencias',
+  title: 'Nexum - Detalle de Transferencia',
 };
 
-export default async function TransfersPage() {
+export default async function TransferDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const token = await getSessionToken(true);
-  
+
   if (!token) {
     return (
       <div className="bg-white p-8 rounded-3xl shadow-sm border border-soft-gray text-center max-w-lg mx-auto mt-10">
@@ -26,30 +26,30 @@ export default async function TransfersPage() {
     );
   }
 
-  let transfers: components['schemas']['TransferResult'][] = [];
-  let accounts: components['schemas']['AccountRead'][] = [];
-  let hasError = false;
+  const { id } = await params;
 
+  let transfer;
   try {
-    const [transfersData, accountsData] = await Promise.all([
-      api.transfers.list(50, 0, true),
-      api.accounts.list(true)
-    ]);
-    transfers = transfersData || [];
-    accounts = accountsData || [];
-  } catch (error) {
-    console.error('Error fetching transfers data:', error);
-    hasError = true;
-  }
-
-  if (hasError) {
+    transfer = await api.transfers.get(id, true);
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message?.includes('404')) {
+      notFound();
+    }
+    console.error('Error fetching transfer:', error);
     return (
       <div className="bg-white p-8 rounded-3xl shadow-sm border border-soft-gray text-center max-w-lg mx-auto mt-10">
         <h2 className="text-xl font-medium text-graphite-blue mb-2">Error de conexión</h2>
-        <p className="text-gray-500">No pudimos cargar tus transferencias. Intenta recargar la página en unos minutos.</p>
+        <p className="text-gray-500 mb-6">No pudimos cargar la transferencia. Intenta recargar la página en unos minutos.</p>
+        <Link href="/app/transfers" className="text-graphite-blue font-medium hover:underline">
+          Volver a Transferencias
+        </Link>
       </div>
     );
   }
 
-  return <TransfersClient initialTransfers={transfers} accounts={accounts} />;
+  if (!transfer) {
+    notFound();
+  }
+
+  return <TransferDetailClient transfer={transfer} />;
 }

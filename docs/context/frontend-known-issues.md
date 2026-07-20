@@ -28,3 +28,7 @@
 ## Auth And Sessions
 
 - Expired JWT, refresh, and redirect behavior should continue to be tested from the user flow, not assumed from backend behavior.
+
+## UI Navigation
+
+- GLOBAL_MOBILE_NAVIGATION_INCOMPLETE: The mobile bottom navigation bar requires a complete UX redesign. Currently, important routes (Categories, Goals, Obligations, Credit, Transfers) are filtered out, leaving them inaccessible on mobile viewports.
