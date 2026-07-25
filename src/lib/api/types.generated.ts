@@ -169,6 +169,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounts/{account_id}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account Availability */
+        get: operations["get_account_availability_api_v1_accounts__account_id__availability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounts/{account_id}/adjustments": {
         parameters: {
             query?: never;
@@ -375,6 +392,40 @@ export interface paths {
         put?: never;
         /** Create Contribution */
         post: operations["create_contribution_api_v1_goals__goal_id__contributions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{goal_id}/releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Release */
+        post: operations["create_release_api_v1_goals__goal_id__releases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{goal_id}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Goal Transactions */
+        get: operations["list_goal_transactions_api_v1_goals__goal_id__transactions_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1380,6 +1431,22 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountAvailabilityRead */
+        AccountAvailabilityRead: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Currency */
+            currency: string;
+            /** Balance */
+            balance: string;
+            /** Goal Reserved Amount */
+            goal_reserved_amount: string;
+            /** Available Balance */
+            available_balance: string;
+        };
         /** AccountBalanceRead */
         AccountBalanceRead: {
             /**
@@ -2429,6 +2496,26 @@ export interface components {
          * @enum {string}
          */
         Frequency: "monthly" | "weekly" | "biweekly" | "yearly" | "one_time";
+        /** GoalAccountReservationRead */
+        GoalAccountReservationRead: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Name */
+            account_name: string;
+            /** Account Currency */
+            account_currency: string;
+            /** Contributed Amount */
+            contributed_amount: string;
+            /** Released Amount */
+            released_amount: string;
+            /** Reserved Amount */
+            reserved_amount: string;
+            /** Account Is Active */
+            account_is_active: boolean;
+        };
         /** GoalContributionCreate */
         GoalContributionCreate: {
             /**
@@ -2438,8 +2525,15 @@ export interface components {
             account_id: string;
             /** Amount */
             amount: number | string;
-            /** Currency */
+            /**
+             * Currency
+             * @description Legacy compatibility only. The account currency is authoritative.
+             */
             currency?: string | null;
+            /** Command Id */
+            command_id?: string | null;
+            /** Description */
+            description?: string | null;
             /** Source Message Id */
             source_message_id?: string | null;
             /** Raw Message */
@@ -2447,18 +2541,59 @@ export interface components {
         };
         /** GoalContributionResult */
         GoalContributionResult: {
+            /**
+             * Transaction Id
+             * Format: uuid
+             */
+            transaction_id: string;
+            /**
+             * Event Id
+             * Format: uuid
+             */
+            event_id: string;
+            /**
+             * Goal Id
+             * Format: uuid
+             */
+            goal_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Source Amount */
+            source_amount: string;
+            /** Source Currency */
+            source_currency: string;
+            /** Applied Amount */
+            applied_amount: string;
+            /** Goal Currency */
+            goal_currency: string;
+            /** Goal Current Amount */
+            goal_current_amount: string;
+            /** Goal Remaining Amount */
+            goal_remaining_amount: string;
+            /** Goal Status */
+            goal_status: string;
+            /** Account Balance */
+            account_balance: string;
+            /** Goal Reserved Amount */
+            goal_reserved_amount: string;
+            /** Available Balance */
+            available_balance: string;
+            /** Idempotent */
+            idempotent: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
             /** Contribution Id */
-            contribution_id: string | null;
-            /** Event Id */
-            event_id: string | null;
+            contribution_id?: string | null;
             /** Amount */
-            amount: string;
+            amount?: string | null;
             /** Currency */
             currency?: string | null;
-            /** Applied Amount */
-            applied_amount?: string | null;
-            /** Goal Currency */
-            goal_currency?: string | null;
             /** Fx Rate */
             fx_rate?: string | null;
             /** Rate Source */
@@ -2471,13 +2606,11 @@ export interface components {
              */
             is_estimated: boolean;
             /** Balance After */
-            balance_after: string;
-            /** Goal Current Amount */
-            goal_current_amount: string;
+            balance_after?: string | null;
             /** Progress Percentage */
-            progress_percentage: string | null;
+            progress_percentage?: string | null;
             /** Status */
-            status: string;
+            status?: string | null;
         };
         /** GoalCreate */
         GoalCreate: {
@@ -2493,6 +2626,65 @@ export interface components {
             source_message_id?: string | null;
             /** Raw Message */
             raw_message?: string | null;
+        };
+        /** GoalDetailRead */
+        GoalDetailRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Target Amount */
+            target_amount: string;
+            /** Current Amount */
+            current_amount: string;
+            /** Target Date */
+            target_date: string | null;
+            /** Currency */
+            currency: string;
+            /** Status */
+            status: string;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Contributed This Period
+             * @default 0.00
+             */
+            contributed_this_period: string;
+            /** Reservations By Account */
+            reservations_by_account?: components["schemas"]["GoalAccountReservationRead"][];
+            /** Remaining Amount */
+            readonly remaining_amount: string;
+            /** Progress Percentage */
+            readonly progress_percentage: string;
+            /** Currency Minimum Unit */
+            readonly currency_minimum_unit: string;
+            /** Is Flexible */
+            readonly is_flexible: boolean;
+            /** Monthly Required */
+            readonly monthly_required: string;
+            /** Required This Period */
+            readonly required_this_period: string;
+            /** Remaining Required This Period */
+            readonly remaining_required_this_period: string;
+            /** Period Status */
+            readonly period_status: string;
+            /** Days Remaining In Period */
+            readonly days_remaining_in_period: number;
+            /** Daily Required This Period */
+            readonly daily_required_this_period: string;
         };
         /** GoalRead */
         GoalRead: {
@@ -2550,6 +2742,126 @@ export interface components {
             readonly days_remaining_in_period: number;
             /** Daily Required This Period */
             readonly daily_required_this_period: string;
+        };
+        /** GoalReleaseCreate */
+        GoalReleaseCreate: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount: number | string;
+            /** Command Id */
+            command_id?: string | null;
+            /** Description */
+            description?: string | null;
+        };
+        /** GoalReleaseResult */
+        GoalReleaseResult: {
+            /**
+             * Transaction Id
+             * Format: uuid
+             */
+            transaction_id: string;
+            /**
+             * Event Id
+             * Format: uuid
+             */
+            event_id: string;
+            /**
+             * Goal Id
+             * Format: uuid
+             */
+            goal_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Released Amount */
+            released_amount: string;
+            /** Source Currency */
+            source_currency: string;
+            /** Applied Amount */
+            applied_amount: string;
+            /** Goal Currency */
+            goal_currency: string;
+            /** Goal Current Amount */
+            goal_current_amount: string;
+            /** Goal Remaining Amount */
+            goal_remaining_amount: string;
+            /** Goal Status */
+            goal_status: string;
+            /** Account Balance */
+            account_balance: string;
+            /** Goal Account Reserved Amount */
+            goal_account_reserved_amount: string;
+            /** Goal Total Reserved Amount */
+            goal_total_reserved_amount: string;
+            /** Account Total Reserved Amount */
+            account_total_reserved_amount: string;
+            /** Available Balance */
+            available_balance: string;
+            /** Idempotent */
+            idempotent: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** GoalTransactionRead */
+        GoalTransactionRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            transaction_type: components["schemas"]["GoalTransactionType"];
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Source Amount */
+            source_amount: string;
+            /** Source Currency */
+            source_currency: string;
+            /** Applied Amount */
+            applied_amount: string;
+            /** Goal Currency */
+            goal_currency: string;
+            /** Event Id */
+            event_id: string | null;
+            /** Description */
+            description?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "legacy" | "native";
+        };
+        /**
+         * GoalTransactionType
+         * @enum {string}
+         */
+        GoalTransactionType: "allocation" | "release" | "adjustment" | "legacy_import";
+        /** GoalTransactionsResponse */
+        GoalTransactionsResponse: {
+            /** Items */
+            items: components["schemas"]["GoalTransactionRead"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
         };
         /** GoalUpdate */
         GoalUpdate: {
@@ -4272,6 +4584,56 @@ export interface operations {
             };
         };
     };
+    get_account_availability_api_v1_accounts__account_id__availability_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountAvailabilityRead"];
+                };
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cuenta inexistente o no accesible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Estado de reservas inconsistente */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cuenta inactiva o sin balance válido */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     create_balance_adjustment_api_v1_accounts__account_id__adjustments_post: {
         parameters: {
             query?: never;
@@ -4702,7 +5064,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GoalRead"];
+                    "application/json": components["schemas"]["GoalDetailRead"];
                 };
             };
             /** @description Validation Error */
@@ -4784,7 +5146,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                "idempotency-key"?: string | null;
+                "Idempotency-Key"?: string | null;
             };
             path: {
                 goal_id: string;
@@ -4806,14 +5168,163 @@ export interface operations {
                     "application/json": components["schemas"]["GoalContributionResult"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cuenta o meta ajena/inactiva */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cuenta o meta no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflicto de idempotencia, reserva o monto */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Payload o moneda inválidos */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                content?: never;
+            };
+        };
+    };
+    create_release_api_v1_goals__goal_id__releases_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalReleaseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
                 };
+                content: {
+                    "application/json": components["schemas"]["GoalReleaseResult"];
+                };
+            };
+            /** @description Meta archivada, cancelada o con estado inválido */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cuenta inactiva o sin saldo configurado */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cuenta o meta no encontrada o inaccesible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflicto de idempotencia, reserva o monto */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Payload o moneda inválidos */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_goal_transactions_api_v1_goals__goal_id__transactions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalTransactionsResponse"];
+                };
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta ajena */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Paginación inválida */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
