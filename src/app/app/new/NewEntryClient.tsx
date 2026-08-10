@@ -131,8 +131,9 @@ export default function NewEntryClient({
         <h3 className="text-lg font-medium text-slate-800 mb-2">No tienes cuentas disponibles</h3>
         <p className="text-slate-500 mb-6">Para registrar un movimiento primero debes crear una cuenta o billetera.</p>
         <button
+          type="button"
           onClick={() => router.push('/app/accounts')}
-          className="bg-slate-800 text-white px-6 py-2 rounded-xl font-medium hover:bg-slate-700 transition-colors"
+          className="bg-slate-800 text-white px-6 py-2 rounded-xl font-medium hover:bg-slate-700 transition-colors cursor-pointer"
         >
           Ir a Billeteras
         </button>
@@ -153,14 +154,16 @@ export default function NewEntryClient({
         
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
+            type="button"
             onClick={() => router.push('/app/history')}
-            className="px-6 py-2.5 rounded-xl font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+            className="px-6 py-2.5 rounded-xl font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
           >
             Ver historial
           </button>
           <button
+            type="button"
             onClick={() => setShowSuccess(false)}
-            className="px-6 py-2.5 rounded-xl font-medium bg-slate-800 text-white hover:bg-slate-700 transition-colors"
+            className="px-6 py-2.5 rounded-xl font-medium bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
           >
             Registrar otro
           </button>
@@ -175,7 +178,7 @@ export default function NewEntryClient({
         <button
           type="button"
           onClick={() => { setType('expense'); setCategoryId(''); }}
-          className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+          className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
             type === 'expense' 
               ? 'bg-white text-slate-800 shadow-sm' 
               : 'text-slate-500 hover:text-slate-700'
@@ -186,7 +189,7 @@ export default function NewEntryClient({
         <button
           type="button"
           onClick={() => { setType('income'); setCategoryId(''); }}
-          className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+          className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
             type === 'income' 
               ? 'bg-white text-slate-800 shadow-sm' 
               : 'text-slate-500 hover:text-slate-700'

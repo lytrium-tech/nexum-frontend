@@ -144,6 +144,8 @@ export const api = {
   goals: {
     list: (isServer = false) =>
       apiClient<GoalRead[]>('/api/v1/goals', { method: 'GET' }, isServer),
+    get: (id: string, isServer = false) =>
+      apiClient<components['schemas']['GoalDetailRead']>(`/api/v1/goals/${id}`, { method: 'GET' }, isServer),
     create: (data: GoalCreate, isServer = false) =>
       apiClient<GoalRead>('/api/v1/goals', {
         method: 'POST',

@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { api } from '@/lib/api/endpoints';
 import { revalidatePath } from 'next/cache';
@@ -14,6 +14,16 @@ export async function createGoalAction(data: components['schemas']['GoalCreate']
   } catch (err: unknown) {
     console.error('Create goal error:', err);
     return { success: false, error: handleFinancialError(err, 'Ocurrió un error al crear la meta. Intenta nuevamente.') };
+  }
+}
+
+export async function getGoalDetailAction(id: string) {
+  try {
+    const result = await api.goals.get(id, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Get goal detail error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos cargar los detalles de la meta.') };
   }
 }
 

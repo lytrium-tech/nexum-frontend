@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createGoalAction, contributeGoalAction } from './actions';
+import { createGoalAction, contributeGoalAction, getGoalDetailAction } from './actions';
 import { formatMoneyOrDash } from '@/lib/format/money';
 
 const Target = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22a10 10 0 110-20 10 10 0 010 20z M12 16a4 4 0 110-8 4 4 0 010 8z M12 12a1 1 0 110-2 1 1 0 010 2z" /></svg>;
@@ -13,8 +13,10 @@ const X = ({ className }: { className?: string }) => <svg className={className} 
 const PiggyBank = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const Calendar = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 const ArrowRight = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>;
+const Unlock = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>;
 
 type GoalRead = components['schemas']['GoalRead'];
+type GoalDetailRead = components['schemas']['GoalDetailRead'];
 type AccountRead = components['schemas']['AccountRead'];
 
 interface GoalsClientProps {
@@ -27,6 +29,13 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<GoalRead | null>(null);
+
+  const [isReleaseModalOpen, setIsReleaseModalOpen] = useState(false);
+  const [selectedGoalForRelease, setSelectedGoalForRelease] = useState<GoalRead | null>(null);
+  const [detailedGoal, setDetailedGoal] = useState<GoalDetailRead | null>(null);
+  const [manageLoading, setManageLoading] = useState(false);
+  const [releaseAccountId, setReleaseAccountId] = useState('');
+  const [releaseAmount, setReleaseAmount] = useState('');
 
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,14 +52,51 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
     setSuccessMessage(null);
   };
 
+  const openReleaseModal = async (goal: GoalRead) => {
+    setSelectedGoalForRelease(goal);
+    setDetailedGoal(null);
+    setReleaseAccountId('');
+    setReleaseAmount('');
+    setIsReleaseModalOpen(true);
+    setManageLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const res = await getGoalDetailAction(goal.id);
+    if (res.success && res.result) {
+      setDetailedGoal(res.result);
+    } else {
+      setError(res.error || 'No pudimos cargar los detalles de la meta.');
+    }
+    setManageLoading(false);
+  };
+
   const closeModals = () => {
     setIsCreateModalOpen(false);
     setIsContributeModalOpen(false);
+    setIsReleaseModalOpen(false);
     setSelectedGoal(null);
+    setSelectedGoalForRelease(null);
+    setDetailedGoal(null);
+    setReleaseAccountId('');
+    setReleaseAmount('');
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(false);
   };
+
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeModals();
+      }
+    };
+    if (isCreateModalOpen || isContributeModalOpen || isReleaseModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCreateModalOpen, isContributeModalOpen, isReleaseModalOpen]);
 
   const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,7 +110,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
     const targetDateStr = formData.get('targetDate') as string;
     const currency = formData.get('currency') as string || 'COP';
 
-    const target_amount = parseFloat(targetAmountStr);
+    const target_amount = parseFloat(targetAmountStr.replace(',', '.'));
     if (isNaN(target_amount) || target_amount <= 0) {
       setError('El monto objetivo debe ser mayor a 0');
       setIsSubmitting(false);
@@ -110,7 +156,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
     const accountId = formData.get('accountId') as string;
     const amountStr = formData.get('amount') as string;
 
-    const amount = parseFloat(amountStr);
+    const amount = parseFloat(amountStr.replace(',', '.'));
     if (isNaN(amount) || amount <= 0) {
       setError('El monto debe ser mayor a 0');
       setIsSubmitting(false);
@@ -152,11 +198,12 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
       setGoals(updatedGoals);
 
       const cr = res.result;
+      const sourceAccountName = sourceAccount?.name || 'la cuenta';
       let messageContent: React.ReactNode;
       if (cr.goal_currency && cr.currency && cr.currency !== cr.goal_currency) {
         messageContent = (
           <div className="flex flex-col gap-1">
-            <span className="font-semibold">Aportaste {formatMoneyOrDash(cr.amount, cr.currency)}</span>
+            <span className="font-semibold">Aportaste {formatMoneyOrDash(cr.amount, cr.currency)} a {selectedGoal.name} desde {sourceAccountName}.</span>
             <span>{cr.is_estimated ? '≈ ' : ''}{formatMoneyOrDash(cr.applied_amount, cr.goal_currency)} aplicados a tu meta</span>
             {cr.fx_rate && (
               <span className="text-xs opacity-80 mt-1">
@@ -166,7 +213,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
           </div>
         );
       } else {
-        messageContent = `Aportaste ${formatMoneyOrDash(cr.amount, cr.currency || 'COP')}`;
+        messageContent = `Aportaste ${formatMoneyOrDash(cr.amount, cr.currency || 'COP')} a ${selectedGoal.name} desde ${sourceAccountName}.`;
       }
 
       setSuccessMessage(messageContent);
@@ -190,8 +237,9 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="bg-graphite-blue text-white px-5 py-2.5 rounded-full font-medium shadow-sm hover:bg-graphite-blue/90 transition-all active:scale-95 flex items-center gap-2"
+          className="bg-graphite-blue text-white px-5 py-2.5 rounded-full font-medium shadow-sm hover:bg-graphite-blue/90 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
         >
           <Plus className="w-5 h-5" />
           <span>Nueva meta</span>
@@ -209,8 +257,9 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
             Crea una meta para empezar a separar dinero hacia algo importante.
           </p>
           <button
+            type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="text-sage-green font-medium hover:text-sage-green/80 flex items-center gap-1 transition-colors"
+            className="text-sage-green font-medium hover:text-sage-green/80 flex items-center gap-1 transition-colors cursor-pointer"
           >
             <span>Crear mi primera meta</span>
             <ArrowRight className="w-4 h-4" />
@@ -329,13 +378,36 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-graphite-blue/5 flex gap-3">
+                  {!isCompleted && goal.status !== 'archived' && goal.status !== 'cancelled' && (
+                    <button
+                      type="button"
+                      onClick={() => openReleaseModal(goal)}
+                      className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2
+                        bg-white border border-graphite-blue/10 text-graphite-blue hover:bg-graphite-blue/5 cursor-pointer`}
+                    >
+                      <Unlock className="w-4 h-4" />
+                      Liberar
+                    </button>
+                  )}
+                  {isCompleted && (
+                    <button
+                      type="button"
+                      onClick={() => openReleaseModal(goal)}
+                      className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2
+                        bg-white border border-graphite-blue/10 text-graphite-blue hover:bg-graphite-blue/5 cursor-pointer`}
+                    >
+                      <Unlock className="w-4 h-4" />
+                      Liberar
+                    </button>
+                  )}
                   <button
+                    type="button"
                     onClick={() => openContributeModal(goal)}
                     disabled={isCompleted}
                     className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors flex justify-center items-center gap-2
                       ${isCompleted 
                         ? 'bg-graphite-blue/5 text-graphite-blue/40 cursor-not-allowed' 
-                        : 'bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white'}`}
+                        : 'bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue hover:text-white cursor-pointer'}`}
                   >
                     <PiggyBank className="w-4 h-4" />
                     {isCompleted ? 'Completada' : 'Aportar'}
@@ -356,7 +428,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 <Target className="w-5 h-5 text-sage-green" />
                 Nueva meta
               </h2>
-              <button 
+              <button
                 onClick={closeModals}
                 className="text-graphite-blue/40 hover:text-graphite-blue transition-colors p-1"
                 disabled={isSubmitting}
@@ -425,7 +497,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                     id="targetAmount"
                     name="targetAmount"
                     type="number"
-                    min="1"
+                    min="0.01"
                     step="0.01"
                     required
                     placeholder="0.00"
@@ -482,7 +554,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 <PiggyBank className="w-5 h-5 text-sage-green" />
                 Aportar a meta
               </h2>
-              <button 
+              <button
                 onClick={closeModals}
                 className="text-graphite-blue/40 hover:text-graphite-blue transition-colors p-1"
                 disabled={isSubmitting}
@@ -547,7 +619,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                     id="amount"
                     name="amount"
                     type="number"
-                    min="1"
+                    min="0.01"
                     step="0.01"
                     required
                     placeholder="0.00"
@@ -577,6 +649,146 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Release Goal Modal */}
+      {isReleaseModalOpen && selectedGoalForRelease && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-graphite-blue/20 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-graphite-blue flex items-center gap-2">
+                <Unlock className="w-5 h-5 text-sage-green" />
+                Liberar dinero
+              </h2>
+              <button
+                onClick={closeModals}
+                className="text-graphite-blue/40 hover:text-graphite-blue transition-colors p-1"
+                disabled={isSubmitting}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-graphite-blue/5 rounded-2xl p-4 mb-6">
+              <p className="text-sm text-graphite-blue/60">Meta seleccionada</p>
+              <p className="font-semibold text-graphite-blue mt-0.5">{selectedGoalForRelease.name}</p>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-3 rounded-xl bg-red-50 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600 font-medium">{error}</p>
+              </div>
+            )}
+
+            {manageLoading ? (
+              <div className="py-12 flex flex-col items-center justify-center">
+                <div className="w-8 h-8 border-4 border-graphite-blue/10 border-t-graphite-blue rounded-full animate-spin mb-4" />
+                <p className="text-sm text-graphite-blue/60">Cargando detalles...</p>
+              </div>
+            ) : detailedGoal ? (
+              !detailedGoal.reservations_by_account || !detailedGoal.reservations_by_account.some(r => parseFloat(r.reserved_amount || '0') > 0) ? (
+                <div className="py-8 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-graphite-blue/5 rounded-full flex items-center justify-center mb-4">
+                    <Unlock className="w-6 h-6 text-graphite-blue/40" />
+                  </div>
+                  <p className="text-graphite-blue font-medium mb-1">Sin reservas</p>
+                  <p className="text-sm text-graphite-blue/60 mb-6 max-w-[250px]">
+                    Esta meta todavía no tiene dinero reservado para liberar.
+                  </p>
+                  <button
+                    onClick={closeModals}
+                    autoFocus
+                    className="w-full py-3 px-4 rounded-xl font-medium bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue/10 transition-colors"
+                  >
+                    Volver
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={(e) => { e.preventDefault(); setError('El envío de la liberación se habilitará en el siguiente paso de implementación.'); }} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="releaseAccountId">
+                      Cuenta de origen *
+                    </label>
+                    <p className="text-xs text-graphite-blue/50 mb-2">
+                      El dinero volverá a estar disponible en esta cuenta.
+                    </p>
+                    {detailedGoal.reservations_by_account?.filter(r => parseFloat(r.reserved_amount || '0') > 0 && r.account_is_active).length ? (
+                      <select
+                        id="releaseAccountId"
+                        name="releaseAccountId"
+                        required
+                        autoFocus
+                        value={releaseAccountId}
+                        onChange={(e) => setReleaseAccountId(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
+                        disabled={isSubmitting || !!successMessage}
+                      >
+                        <option value="">Selecciona una cuenta</option>
+                        {detailedGoal.reservations_by_account?.filter(r => parseFloat(r.reserved_amount || '0') > 0 && r.account_is_active).map(res => (
+                          <option key={res.account_id} value={res.account_id}>
+                            {res.account_name} — Reserva disponible: {formatMoneyOrDash(res.reserved_amount, res.account_currency)}
+                          </option>
+                        ))}
+                      </select>
+                    ) : null}
+                    {detailedGoal.reservations_by_account?.some(r => !r.account_is_active && parseFloat(r.reserved_amount || '0') > 0) && (
+                      <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-100 flex gap-2 items-start" aria-live="polite">
+                        <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-sm text-amber-700 font-medium">
+                          Hay dinero reservado desde una cuenta archivada. Actívala para gestionarlo.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="releaseAmount">
+                      Monto a liberar *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-graphite-blue/40 font-medium">
+                        $
+                      </span>
+                      <input
+                        id="releaseAmount"
+                        name="releaseAmount"
+                        type="number"
+                        min="0.01"
+                        max={releaseAccountId && detailedGoal.reservations_by_account ? detailedGoal.reservations_by_account.find(r => r.account_id === releaseAccountId)?.reserved_amount : undefined}
+                        step="0.01"
+                        required
+                        value={releaseAmount}
+                        onChange={(e) => setReleaseAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full pl-8 pr-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors placeholder:text-graphite-blue/30 outline-none"
+                        disabled={isSubmitting || !!successMessage || !releaseAccountId}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={closeModals}
+                      className="flex-1 py-3 px-4 rounded-xl font-medium text-graphite-blue/70 hover:bg-graphite-blue/5 transition-colors"
+                      disabled={isSubmitting || !!successMessage}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || !!successMessage || !detailedGoal.reservations_by_account?.some(r => r.account_is_active && parseFloat(r.reserved_amount || '0') > 0)}
+                      className="flex-1 py-3 px-4 rounded-xl font-medium bg-graphite-blue text-white hover:bg-graphite-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                </form>
+              )
+            ) : null}
           </div>
         </div>
       )}
