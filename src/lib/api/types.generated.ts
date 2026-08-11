@@ -2505,16 +2505,40 @@ export interface components {
             account_id: string;
             /** Account Name */
             account_name: string;
-            /** Account Currency */
+            /**
+             * Account Currency
+             * @description La moneda fuente (account_currency).
+             */
             account_currency: string;
-            /** Contributed Amount */
+            /**
+             * Contributed Amount
+             * @description Expresado en la moneda fuente.
+             */
             contributed_amount: string;
-            /** Released Amount */
+            /**
+             * Released Amount
+             * @description Expresado en la moneda fuente.
+             */
             released_amount: string;
-            /** Reserved Amount */
+            /**
+             * Reserved Amount
+             * @description Expresado en la moneda fuente.
+             */
             reserved_amount: string;
+            /** Goal Currency */
+            goal_currency: string;
+            /** Applied Contributed Amount */
+            applied_contributed_amount: string;
+            /** Applied Released Amount */
+            applied_released_amount: string;
+            /** Applied Reserved Amount */
+            applied_reserved_amount: string;
             /** Account Is Active */
             account_is_active: boolean;
+            /** Is Releasable */
+            is_releasable: boolean;
+            /** Release Block Reason */
+            release_block_reason?: ("currency_mismatch_legacy" | "account_inactive") | null;
         };
         /** GoalContributionCreate */
         GoalContributionCreate: {
