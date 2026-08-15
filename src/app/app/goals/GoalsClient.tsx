@@ -715,38 +715,58 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                     <p className="text-xs text-graphite-blue/50 mb-2">
                       El dinero volverá a estar disponible en esta cuenta.
                     </p>
-                    {detailedGoal.reservations_by_account?.filter(r => parseFloat(r.reserved_amount || '0') > 0 && r.account_is_active).length ? (
-                      <select
-                        id="releaseAccountId"
-                        name="releaseAccountId"
-                        required
-                        autoFocus
-                        value={releaseAccountId}
-                        onChange={(e) => setReleaseAccountId(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
-                        disabled={isSubmitting || !!successMessage}
-                      >
-                        <option value="">Selecciona una cuenta</option>
-                        {detailedGoal.reservations_by_account?.filter(r => parseFloat(r.reserved_amount || '0') > 0 && r.account_is_active).map(res => (
-                          <option key={res.account_id} value={res.account_id}>
-                            {res.account_name} — Reserva disponible: {formatMoneyOrDash(res.reserved_amount, res.account_currency)}
+                    <select
+                      id="releaseAccountId"
+                      name="releaseAccountId"
+                      required
+                      autoFocus
+                      value={releaseAccountId}
+                      onChange={(e) => setReleaseAccountId(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-graphite-blue/5 border-transparent focus:border-graphite-blue focus:bg-white focus:ring-0 transition-colors text-graphite-blue outline-none appearance-none"
+                      disabled={isSubmitting || !!successMessage}
+                    >
+                      <option value="">Selecciona una cuenta</option>
+                      {detailedGoal.reservations_by_account?.filter(r => parseFloat(r.reserved_amount || '0') > 0).map(res => {
+                        const isDisabled = !res.is_releasable;
+                        let label = `${res.account_name} — Reserva disponible: ${formatMoneyOrDash(res.reserved_amount, res.account_currency)}`;
+                        if (isDisabled) {
+                          if (res.release_block_reason === 'currency_mismatch_legacy') {
+                            label += ' (Bloqueada: Moneda distinta)';
+                          } else if (res.release_block_reason === 'account_inactive') {
+                            label += ' (Bloqueada: Cuenta inactiva)';
+                          } else {
+                            label += ' (Bloqueada)';
+                          }
+                        }
+                        return (
+                          <option key={res.account_id} value={res.account_id} disabled={isDisabled}>
+                            {label}
                           </option>
-                        ))}
-                      </select>
-                    ) : null}
-                    {detailedGoal.reservations_by_account?.some(r => !r.account_is_active && parseFloat(r.reserved_amount || '0') > 0) && (
+                        );
+                      })}
+                    </select>
+
+                    {detailedGoal.reservations_by_account?.some(r => !r.is_releasable && parseFloat(r.reserved_amount || '0') > 0) && (
                       <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-100 flex gap-2 items-start" aria-live="polite">
                         <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                        <p className="text-sm text-amber-700 font-medium">
-                          Hay dinero reservado desde una cuenta archivada. Actívala para gestionarlo.
-                        </p>
+                        <div className="text-sm text-amber-700 font-medium">
+                          Algunas reservas no se pueden liberar automáticamente:
+                          <ul className="list-disc ml-5 mt-1 text-xs opacity-90">
+                            {detailedGoal.reservations_by_account.some(r => r.release_block_reason === 'account_inactive' && parseFloat(r.reserved_amount || '0') > 0) && (
+                              <li>Cuenta inactiva (actívala en Cuentas para liberar).</li>
+                            )}
+                            {detailedGoal.reservations_by_account.some(r => r.release_block_reason === 'currency_mismatch_legacy' && parseFloat(r.reserved_amount || '0') > 0) && (
+                              <li>Diferencia de moneda (incompatibilidad legacy).</li>
+                            )}
+                          </ul>
+                        </div>
                       </div>
                     )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="releaseAmount">
-                      Monto a liberar *
+                      Monto a liberar {releaseAccountId ? `(${detailedGoal.reservations_by_account?.find(r => r.account_id === releaseAccountId)?.account_currency})` : ''} *
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-graphite-blue/40 font-medium">
@@ -767,6 +787,17 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                         disabled={isSubmitting || !!successMessage || !releaseAccountId}
                       />
                     </div>
+                    {releaseAccountId && detailedGoal.reservations_by_account && (() => {
+                      const selectedRes = detailedGoal.reservations_by_account.find(r => r.account_id === releaseAccountId);
+                      if (selectedRes && selectedRes.applied_reserved_amount !== selectedRes.reserved_amount && selectedRes.goal_currency) {
+                        return (
+                          <p className="text-xs text-graphite-blue/50 mt-1.5">
+                            Esta reserva equivale a {formatMoneyOrDash(selectedRes.applied_reserved_amount, selectedRes.goal_currency)} en el progreso de la meta.
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   <div className="pt-4 flex gap-3">
@@ -780,7 +811,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                     </button>
                     <button
                       type="submit"
-                      disabled={isSubmitting || !!successMessage || !detailedGoal.reservations_by_account?.some(r => r.account_is_active && parseFloat(r.reserved_amount || '0') > 0)}
+                      disabled={isSubmitting || !!successMessage || !detailedGoal.reservations_by_account?.some(r => r.is_releasable && parseFloat(r.reserved_amount || '0') > 0)}
                       className="flex-1 py-3 px-4 rounded-xl font-medium bg-graphite-blue text-white hover:bg-graphite-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                     >
                       Continuar
