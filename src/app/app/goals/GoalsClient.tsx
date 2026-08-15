@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { components } from '@/lib/api/types.generated';
-import { createGoalAction, contributeGoalAction, getGoalDetailAction } from './actions';
+import { createGoalAction, contributeGoalAction, getGoalDetailAction, releaseGoalAction } from './actions';
 import { formatMoneyOrDash } from '@/lib/format/money';
 
 const Target = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22a10 10 0 110-20 10 10 0 010 20z M12 16a4 4 0 110-8 4 4 0 010 8z M12 12a1 1 0 110-2 1 1 0 010 2z" /></svg>;
@@ -235,6 +235,63 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
       }, 3000);
     } else {
       setError(res.error || 'Ocurrió un error al registrar el aporte');
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReleaseSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!detailedGoal || !releaseAccountId) return;
+    const selectedRes = detailedGoal.reservations_by_account?.find(r => r.account_id === releaseAccountId);
+    if (!selectedRes || !selectedRes.is_releasable) {
+      setError('La reserva seleccionada no es elegible para liberación.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    const amountStr = formData.get('releaseAmount') as string;
+
+    const amount = parseFloat(amountStr.replace(',', '.'));
+    if (isNaN(amount) || amount <= 0) {
+      setError('El monto debe ser mayor a 0');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const maxAllowed = parseFloat(selectedRes.reserved_amount || '0');
+    if (amount > maxAllowed) {
+      setError('El monto supera el dinero reservado en esta cuenta.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const payload = {
+      account_id: releaseAccountId,
+      amount
+    };
+
+    // basic idempotency key just for client deduplication per session submit
+    const idemKey = crypto.randomUUID();
+
+    const res = await releaseGoalAction(detailedGoal.id, payload, idemKey);
+
+    if (res.success && res.result) {
+      // NOTE: NO frontend optimistic finance.
+      // The backend/refetch será quien actualice los valores.
+      const cr = res.result;
+
+      const messageContent = `Liberaste ${formatMoneyOrDash(cr.released_amount, cr.source_currency || 'COP')} de ${detailedGoal.name} hacia ${selectedRes.account_name}.`;
+
+      setSuccessMessage(messageContent);
+      setTimeout(() => {
+        closeModals();
+      }, 3000);
+    } else {
+      setError(res.error || 'Ocurrió un error al liberar el dinero');
       setIsSubmitting(false);
     }
   };
@@ -724,7 +781,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                   </button>
                 </div>
               ) : (
-                <form onSubmit={(e) => { e.preventDefault(); setError('El envío de la liberación se habilitará en el siguiente paso de implementación.'); }} className="space-y-4">
+                <form onSubmit={handleReleaseSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-graphite-blue/70 mb-1.5" htmlFor="releaseAccountId">
                       Cuenta de origen *

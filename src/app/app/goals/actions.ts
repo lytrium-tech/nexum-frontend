@@ -85,7 +85,8 @@ export async function releaseGoalAction(id: string, data: components['schemas'][
     } else if (errorCode === 'conflict' && (backendMessage.includes('Idempotency-Key') || backendMessage.includes('idempotencia'))) {
       message = 'La operación ya fue procesada con datos distintos.';
     } else if (apiError?.status === 422) {
-      message = 'No pudimos liberar el dinero. Revisa los datos e inténtalo nuevamente.';
+      const detailMsg = Array.isArray(apiError?.detail) ? apiError.detail.map((d: { msg?: string; type?: string }) => d.msg || d.type).join(', ') : (apiError?.detail || backendMessage);
+      message = detailMsg ? `Validación fallida: ${detailMsg}` : 'No pudimos liberar el dinero. Revisa los datos e inténtalo nuevamente.';
     }
 
     return { success: false, error: message };
