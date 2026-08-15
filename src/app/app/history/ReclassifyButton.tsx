@@ -33,11 +33,7 @@ export default function ReclassifyButton({
     setNewCategoryId('');
     setReason('');
     setError(null);
-    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
-      setIdempotencyKey(window.crypto.randomUUID());
-    } else {
-      setIdempotencyKey(Math.random().toString(36).substring(2) + Date.now().toString(36));
-    }
+    setIdempotencyKey(crypto.randomUUID());
   };
 
   const handleClose = () => {
