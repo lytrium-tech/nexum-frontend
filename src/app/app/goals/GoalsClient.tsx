@@ -170,7 +170,20 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
     }
 
     const sourceAccount = accounts.find(a => a.id === accountId);
-    const currency = sourceAccount?.currency || 'COP';
+    if (!sourceAccount) {
+      setError('Cuenta de origen no encontrada');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const available = parseFloat((sourceAccount.available_balance ?? sourceAccount.balance) || '0');
+    if (amount > available) {
+      setError('El monto supera tu disponibilidad. Intenta con un monto menor o revisa el saldo disponible de tu cuenta.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const currency = sourceAccount.currency || 'COP';
 
     const payload = {
       account_id: accountId,
@@ -599,11 +612,15 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                   disabled={isSubmitting || !!successMessage}
                 >
                   <option value="">Selecciona una cuenta</option>
-                  {accounts.filter(a => a.is_active).map(acc => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} — {formatMoneyOrDash(acc.balance, acc.currency)}
-                    </option>
-                  ))}
+                  {accounts.filter(a => a.is_active !== false && String(a.is_active) !== 'false').map(acc => {
+                    const available = acc.available_balance ?? acc.balance;
+                    const isZero = parseFloat(available || '0') <= 0;
+                    return (
+                      <option key={acc.id} value={acc.id} disabled={isZero}>
+                        {acc.name} — Disponible: {formatMoneyOrDash(available, acc.currency)} {isZero ? '(Sin saldo disponible)' : `(Saldo bruto: ${formatMoneyOrDash(acc.balance, acc.currency)})`}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 

@@ -11,14 +11,9 @@ import {
 } from './actions';
 import Link from 'next/link';
 
-type AccountRead = {
-  id: string;
-  name: string;
-  type: string;
-  balance?: string | null;
-  currency: string;
-  is_active?: boolean | null;
-};
+import { components } from '@/lib/api/types.generated';
+
+type AccountRead = components['schemas']['AccountRead'];
 
 function createSafeUuid(): string {
   if (
@@ -696,10 +691,14 @@ export default function AccountsClient({
               </div>
               
               <div className="mb-2">
-                <p className={`text-2xl font-semibold tracking-tight ${account.balance?.startsWith('-') ? 'text-red-500' : 'text-graphite-blue'}`}>
-                  {formatBalance(account.balance || '0', account.currency)}
+                <p className="text-xs text-gray-500 font-medium mb-1">Disponible</p>
+                <p className={`text-2xl font-semibold tracking-tight ${account.available_balance?.startsWith('-') ? 'text-red-500' : 'text-graphite-blue'}`}>
+                  {formatBalance(account.available_balance ?? account.balance, account.currency)}
                 </p>
-                <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{account.currency}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <p className="text-xs text-gray-400 font-medium">Saldo bruto: {formatBalance(account.balance || '0', account.currency)}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider">({account.currency})</p>
+                </div>
               </div>
 
               {actionError?.id === account.id && (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { MonthYearPicker } from '@/components/MonthYearPicker';
 import { components } from '@/lib/api/types.generated';
@@ -327,10 +327,13 @@ export default function AccountDetailClient({
           </div>
           
           <div className="flex flex-col md:items-end w-full md:w-auto">
-            <p className="text-sm text-gray-500 mb-1">Saldo disponible</p>
-            <p className={`text-4xl font-bold tracking-tight mb-4 ${account.balance?.startsWith('-') ? 'text-red-500' : 'text-graphite-blue'}`}>
-              {formatBalance(account.balance || '0', account.currency)}
+            <p className="text-sm text-gray-500 mb-1">Disponible</p>
+            <p className={`text-4xl font-bold tracking-tight mb-2 ${(account.available_balance ?? account.balance)?.startsWith('-') ? 'text-red-500' : 'text-graphite-blue'}`}>
+              {formatBalance(account.available_balance ?? account.balance, account.currency)}
             </p>
+            <div className="flex items-center gap-2 mb-4">
+              <p className="text-sm text-gray-400 font-medium">Saldo bruto: {formatBalance(account.balance || '0', account.currency)}</p>
+            </div>
             
             <div className="flex flex-wrap gap-2">
               {isActive ? (

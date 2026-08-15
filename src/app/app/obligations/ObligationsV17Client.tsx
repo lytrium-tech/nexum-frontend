@@ -812,7 +812,7 @@ export default function ObligationsV17Client({ accounts = [], initialObligations
                 >
                   <option value="">Selecciona una cuenta</option>
                   {localAccounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>{acc.name} ({formatMoneyOrDash(acc.balance, acc.currency)})</option>
+                    <option key={acc.id} value={acc.id}>{acc.name} (Disp: {formatMoneyOrDash(acc.available_balance ?? acc.balance, acc.currency)})</option>
                   ))}
                 </select>
               </div>

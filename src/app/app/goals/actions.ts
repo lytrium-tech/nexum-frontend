@@ -45,7 +45,6 @@ export async function contributeGoalAction(id: string, data: components['schemas
     revalidatePath('/app/goals');
     revalidatePath('/app/accounts');
     revalidatePath('/app/history');
-    revalidatePath('/app');
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Contribute goal error:', err);
@@ -59,7 +58,6 @@ export async function releaseGoalAction(id: string, data: components['schemas'][
     revalidatePath('/app/goals');
     revalidatePath('/app/accounts');
     revalidatePath('/app/history');
-    revalidatePath('/app');
     return { success: true, result };
   } catch (err: unknown) {
     console.error('Release goal error:', err);

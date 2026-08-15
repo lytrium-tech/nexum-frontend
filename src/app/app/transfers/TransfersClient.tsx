@@ -195,7 +195,8 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
   if (!sourceAccount) isFormValid = false;
   if (!destinationAccount) isFormValid = false;
   if (!isValidAmount || !hasValidDecimals) isFormValid = false;
-  if (sourceAccount && isValidAmount && amount > parseFloat(sourceAccount.balance as string)) isFormValid = false;
+  if (sourceAccount && isValidAmount && amount > parseFloat((sourceAccount.available_balance ?? sourceAccount.balance) as string)) isFormValid = false;
+
   if (isSubmitting) isFormValid = false;
   if (!commandId) isFormValid = false;
   if (isCrossCurrency) {
@@ -479,7 +480,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                         <option value="">Selecciona cuenta origen...</option>
                         {activeAccounts.map(a => (
                           <option key={a.id} value={a.id}>
-                            {a.name} ({formatMoneyOrDash(a.balance, a.currency)})
+                            {a.name} (Disp: {formatMoneyOrDash(a.available_balance ?? a.balance, a.currency)})
                           </option>
                         ))}
                       </select>
@@ -498,7 +499,7 @@ export default function TransfersClient({ initialTransfers, accounts }: Transfer
                         <option value="">{sourceAccount ? 'Selecciona cuenta destino...' : 'Primero selecciona un origen'}</option>
                         {eligibleDestinationAccounts.map(a => (
                           <option key={a.id} value={a.id}>
-                            {a.name} ({formatMoneyOrDash(a.balance, a.currency)})
+                            {a.name} (Disp: {formatMoneyOrDash(a.available_balance ?? a.balance, a.currency)})
                           </option>
                         ))}
                       </select>
