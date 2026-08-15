@@ -17,6 +17,8 @@ type GoalCreate = components['schemas']['GoalCreate'];
 type GoalUpdate = components['schemas']['GoalUpdate'];
 type GoalContributionCreate = components['schemas']['GoalContributionCreate'];
 type GoalContributionResult = components['schemas']['GoalContributionResult'];
+type GoalReleaseRequest = components['schemas']['GoalReleaseCreate'];
+type GoalReleaseResult = components['schemas']['GoalReleaseResult'];
 type ObligationRead = components['schemas']['ObligationRead'];
 type ObligationCreate = components['schemas']['ObligationCreate'];
 // type ObligationUpdate = components['schemas']['ObligationUpdate'];
@@ -142,6 +144,8 @@ export const api = {
   goals: {
     list: (isServer = false) =>
       apiClient<GoalRead[]>('/api/v1/goals', { method: 'GET' }, isServer),
+    get: (id: string, isServer = false) =>
+      apiClient<components['schemas']['GoalDetailRead']>(`/api/v1/goals/${id}`, { method: 'GET' }, isServer),
     create: (data: GoalCreate, isServer = false) =>
       apiClient<GoalRead>('/api/v1/goals', {
         method: 'POST',
@@ -154,6 +158,14 @@ export const api = {
       }, isServer),
     contribute: (id: string, data: GoalContributionCreate, idempotencyKey: string, isServer = false) =>
       apiClient<GoalContributionResult>(`/api/v1/goals/${id}/contributions`, {
+        method: 'POST',
+        headers: {
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(data),
+      }, isServer),
+    release: (id: string, data: GoalReleaseRequest, idempotencyKey: string, isServer = false) =>
+      apiClient<GoalReleaseResult>(`/api/v1/goals/${id}/releases`, {
         method: 'POST',
         headers: {
           'Idempotency-Key': idempotencyKey,

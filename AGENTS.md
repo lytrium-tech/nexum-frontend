@@ -28,6 +28,190 @@ When making decisions, prioritize in this order:
 
 Never sacrifice a higher-priority item for a lower-priority item.
 
+## Workspace Model
+
+Nexum frontend now uses three distinct operational layers:
+
+1. **Local frontend workspace**
+   - Used for active development, tests, builds, runtime validation, and temporary uncommitted code changes.
+   - Expected project path:
+
+```text
+C:\Users\Lytrium\Documents\Projects\Nexum\frontend
+```
+
+2. **Argos frontend documentation workspace**
+   - Canonical location for all frontend documentation, audits, reports, handoffs, contracts, context, architecture, and agent-generated written outputs.
+   - Mounted in Windows as:
+
+```text
+W:\Lytrium\Nexum\frontend\docs
+```
+
+3. **Git repository**
+   - Used as the versioned backup and collaboration history for approved frontend code.
+   - Code should only be committed and pushed after local validation and explicit approval.
+   - Argos documentation is not automatically part of the frontend Git working tree.
+
+The local frontend project is for code and runtime assets.
+
+The Argos workspace is for documentation.
+
+Do not mix these responsibilities.
+
+## Canonical Documentation Policy
+
+All new frontend documentation must be written directly to the Argos documentation workspace.
+
+Canonical frontend documentation root:
+
+```text
+W:\Lytrium\Nexum\frontend\docs
+```
+
+Do not create new frontend documentation under the local project path.
+
+Do not use the local repository as the permanent home for:
+
+- audits;
+- cleanup reports;
+- debug reports;
+- implementation reports;
+- sprint reports;
+- architecture documents;
+- frontend context;
+- OpenAPI contract documentation;
+- frontend handoffs;
+- project documentation;
+- temporary agent notes;
+- copied backend documentation.
+
+Do not create a local fallback copy if the `W:` drive is unavailable.
+
+If the Argos workspace cannot be reached:
+
+1. Stop the documentation write.
+2. Preserve code changes locally.
+3. Report that the network documentation workspace is unavailable.
+4. Wait for Steven to restore the mount or provide another approved destination.
+
+Never silently write the document into the local project as a substitute.
+
+## Argos Frontend Documentation Destinations
+
+Use these exact destinations:
+
+### Audits
+
+```text
+W:\Lytrium\Nexum\frontend\docs\agent\audits
+```
+
+### Cleanup reports
+
+```text
+W:\Lytrium\Nexum\frontend\docs\agent\cleanup
+```
+
+### Debug reports
+
+```text
+W:\Lytrium\Nexum\frontend\docs\agent\debug
+```
+
+### Reports
+
+```text
+W:\Lytrium\Nexum\frontend\docs\agent\reports
+```
+
+### Sprint reports
+
+```text
+W:\Lytrium\Nexum\frontend\docs\agent\sprint-reports
+```
+
+### Architecture
+
+```text
+W:\Lytrium\Nexum\frontend\docs\architecture
+```
+
+### Context
+
+```text
+W:\Lytrium\Nexum\frontend\docs\context
+```
+
+### Contracts
+
+```text
+W:\Lytrium\Nexum\frontend\docs\contracts
+```
+
+### Frontend handoffs
+
+```text
+W:\Lytrium\Nexum\frontend\docs\handoff\frontend
+```
+
+### Project documentation
+
+```text
+W:\Lytrium\Nexum\frontend\docs\project
+```
+
+Do not invent parallel documentation roots.
+
+Do not write frontend documents into backend documentation directories.
+
+## Network Workspace Availability
+
+Before writing documentation, verify that the destination exists and is writable.
+
+Recommended checks:
+
+```powershell
+Test-Path "W:\Lytrium\Nexum\frontend\docs"
+Test-Path "W:\Lytrium\Nexum\frontend\docs\agent"
+```
+
+For a target directory, verify the exact path before creating a file.
+
+Do not:
+
+- remap the drive;
+- modify SMB credentials;
+- change Argos permissions;
+- create a different network share;
+- write to an inferred UNC path;
+- write to another drive;
+- repair the Homelab connection;
+
+unless Steven explicitly authorizes it.
+
+If a required frontend documentation subfolder is missing but the root workspace is available, report it before creating new top-level structure unless the task explicitly authorizes creating the missing approved subfolder.
+
+## Documentation Write Safety
+
+When updating an existing document on Argos:
+
+1. Read the existing file first.
+2. Preserve relevant content and history.
+3. Make the smallest coherent update.
+4. Avoid replacing the entire file unless the task requires a rewrite.
+5. Verify the written file after saving.
+6. Report the exact Argos path modified.
+
+For important context, architecture, contract, and handoff files:
+
+- avoid partial or corrupted writes;
+- prefer writing a temporary file in the same approved Argos directory and replacing the destination safely when tooling permits;
+- never create the temporary file in the local frontend project;
+- remove approved temporary write artifacts after successful replacement.
+
+Do not store secrets, tokens, credentials, database dumps, backups, or private customer data in frontend documentation.
+
 ## Backend Dependency Rule
 
 Backend documents backend truth.
@@ -45,81 +229,41 @@ Frontend documentation must only record:
 
 Do not copy backend architecture, backend roadmap, backend changelog, backend domain maps, or backend implementation details into frontend docs.
 
-If backend behavior is needed, inspect backend docs or backend OpenAPI directly.
+If backend behavior is needed, inspect backend source, approved backend documentation, or backend OpenAPI directly.
 
 ## Backend Read Permissions
 
-The frontend agent may read backend documentation and backend OpenAPI for context only.
+The frontend agent may read backend source, backend documentation, and backend OpenAPI for context only when the required location is available and the task requires it.
 
-Allowed read-only backend references:
+Do not infer or guess the backend documentation path on Argos.
 
-```text
-../backend/docs/context/
-../backend/docs/project/
-../backend/docs/architecture/
-../backend/docs/agent/sprint-reports/
-../backend/docs/agent/audits/
-../backend/openapi.json
-```
+Do not write to any backend documentation tree.
 
 Do not modify backend files from the frontend workspace.
 
-Do not execute backend scripts, migrations, tests, deploy commands, or database commands unless explicitly approved.
+Do not execute backend scripts, migrations, tests, deploy commands, database commands, or production operations unless Steven explicitly approves them.
+
+When frontend work discovers a backend issue, document the finding only in the approved frontend Argos context or handoff destination.
 
 ## Shared Project Documentation
 
-There may be a shared project documentation workspace at:
+Project-level frontend documentation belongs in:
 
 ```text
-../docs/
+W:\Lytrium\Nexum\frontend\docs\project
 ```
 
-or:
+Use it only for frontend-owned project context and approved cross-team handoffs.
 
-```text
-C:\Users\Lytrium\Documents\Projects\Nexum\docs
-```
+Do not use frontend project documentation to duplicate backend truth.
 
-This folder is intended for cross-repository coordination between frontend, backend, product, and future agents.
-
-You may read shared project documentation when it exists and when the task requires project-level context.
-
-You may write to shared project documentation only when Steven explicitly asks you to do so.
-
-Valid explicit instructions include:
-
-- "update shared docs";
-- "update project handoff";
-- "prepare backend handoff";
-- "prepare frontend handoff";
-- "sync project docs";
-- "close this phase and update shared context".
-
-Do not use shared docs for temporary notes, long logs, scratch content, or agent noise.
-
-Shared docs do not replace frontend docs.
-
-Frontend-specific state stays in:
-
-```text
-docs/context/frontend-current-state.md
-docs/context/frontend-known-issues.md
-docs/context/frontend-backend-findings.md
-```
-
-Shared docs are only for project-level context, cross-repository decisions, and handoff between backend, frontend, product, and future agents.
+Do not write to a shared or backend project tree unless Steven explicitly provides the exact destination and authorizes the write.
 
 ## Legacy Frontend Reference
 
 You may read the legacy frontend only when explicitly instructed.
 
-Allowed read-only path:
-
-```text
-../legacy/frontend-n8n-legacy
-```
-
-or:
+Allowed read-only paths may include:
 
 ```text
 C:\Users\Lytrium\Documents\Projects\Nexum\legacy\frontend-n8n-legacy
@@ -137,9 +281,23 @@ Current FastAPI/OpenAPI contracts override legacy behavior.
 
 ## Frontend Scope
 
-Work only inside the frontend workspace unless explicitly approved.
+Work only inside the frontend code workspace unless explicitly approved.
+
+Approved local frontend workspace:
+
+```text
+C:\Users\Lytrium\Documents\Projects\Nexum\frontend
+```
+
+Approved external write scope:
+
+```text
+W:\Lytrium\Nexum\frontend\docs
+```
 
 Do not touch backend source code.
+
+Do not touch backend documentation.
 
 Do not touch branding source assets unless explicitly approved.
 
@@ -161,11 +319,11 @@ Runtime assets used by the app should normally live in `src/` or `public/`.
 
 The `src/` tree is application source and should remain fully versioned, including runtime assets and fonts placed there intentionally.
 
-## Root Cleanliness
+## Local Root Cleanliness
 
-The project root should only contain approved project-level files.
+The local project root should contain only approved code, runtime assets, configuration, and essential repository files.
 
-Allowed root files include:
+Allowed local root entries include:
 
 ```text
 .env.example
@@ -182,61 +340,90 @@ postcss.config.mjs
 tsconfig.json
 src/
 public/
-docs/
 branding/        local-only if present
 ```
 
-Do not create reports, prompts, dumps, screenshots, temporary files, copied backend docs, or agent outputs in the project root.
+The local `docs/` directory is no longer the canonical documentation workspace.
 
-Agent outputs belong in:
+Do not create new documentation there.
+
+Existing local documentation may remain temporarily during the migration period, but it is read-only unless Steven explicitly authorizes migration, cleanup, or deletion.
+
+Do not create reports, prompts, dumps, screenshots, temporary scripts, copied backend docs, or agent outputs in the project root.
+
+## Canonical Documentation Structure
+
+The canonical frontend documentation structure on Argos is:
 
 ```text
-docs/agent/
+W:\Lytrium\Nexum\frontend\docs\
+  context\
+  contracts\
+  project\
+  architecture\
+  handoff\
+    frontend\
+  agent\
+    audits\
+    cleanup\
+    debug\
+    reports\
+    sprint-reports\
 ```
 
-## Current Documentation Structure
-
-```text
-docs/
-  context/
-    frontend-current-state.md
-    frontend-known-issues.md
-    frontend-backend-findings.md
-  contracts/
-    openapi.json
-  project/
-    changelog.md
-  architecture/
-    frontend-architecture.md
-    auth-flow.md
-    frontend-backend-map.md
-  agent/
-    audits/
-    cleanup/
-    reports/
-    sprint-reports/
-  archive/
-```
+Do not create a second canonical structure inside the local repository.
 
 ## Documentation Rules
 
-Use `docs/context/frontend-current-state.md` for living frontend status.
+Use the Argos context directory for living frontend state:
 
-Use `docs/context/frontend-known-issues.md` for frontend bugs, UI gaps, and frontend integration issues.
+```text
+W:\Lytrium\Nexum\frontend\docs\context
+```
 
-Use `docs/context/frontend-backend-findings.md` for backend bugs or contract gaps discovered from frontend work.
+Recommended living files include:
 
-Use `docs/architecture/frontend-architecture.md` for frontend architecture only.
+```text
+frontend-current-state.md
+frontend-known-issues.md
+frontend-backend-findings.md
+```
 
-Use `docs/architecture/frontend-backend-map.md` for route-to-endpoint integration mapping only.
+Use the Argos architecture directory for frontend architecture:
 
-Use `docs/project/changelog.md` for frontend project changes.
+```text
+W:\Lytrium\Nexum\frontend\docs\architecture
+```
 
-`docs/agent/` is local/ignored by default and used for agent-generated outputs.
+Recommended files include:
 
-`docs/archive/` is local/ignored by default and used for temporary historical material unless Steven explicitly approves versioning specific archive files.
+```text
+frontend-architecture.md
+auth-flow.md
+frontend-backend-map.md
+```
 
-Do not recreate backend-copy docs such as:
+Use the Argos contracts directory for frontend-owned contract artifacts:
+
+```text
+W:\Lytrium\Nexum\frontend\docs\contracts
+```
+
+Use the Argos project directory for frontend project documentation:
+
+```text
+W:\Lytrium\Nexum\frontend\docs\project
+```
+
+Use the Argos handoff directory for frontend handoffs:
+
+```text
+W:\Lytrium\Nexum\frontend\docs\handoff\frontend
+```
+
+Use the correct Argos agent folder for audits, cleanup, debugging, reports, and sprint reports.
+
+Do not recreate backend-copy documents such as:
 
 ```text
 00-backend-overview.md
@@ -244,6 +431,27 @@ Do not recreate backend-copy docs such as:
 03-api-contracts.md
 12-backend-changelog.md
 ```
+
+## Documentation And Git
+
+Argos documentation and frontend Git commits are separate workflows.
+
+Do not run `git add`, `git commit`, or `git push` for a document written only to:
+
+```text
+W:\Lytrium\Nexum\frontend\docs
+```
+
+When a task includes both code and documentation:
+
+1. Implement and validate code locally.
+2. Write the required report or handoff directly to Argos.
+3. Verify the Argos document.
+4. Inspect the local Git diff.
+5. Commit only approved local code and repository files.
+6. Do not attempt to include the network document in the frontend Git commit.
+
+In commit reports, list Argos documentation separately from committed files.
 
 ## Tooling And Package Manager
 
@@ -264,26 +472,33 @@ Do not install, remove, or upgrade dependencies without explicit approval.
 
 ## OpenAPI And Types
 
-The frontend may keep a local OpenAPI contract cache.
-
-The current OpenAPI location is:
+The canonical frontend OpenAPI contract artifact lives at:
 
 ```text
-docs/contracts/openapi.json
+W:\Lytrium\Nexum\frontend\docs\contracts\openapi.json
 ```
 
-The OpenAPI location must match `package.json`.
+Before using or updating it, confirm that the frontend generation workflow supports the network path.
 
-Do not move OpenAPI files without updating `package.json` in the same approved change.
+Inspect `package.json` and the official type-generation command.
+
+Do not change generation paths, scripts, or package configuration without explicit approval.
+
+If the current generation command still requires a local contract file:
+
+1. Report the incompatibility.
+2. Do not create a permanent local documentation copy.
+3. Request approval for a controlled build-input strategy.
+4. Keep the Argos contract as the canonical source.
 
 Do not regenerate generated API types unless explicitly approved.
 
 Do not hand-edit generated API types.
 
-If backend OpenAPI differs from frontend OpenAPI, record the gap in:
+If backend OpenAPI differs from the canonical frontend OpenAPI, record the gap in:
 
 ```text
-docs/context/frontend-backend-findings.md
+W:\Lytrium\Nexum\frontend\docs\context\frontend-backend-findings.md
 ```
 
 ## Generated Files
@@ -295,6 +510,10 @@ Generated API types may only be changed by the official generation command defin
 If generated types appear stale, report the mismatch first.
 
 Do not regenerate types unless explicitly approved.
+
+Generated source files that are required by the application remain in the local code workspace and may be versioned when approved.
+
+Documentation about generated files belongs on Argos.
 
 ## Financial UI Rules
 
@@ -419,13 +638,17 @@ over technical messages or stack traces.
 
 ## File Creation Rules
 
-Create files only in the correct existing folders.
+Create local files only when they are application code, runtime assets, tests, configuration, generated source required by the app, or explicitly approved repository files.
 
-Do not create loose reports in the project root.
+Create documentation only in the approved Argos frontend documentation destination.
 
-Do not create temporary scripts in root.
+Do not create loose reports in the local project root.
 
-Do not create docs that duplicate backend truth.
+Do not create temporary scripts in the local project root.
+
+Do not create local docs that duplicate backend truth.
+
+Do not write to the backend documentation tree.
 
 ## Deletion Policy
 
@@ -433,21 +656,28 @@ Cleanup is allowed when approved.
 
 Clear temporary, generated, duplicate, or accidental documentation noise may be deleted with approval.
 
-Historical or ambiguous files should be archived or reported before deletion.
+Historical or ambiguous files should be migrated, archived, or reported before deletion.
 
-Never delete these without explicit approval:
+Never delete these local project files without explicit approval:
 
 ```text
 src/
 public/
-docs/contracts/openapi.json
 .env.example
 package.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
 next.config.ts
 tsconfig.json
+AGENTS.md
 ```
+
+Never delete or overwrite Argos documentation in bulk without:
+
+1. an inventory;
+2. a migration or cleanup plan;
+3. Steven's approval;
+4. a verification step.
 
 ## Testing And Validation
 
@@ -460,7 +690,12 @@ pnpm build
 
 Run broader checks only when appropriate and approved.
 
-For docs-only changes, validation may be limited to structure checks and `git status`.
+For Argos documentation-only changes, validation should include:
+
+- target path exists;
+- file was written successfully;
+- file can be read back;
+- no local Git files changed unintentionally.
 
 ## Git Rules
 
@@ -485,12 +720,14 @@ Do not revert user changes.
 
 Do not delete files unless approved.
 
+Do not stage or commit network documentation.
+
 ## Handoff To Backend
 
 If frontend work reveals a backend issue, record it in:
 
 ```text
-docs/context/frontend-backend-findings.md
+W:\Lytrium\Nexum\frontend\docs\context\frontend-backend-findings.md
 ```
 
 Each finding should include:
@@ -502,26 +739,32 @@ Each finding should include:
 - evidence;
 - status.
 
+Do not write the finding into backend documentation.
+
 Do not fix backend behavior from frontend unless explicitly instructed.
 
 ## Implementation Reporting
 
-For implementation tasks, keep reports short.
+For implementation tasks, keep the response concise.
 
 Use this format:
 
 ```text
 Changed
-Deleted
+Argos Documentation
 Validation
 Git State
 Risks
 Next Step
 ```
 
-Do not paste long logs unless requested.
+For `Argos Documentation`, report:
 
-## Future Skills
+- exact file path;
+- created or updated;
+- verification status.
+
+Do not paste long logs unless requested.
 
 ## Local Frontend Skills
 
