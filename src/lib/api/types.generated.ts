@@ -1440,11 +1440,17 @@ export interface components {
             account_id: string;
             /** Currency */
             currency: string;
-            /** Balance */
+            /**
+             * Balance
+             * @description Saldo bruto contable.
+             */
             balance: string;
             /** Goal Reserved Amount */
             goal_reserved_amount: string;
-            /** Available Balance */
+            /**
+             * Available Balance
+             * @description Saldo bruto menos reservas autoritativas de metas.
+             */
             available_balance: string;
         };
         /** AccountBalanceRead */
@@ -1492,8 +1498,16 @@ export interface components {
             /** Name */
             name: string;
             type: components["schemas"]["AccountType"];
-            /** Balance */
+            /**
+             * Balance
+             * @description Saldo bruto contable; no descuenta reservas de metas.
+             */
             balance: string;
+            /**
+             * Available Balance
+             * @description Saldo gastable después de descontar reservas autoritativas de metas.
+             */
+            available_balance: string;
             /** Currency */
             currency: string;
             /** Is Active */
@@ -1557,8 +1571,16 @@ export interface components {
             /** Name */
             name: string;
             type: components["schemas"]["AccountType"];
-            /** Balance */
+            /**
+             * Balance
+             * @description Saldo bruto contable; no descuenta reservas de metas.
+             */
             balance: string;
+            /**
+             * Available Balance
+             * @description Saldo gastable después de descontar reservas autoritativas de metas.
+             */
+            available_balance: string;
             /** Currency */
             currency: string;
             /** Is Active */
@@ -4134,6 +4156,41 @@ export interface components {
             };
         };
         /**
+         * TransferAccountRead
+         * @description Account representation for transfers; exposes gross balance only.
+         */
+        TransferAccountRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Name */
+            name: string;
+            type: components["schemas"]["AccountType"];
+            /** Balance */
+            balance: string;
+            /** Currency */
+            currency: string;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
          * TransferRequest
          * @description Contrato HTTP público para crear una transferencia V1 de la misma moneda.
          */
@@ -4171,8 +4228,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            source_account: components["schemas"]["AccountRead"];
-            destination_account: components["schemas"]["AccountRead"];
+            source_account: components["schemas"]["TransferAccountRead"];
+            destination_account: components["schemas"]["TransferAccountRead"];
             /** Amount */
             amount: string;
             /** Currency */
