@@ -108,3 +108,22 @@ export async function getGoalAutoContributionAction(goalId: string) {
   }
 }
 
+export async function configureGoalAutoContributionAction(goalId: string, payload: components['schemas']['GoalAutoContributionScheduleCreate']) {
+  try {
+    const result = await api.goals.autoContribution.configure(goalId, payload, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Configure auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos guardar la configuración.') };
+  }
+}
+
+export async function updateGoalAutoContributionAction(goalId: string, payload: components['schemas']['GoalAutoContributionScheduleUpdate']) {
+  try {
+    const result = await api.goals.autoContribution.update(goalId, payload, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Update auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos actualizar la configuración.') };
+  }
+}
