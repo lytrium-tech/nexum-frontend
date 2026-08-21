@@ -156,3 +156,12 @@ export async function cancelGoalAutoContributionAction(goalId: string) {
     return { success: false, error: handleFinancialError(err, 'No pudimos cancelar la configuración.') };
   }
 }
+export async function getGoalHistoryAction(goalId: string, limit: number = 50) {
+  try {
+    const result = await api.goals.transactions(goalId, { limit }, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Goal history error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos cargar el historial.') };
+  }
+}

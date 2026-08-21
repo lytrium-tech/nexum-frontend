@@ -5,6 +5,7 @@ import { components } from '@/lib/api/types.generated';
 import { createGoalAction, contributeGoalAction, getGoalDetailAction, releaseGoalAction } from './actions';
 import { formatMoneyOrDash } from '@/lib/format/money';
 import { AutoContributionModal } from './components/AutoContributionModal';
+import { GoalHistoryModal } from './components/GoalHistoryModal';
 
 const Target = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22a10 10 0 110-20 10 10 0 010 20z M12 16a4 4 0 110-8 4 4 0 010 8z M12 12a1 1 0 110-2 1 1 0 010 2z" /></svg>;
 const Plus = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>;
@@ -16,6 +17,7 @@ const Calendar = ({ className }: { className?: string }) => <svg className={clas
 const ArrowRight = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>;
 const Unlock = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>;
 const Settings = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+const HistoryIcon = ({ className }: { className?: string }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
 type GoalRead = components['schemas']['GoalRead'];
 type GoalDetailRead = components['schemas']['GoalDetailRead'];
@@ -32,6 +34,7 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
   const [isReleaseModalOpen, setIsReleaseModalOpen] = useState(false);
   const [isAutoContributionModalOpen, setIsAutoContributionModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<GoalRead | null>(null);
   const [selectedGoalForRelease, setSelectedGoalForRelease] = useState<GoalRead | null>(null);
   const [detailedGoal, setDetailedGoal] = useState<GoalDetailRead | null>(null);
@@ -80,11 +83,17 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
     setManageLoading(false);
   };
 
+  const openHistoryModal = (goal: GoalRead) => {
+    setSelectedGoal(goal);
+    setIsHistoryModalOpen(true);
+  };
+
   const closeModals = () => {
     setIsCreateModalOpen(false);
     setIsContributeModalOpen(false);
     setIsReleaseModalOpen(false);
     setIsAutoContributionModalOpen(false);
+    setIsHistoryModalOpen(false);
     setSelectedGoal(null);
     setSelectedGoalForRelease(null);
     setDetailedGoal(null);
@@ -101,11 +110,11 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
         closeModals();
       }
     };
-    if (isCreateModalOpen || isContributeModalOpen || isReleaseModalOpen || isAutoContributionModalOpen) {
+    if (isCreateModalOpen || isContributeModalOpen || isReleaseModalOpen || isAutoContributionModalOpen || isHistoryModalOpen) {
       window.addEventListener('keydown', handleKeyDown);
     }
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCreateModalOpen, isContributeModalOpen, isReleaseModalOpen, isAutoContributionModalOpen]);
+  }, [isCreateModalOpen, isContributeModalOpen, isReleaseModalOpen, isAutoContributionModalOpen, isHistoryModalOpen]);
 
   const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -467,6 +476,21 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
                       className="text-sage-green font-medium hover:text-sage-green/80 flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       Administrar <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* History Entry */}
+                  <div className="mt-4 pt-4 border-t border-graphite-blue/5 flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-1.5 text-graphite-blue/70">
+                      <HistoryIcon className="w-3.5 h-3.5" />
+                      <span>Movimientos</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openHistoryModal(goal)}
+                      className="text-sage-green font-medium hover:text-sage-green/80 flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      Historial <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -925,6 +949,15 @@ export default function GoalsClient({ initialGoals, accounts }: GoalsClientProps
       {/* Auto Contribution Modal */}
       {isAutoContributionModalOpen && selectedGoal && (
         <AutoContributionModal
+          goal={selectedGoal}
+          accounts={accounts}
+          onClose={closeModals}
+        />
+      )}
+
+      {/* History Modal */}
+      {isHistoryModalOpen && selectedGoal && (
+        <GoalHistoryModal
           goal={selectedGoal}
           accounts={accounts}
           onClose={closeModals}
