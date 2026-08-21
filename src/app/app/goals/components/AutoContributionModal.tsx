@@ -5,7 +5,10 @@ import { components } from '@/lib/api/types.generated';
 import { 
   getGoalAutoContributionAction,
   configureGoalAutoContributionAction,
-  updateGoalAutoContributionAction
+  updateGoalAutoContributionAction,
+  pauseGoalAutoContributionAction,
+  resumeGoalAutoContributionAction,
+  cancelGoalAutoContributionAction
 } from '../actions';
 import { formatMoneyOrDash } from '@/lib/format/money';
 
@@ -44,6 +47,7 @@ export function AutoContributionModal({ goal, accounts, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // Form State
   const [accountId, setAccountId] = useState<string>('');
@@ -145,6 +149,52 @@ export function AutoContributionModal({ goal, accounts, onClose }: Props) {
       } else {
         setError(res.error || 'Ocurrió un error inesperado al guardar.');
       }
+    }
+    setIsSubmitting(false);
+  };
+
+  const handlePause = async () => {
+    if (isSubmitting) return;
+    setError(null);
+    setSuccessMsg(null);
+    setIsSubmitting(true);
+    const res = await pauseGoalAutoContributionAction(goal.id);
+    if (res.success) {
+      setSchedule(res.result as GoalAutoContributionScheduleRead);
+      setSuccessMsg('Aportes pausados.');
+    } else {
+      setError(res.error || 'No pudimos pausar la configuración.');
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleResume = async () => {
+    if (isSubmitting) return;
+    setError(null);
+    setSuccessMsg(null);
+    setIsSubmitting(true);
+    const res = await resumeGoalAutoContributionAction(goal.id);
+    if (res.success) {
+      setSchedule(res.result as GoalAutoContributionScheduleRead);
+      setSuccessMsg('Aportes reanudados.');
+    } else {
+      setError(res.error || 'No pudimos reanudar la configuración.');
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleCancel = async () => {
+    if (isSubmitting) return;
+    setError(null);
+    setSuccessMsg(null);
+    setIsSubmitting(true);
+    const res = await cancelGoalAutoContributionAction(goal.id);
+    if (res.success) {
+      setSchedule(null);
+      setShowCancelConfirm(false);
+      setSuccessMsg('Aportes desactivados.');
+    } else {
+      setError(res.error || 'No pudimos desactivar la configuración.');
     }
     setIsSubmitting(false);
   };
@@ -379,13 +429,74 @@ export function AutoContributionModal({ goal, accounts, onClose }: Props) {
             </div>
 
             {goal.status !== 'completed' && (
-              <button 
-                type="button"
-                onClick={handleEditClick}
-                className="w-full py-3 rounded-xl text-sm font-medium transition-colors bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue/10 cursor-pointer mt-2"
-              >
-                Editar configuración
-              </button>
+              showCancelConfirm ? (
+                <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-100">
+                  <h3 className="text-red-700 font-medium mb-1">Desactivar aportes automáticos</h3>
+                  <p className="text-sm text-red-600/80 mb-4">Dejarás de realizar nuevos aportes automáticos. Tus aportes anteriores y el historial de la meta se conservarán.</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowCancelConfirm(false)}
+                      disabled={isSubmitting}
+                      className="flex-1 py-2 rounded-xl text-sm font-medium transition-colors bg-white text-graphite-blue hover:bg-graphite-blue/5 border border-graphite-blue/10 disabled:opacity-50"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      disabled={isSubmitting}
+                      className="flex-1 py-2 rounded-xl text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      Desactivar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 mt-4">
+                  <button 
+                    type="button"
+                    onClick={handleEditClick}
+                    disabled={isSubmitting}
+                    className="w-full py-3 rounded-xl text-sm font-medium transition-colors bg-graphite-blue/5 text-graphite-blue hover:bg-graphite-blue/10 cursor-pointer disabled:opacity-50"
+                  >
+                    Editar configuración
+                  </button>
+                  
+                  {schedule.status === 'active' && (
+                    <button 
+                      type="button"
+                      onClick={handlePause}
+                      disabled={isSubmitting}
+                      className="w-full py-3 rounded-xl text-sm font-medium transition-colors bg-orange-50 text-orange-600 hover:bg-orange-100 cursor-pointer disabled:opacity-50"
+                    >
+                      Pausar aportes
+                    </button>
+                  )}
+                  
+                  {schedule.status === 'paused' && schedule.pause_reason === 'user_paused' && (
+                    <button 
+                      type="button"
+                      onClick={handleResume}
+                      disabled={isSubmitting}
+                      className="w-full py-3 rounded-xl text-sm font-medium transition-colors bg-sage-green/10 text-sage-green hover:bg-sage-green/20 cursor-pointer disabled:opacity-50"
+                    >
+                      Reanudar aportes
+                    </button>
+                  )}
+                  
+                  {schedule.status !== 'cancelled' && (
+                    <button 
+                      type="button"
+                      onClick={() => setShowCancelConfirm(true)}
+                      disabled={isSubmitting}
+                      className="w-full py-3 rounded-xl text-sm font-medium transition-colors bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer disabled:opacity-50"
+                    >
+                      Desactivar aportes automáticos
+                    </button>
+                  )}
+                </div>
+              )
             )}
           </div>
         ) : (

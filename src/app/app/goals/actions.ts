@@ -127,3 +127,32 @@ export async function updateGoalAutoContributionAction(goalId: string, payload: 
     return { success: false, error: handleFinancialError(err, 'No pudimos actualizar la configuración.') };
   }
 }
+export async function pauseGoalAutoContributionAction(goalId: string) {
+  try {
+    const result = await api.goals.autoContribution.pause(goalId, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Pause auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos pausar la configuración.') };
+  }
+}
+
+export async function resumeGoalAutoContributionAction(goalId: string) {
+  try {
+    const result = await api.goals.autoContribution.resume(goalId, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Resume auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos reanudar la configuración.') };
+  }
+}
+
+export async function cancelGoalAutoContributionAction(goalId: string) {
+  try {
+    await api.goals.autoContribution.delete(goalId, true);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error('Cancel auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos cancelar la configuración.') };
+  }
+}
