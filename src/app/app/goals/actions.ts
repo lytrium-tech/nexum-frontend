@@ -92,3 +92,19 @@ export async function releaseGoalAction(id: string, data: components['schemas'][
     return { success: false, error: message };
   }
 }
+
+export async function getGoalAutoContributionAction(goalId: string) {
+  try {
+    const result = await api.goals.autoContribution.get(goalId, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const apiError = err as any;
+    if (apiError?.status === 404) {
+      return { success: true, result: null }; // 404 means not configured
+    }
+    console.error('Get goal auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos cargar la configuración de aportes automáticos.') };
+  }
+}
+
