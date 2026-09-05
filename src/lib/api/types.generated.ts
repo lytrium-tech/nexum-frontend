@@ -432,6 +432,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/goals/{goal_id}/auto-contribution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Auto Contribution Schedule */
+        get: operations["get_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_get"];
+        /** Put Auto Contribution Schedule */
+        put: operations["put_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_put"];
+        post?: never;
+        /** Delete Auto Contribution Schedule */
+        delete: operations["delete_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_delete"];
+        options?: never;
+        head?: never;
+        /** Patch Auto Contribution Schedule */
+        patch: operations["patch_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_patch"];
+        trace?: never;
+    };
+    "/api/v1/goals/{goal_id}/auto-contribution/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pause Auto Contribution Schedule */
+        post: operations["pause_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{goal_id}/auto-contribution/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume Auto Contribution Schedule */
+        post: operations["resume_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/obligations": {
         parameters: {
             query?: never;
@@ -2562,6 +2616,92 @@ export interface components {
             /** Release Block Reason */
             release_block_reason?: ("currency_mismatch_legacy" | "account_inactive") | null;
         };
+        /** GoalAutoContributionScheduleCreate */
+        GoalAutoContributionScheduleCreate: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount: number | string;
+            /**
+             * Frequency
+             * @enum {string}
+             */
+            frequency: "weekly" | "monthly";
+            /** Execution Day */
+            execution_day: string;
+            /** Timezone */
+            timezone: string;
+            /** Start Date */
+            start_date?: string | null;
+        };
+        /** GoalAutoContributionScheduleRead */
+        GoalAutoContributionScheduleRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Goal Id
+             * Format: uuid
+             */
+            goal_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount: string;
+            /**
+             * Frequency
+             * @enum {string}
+             */
+            frequency: "weekly" | "monthly";
+            /** Execution Day */
+            execution_day: string;
+            /** Timezone */
+            timezone: string;
+            /** Start Date */
+            start_date: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "paused" | "cancelled";
+            /** Pause Reason */
+            pause_reason: ("user_paused" | "goal_completed" | "account_inactive" | "goal_archived") | null;
+            /** Next Run At */
+            next_run_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** GoalAutoContributionScheduleUpdate */
+        GoalAutoContributionScheduleUpdate: {
+            /** Account Id */
+            account_id?: string | null;
+            /** Amount */
+            amount?: number | string | null;
+            /** Frequency */
+            frequency?: ("weekly" | "monthly") | null;
+            /** Execution Day */
+            execution_day?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+        };
         /** GoalContributionCreate */
         GoalContributionCreate: {
             /**
@@ -2892,6 +3032,11 @@ export interface components {
              * @enum {string}
              */
             origin: "legacy" | "native";
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "manual" | "automatic" | "legacy";
         };
         /**
          * GoalTransactionType
@@ -5401,6 +5546,339 @@ export interface operations {
                 content?: never;
             };
             /** @description Paginación inválida */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalAutoContributionScheduleRead"];
+                };
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta ajena */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta o schedule no encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalAutoContributionScheduleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalAutoContributionScheduleRead"];
+                };
+            };
+            /** @description Meta no operativa */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta o cuenta ajena/inactiva */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta o cuenta no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Ya existe un schedule no cancelado */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Configuración, timezone o moneda inválida */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta ajena */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta o schedule no encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalAutoContributionScheduleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalAutoContributionScheduleRead"];
+                };
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta o cuenta ajena/inactiva */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta, cuenta o schedule no encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Configuración, timezone o moneda inválida */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    pause_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalAutoContributionScheduleRead"];
+                };
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta ajena */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta o schedule no encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_auto_contribution_schedule_api_v1_goals__goal_id__auto_contribution_resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalAutoContributionScheduleRead"];
+                };
+            };
+            /** @description Meta no operativa */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Autenticación requerida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta o cuenta ajena/inactiva */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Meta, cuenta o schedule no encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Timezone o moneda inválida */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -92,3 +92,76 @@ export async function releaseGoalAction(id: string, data: components['schemas'][
     return { success: false, error: message };
   }
 }
+
+export async function getGoalAutoContributionAction(goalId: string) {
+  try {
+    const result = await api.goals.autoContribution.get(goalId, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const apiError = err as any;
+    if (apiError?.status === 404) {
+      return { success: true, result: null }; // 404 means not configured
+    }
+    console.error('Get goal auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos cargar la configuración de aportes automáticos.') };
+  }
+}
+
+export async function configureGoalAutoContributionAction(goalId: string, payload: components['schemas']['GoalAutoContributionScheduleCreate']) {
+  try {
+    const result = await api.goals.autoContribution.configure(goalId, payload, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Configure auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos guardar la configuración.') };
+  }
+}
+
+export async function updateGoalAutoContributionAction(goalId: string, payload: components['schemas']['GoalAutoContributionScheduleUpdate']) {
+  try {
+    const result = await api.goals.autoContribution.update(goalId, payload, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Update auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos actualizar la configuración.') };
+  }
+}
+export async function pauseGoalAutoContributionAction(goalId: string) {
+  try {
+    const result = await api.goals.autoContribution.pause(goalId, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Pause auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos pausar la configuración.') };
+  }
+}
+
+export async function resumeGoalAutoContributionAction(goalId: string) {
+  try {
+    const result = await api.goals.autoContribution.resume(goalId, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Resume auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos reanudar la configuración.') };
+  }
+}
+
+export async function cancelGoalAutoContributionAction(goalId: string) {
+  try {
+    await api.goals.autoContribution.delete(goalId, true);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error('Cancel auto contribution error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos cancelar la configuración.') };
+  }
+}
+export async function getGoalHistoryAction(goalId: string, limit: number = 50) {
+  try {
+    const result = await api.goals.transactions(goalId, { limit }, true);
+    return { success: true, result };
+  } catch (err: unknown) {
+    console.error('Goal history error:', err);
+    return { success: false, error: handleFinancialError(err, 'No pudimos cargar el historial.') };
+  }
+}

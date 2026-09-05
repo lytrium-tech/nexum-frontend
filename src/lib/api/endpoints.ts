@@ -19,6 +19,10 @@ type GoalContributionCreate = components['schemas']['GoalContributionCreate'];
 type GoalContributionResult = components['schemas']['GoalContributionResult'];
 type GoalReleaseRequest = components['schemas']['GoalReleaseCreate'];
 type GoalReleaseResult = components['schemas']['GoalReleaseResult'];
+type GoalAutoContributionScheduleRead = components['schemas']['GoalAutoContributionScheduleRead'];
+type GoalAutoContributionScheduleCreate = components['schemas']['GoalAutoContributionScheduleCreate'];
+type GoalAutoContributionScheduleUpdate = components['schemas']['GoalAutoContributionScheduleUpdate'];
+type GoalTransactionsResponse = components['schemas']['GoalTransactionsResponse'];
 type ObligationRead = components['schemas']['ObligationRead'];
 type ObligationCreate = components['schemas']['ObligationCreate'];
 // type ObligationUpdate = components['schemas']['ObligationUpdate'];
@@ -172,6 +176,33 @@ export const api = {
         },
         body: JSON.stringify(data),
       }, isServer),
+    transactions: (id: string, params?: { limit?: number; offset?: number }, isServer = false) => {
+      const qsObj: Record<string, string> = {};
+      if (params?.limit !== undefined) qsObj.limit = String(params.limit);
+      if (params?.offset !== undefined) qsObj.offset = String(params.offset);
+      const qs = Object.keys(qsObj).length > 0 ? '?' + new URLSearchParams(qsObj).toString() : '';
+      return apiClient<GoalTransactionsResponse>(`/api/v1/goals/${id}/transactions${qs}`, { method: 'GET' }, isServer);
+    },
+    autoContribution: {
+      get: (goalId: string, isServer = false) =>
+        apiClient<GoalAutoContributionScheduleRead>(`/api/v1/goals/${goalId}/auto-contribution`, { method: 'GET' }, isServer),
+      configure: (goalId: string, data: GoalAutoContributionScheduleCreate, isServer = false) =>
+        apiClient<GoalAutoContributionScheduleRead>(`/api/v1/goals/${goalId}/auto-contribution`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+        }, isServer),
+      update: (goalId: string, data: GoalAutoContributionScheduleUpdate, isServer = false) =>
+        apiClient<GoalAutoContributionScheduleRead>(`/api/v1/goals/${goalId}/auto-contribution`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }, isServer),
+      pause: (goalId: string, isServer = false) =>
+        apiClient<GoalAutoContributionScheduleRead>(`/api/v1/goals/${goalId}/auto-contribution/pause`, { method: 'POST' }, isServer),
+      resume: (goalId: string, isServer = false) =>
+        apiClient<GoalAutoContributionScheduleRead>(`/api/v1/goals/${goalId}/auto-contribution/resume`, { method: 'POST' }, isServer),
+      delete: (goalId: string, isServer = false) =>
+        apiClient<void>(`/api/v1/goals/${goalId}/auto-contribution`, { method: 'DELETE' }, isServer),
+    },
   },
   obligations: {
     list: (isServer = false, params?: { include_archived?: boolean }) => {
